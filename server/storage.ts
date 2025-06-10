@@ -132,7 +132,7 @@ export class MemStorage implements IStorage {
       assignedTo: story.assignedTo || null,
       priority: story.priority || null,
       createdDate: story.createdDate || null,
-      tags: story.tags || null,
+      tags: Array.isArray(story.tags) ? story.tags : null,
       configId: story.configId || null,
     };
     this.userStories.set(id, userStory);
@@ -175,8 +175,8 @@ export class MemStorage implements IStorage {
       ...testCase,
       id,
       status: testCase.status || "pending",
-      prerequisites: testCase.prerequisites || null,
-      testSteps: testCase.testSteps || null,
+      prerequisites: Array.isArray(testCase.prerequisites) ? testCase.prerequisites : null,
+      testSteps: Array.isArray(testCase.testSteps) ? testCase.testSteps : null,
       userStoryId: testCase.userStoryId || null,
       azureTestCaseId: testCase.azureTestCaseId || null,
       createdAt: new Date(),
@@ -217,6 +217,143 @@ export class MemStorage implements IStorage {
       if (test) tests.push(test);
     }
     return tests;
+  }
+
+  // Test Plans methods
+  async createTestPlan(testPlan: InsertTestPlan): Promise<TestPlan> {
+    const id = this.currentTestPlanId++;
+    const plan: TestPlan = {
+      ...testPlan,
+      id,
+      createdAt: new Date(),
+    };
+    this.testPlans.set(id, plan);
+    return plan;
+  }
+
+  async getTestPlans(configId?: number): Promise<TestPlan[]> {
+    const plans = Array.from(this.testPlans.values());
+    if (configId !== undefined) {
+      return plans.filter(plan => plan.configId === configId);
+    }
+    return plans;
+  }
+
+  async getTestPlan(id: number): Promise<TestPlan | undefined> {
+    return this.testPlans.get(id);
+  }
+
+  async clearTestPlans(configId: number): Promise<void> {
+    const plansToDelete = Array.from(this.testPlans.entries())
+      .filter(([_, plan]) => plan.configId === configId)
+      .map(([id]) => id);
+    
+    plansToDelete.forEach(id => this.testPlans.delete(id));
+  }
+
+  // Test Suites methods
+  async createTestSuite(testSuite: InsertTestSuite): Promise<TestSuite> {
+    const id = this.currentTestSuiteId++;
+    const suite: TestSuite = {
+      ...testSuite,
+      id,
+      createdAt: new Date(),
+    };
+    this.testSuites.set(id, suite);
+    return suite;
+  }
+
+  async getTestSuites(testPlanId?: number): Promise<TestSuite[]> {
+    const suites = Array.from(this.testSuites.values());
+    if (testPlanId !== undefined) {
+      return suites.filter(suite => suite.testPlanId === testPlanId);
+    }
+    return suites;
+  }
+
+  async getTestSuite(id: number): Promise<TestSuite | undefined> {
+    return this.testSuites.get(id);
+  }
+
+  async clearTestSuites(configId: number): Promise<void> {
+    const suitesToDelete = Array.from(this.testSuites.entries())
+      .filter(([_, suite]) => suite.configId === configId)
+      .map(([id]) => id);
+    
+    suitesToDelete.forEach(id => this.testSuites.delete(id));
+  }
+
+  // Test Case Links methods
+  async createTestCaseLink(link: InsertTestCaseLink): Promise<TestCaseLink> {
+    const id = this.currentLinkId++;
+    const testCaseLink: TestCaseLink = {
+      ...link,
+      id,
+      createdAt: new Date(),
+    };
+    this.testCaseLinks.set(id, testCaseLink);
+    return testCaseLink;
+  }
+
+  async getTestCaseLinks(testCaseId: number): Promise<TestCaseLink[]> {
+    return Array.from(this.testCaseLinks.values())
+      .filter(link => link.testCaseId === testCaseId);
+  }
+
+  async deleteTestCaseLink(id: number): Promise<boolean> {
+    return this.testCaseLinks.delete(id);
+  }
+
+  // Test Case Feedback methods
+  async createTestCaseFeedback(feedback: InsertTestCaseFeedback): Promise<TestCaseFeedback> {
+    const id = this.currentFeedbackId++;
+    const testCaseFeedback: TestCaseFeedback = {
+      ...feedback,
+      id,
+      createdAt: new Date(),
+    };
+    this.testCaseFeedback.set(id, testCaseFeedback);
+    return testCaseFeedback;
+  }
+
+  async getTestCaseFeedback(testCaseId: number): Promise<TestCaseFeedback[]> {
+    return Array.from(this.testCaseFeedback.values())
+      .filter(feedback => feedback.testCaseId === testCaseId);
+  }
+
+  async getAllFeedback(): Promise<TestCaseFeedback[]> {
+    return Array.from(this.testCaseFeedback.values());
+  }
+
+  // AI Context methods
+  async createOrUpdateAiContext(context: InsertAiContext): Promise<AiContext> {
+    // Find existing context for this config
+    const existing = Array.from(this.aiContexts.values())
+      .find(ctx => ctx.configId === context.configId);
+    
+    if (existing) {
+      const updated: AiContext = {
+        ...existing,
+        ...context,
+        updatedAt: new Date(),
+      };
+      this.aiContexts.set(existing.id, updated);
+      return updated;
+    } else {
+      const id = this.currentContextId++;
+      const newContext: AiContext = {
+        ...context,
+        id,
+        updatedAt: new Date(),
+      };
+      this.aiContexts.set(id, newContext);
+      return newContext;
+    }
+  }
+
+  async getAiContext(configId: number): Promise<AiContext | undefined> {
+    return Array.from(this.aiContexts.values())
+      .find(context => context.configId === configId);
   }
 }
 

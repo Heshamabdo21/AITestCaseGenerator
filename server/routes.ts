@@ -215,8 +215,15 @@ For each test case, provide the following in JSON format:
 
         const response = await openai.chat.completions.create({
           model: "gpt-4o",
-          messages: [{ role: "user", content: prompt }],
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert QA engineer specializing in comprehensive test case design. Generate detailed, executable test cases that follow industry best practices. Always respond in valid JSON format."
+            },
+            { role: "user", content: prompt }
+          ],
           response_format: { type: "json_object" },
+          temperature: 0.7,
         });
 
         const result = JSON.parse(response.choices[0].message.content || "{}");
