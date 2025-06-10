@@ -104,8 +104,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Clear existing user stories for this config
       await storage.clearUserStories(config.id);
 
-      const apiUrl = `${config.organizationUrl}/${config.project}/_apis/wit/workitems?api-version=7.0&$top=100&$filter=System.WorkItemType eq 'User Story'`;
+      // First, get work item IDs using a query
+      const queryUrl = `${config.organizationUrl}/${config.project}/_apis/wit/wiql?api-version=7.0`;
+      const queryPayload = {
+        query: "SELECT [System.Id] FROM WorkItems WHERE [System.WorkItemType] = 'User Story' ORDER BY [System.CreatedDate] DESC"
+      };
+
       const authHeader = `Basic ${Buffer.from(`:${config.patToken}`).toString('base64')}`;
+      
+      const queryResponse = await fetch(queryUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(queryPayload)
+      });
+
+      if (!queryResponse.ok) {
+        throw new Error(`Azure DevOps Query API error: ${queryResponse.status} ${queryResponse.statusText}`);
+      }
+
+      const queryData = await queryResponse.json();
+      const workItemIds = queryData.workItems?.map((item: any) => item.id) || [];
+
+      if (workItemIds.length === 0) {
+        return res.json([]);
+      }
+
+      // Now fetch the actual work items with their details
+      const apiUrl = `${config.organizationUrl}/${config.project}/_apis/wit/workitems?ids=${workItemIds.slice(0, 50).join(',')}&api-version=7.0&$expand=All`;
+      
+      console.log(`Fetching work items from: ${apiUrl}`);
       
       const response = await fetch(apiUrl, {
         headers: {

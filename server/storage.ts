@@ -1,28 +1,20 @@
 import { 
-  azureConfigs, 
-  userStories, 
-  testCases,
-  testPlans,
-  testSuites,
-  testCaseLinks,
-  testCaseFeedback,
-  aiContext,
-  type AzureConfig,
-  type InsertAzureConfig,
-  type UserStory,
-  type InsertUserStory,
-  type TestCase,
-  type InsertTestCase,
-  type TestPlan,
-  type InsertTestPlan,
-  type TestSuite,
-  type InsertTestSuite,
-  type TestCaseLink,
-  type InsertTestCaseLink,
-  type TestCaseFeedback,
-  type InsertTestCaseFeedback,
-  type AiContext,
-  type InsertAiContext
+  AzureConfig, 
+  InsertAzureConfig, 
+  UserStory, 
+  InsertUserStory, 
+  TestCase, 
+  InsertTestCase,
+  TestPlan,
+  InsertTestPlan,
+  TestSuite,
+  InsertTestSuite,
+  TestCaseLink,
+  InsertTestCaseLink,
+  TestCaseFeedback,
+  InsertTestCaseFeedback,
+  AiContext,
+  InsertAiContext
 } from "@shared/schema";
 
 export interface IStorage {
@@ -74,287 +66,191 @@ export interface IStorage {
   getAiContext(configId: number): Promise<AiContext | undefined>;
 }
 
-export class MemStorage implements IStorage {
-  private azureConfigs: Map<number, AzureConfig> = new Map();
-  private userStories: Map<number, UserStory> = new Map();
-  private testCases: Map<number, TestCase> = new Map();
-  private testPlans: Map<number, TestPlan> = new Map();
-  private testSuites: Map<number, TestSuite> = new Map();
-  private testCaseLinks: Map<number, TestCaseLink> = new Map();
-  private testCaseFeedback: Map<number, TestCaseFeedback> = new Map();
-  private aiContexts: Map<number, AiContext> = new Map();
-  private currentConfigId = 1;
-  private currentStoryId = 1;
-  private currentTestCaseId = 1;
-  private currentTestPlanId = 1;
-  private currentTestSuiteId = 1;
-  private currentLinkId = 1;
-  private currentFeedbackId = 1;
-  private currentContextId = 1;
+import { db } from "./db";
+import { eq, inArray, desc } from "drizzle-orm";
+import { 
+  azureConfigs, 
+  userStories, 
+  testCases, 
+  testPlans, 
+  testSuites, 
+  testCaseLinks, 
+  testCaseFeedback, 
+  aiContext 
+} from "@shared/schema";
 
+export class DatabaseStorage implements IStorage {
   // Azure Config methods
   async createAzureConfig(config: InsertAzureConfig): Promise<AzureConfig> {
-    const id = this.currentConfigId++;
-    const azureConfig: AzureConfig = {
-      ...config,
-      id,
-      createdAt: new Date(),
-    };
-    this.azureConfigs.set(id, azureConfig);
-    return azureConfig;
+    const [result] = await db.insert(azureConfigs).values(config).returning();
+    return result;
   }
 
   async getAzureConfig(id: number): Promise<AzureConfig | undefined> {
-    return this.azureConfigs.get(id);
+    const [result] = await db.select().from(azureConfigs).where(eq(azureConfigs.id, id));
+    return result || undefined;
   }
 
   async getLatestAzureConfig(): Promise<AzureConfig | undefined> {
-    const configs = Array.from(this.azureConfigs.values());
-    return configs.sort((a, b) => b.id - a.id)[0];
+    const [result] = await db.select().from(azureConfigs).orderBy(desc(azureConfigs.id)).limit(1);
+    return result || undefined;
   }
 
   async updateAzureConfig(id: number, config: Partial<InsertAzureConfig>): Promise<AzureConfig | undefined> {
-    const existing = this.azureConfigs.get(id);
-    if (!existing) return undefined;
-
-    const updated: AzureConfig = { ...existing, ...config };
-    this.azureConfigs.set(id, updated);
-    return updated;
+    const [result] = await db.update(azureConfigs).set(config).where(eq(azureConfigs.id, id)).returning();
+    return result || undefined;
   }
 
   // User Stories methods
   async createUserStory(story: InsertUserStory): Promise<UserStory> {
-    const id = this.currentStoryId++;
-    const userStory: UserStory = {
-      ...story,
-      id,
-      description: story.description || null,
-      assignedTo: story.assignedTo || null,
-      priority: story.priority || null,
-      createdDate: story.createdDate || null,
-      tags: Array.isArray(story.tags) ? story.tags : null,
-      configId: story.configId || null,
-    };
-    this.userStories.set(id, userStory);
-    return userStory;
+    const [result] = await db.insert(userStories).values(story).returning();
+    return result;
   }
 
   async getUserStories(configId?: number): Promise<UserStory[]> {
-    const stories = Array.from(this.userStories.values());
-    if (configId !== undefined) {
-      return stories.filter(story => story.configId === configId);
+    if (configId) {
+      return await db.select().from(userStories).where(eq(userStories.configId, configId));
     }
-    return stories;
+    return await db.select().from(userStories);
   }
 
   async getUserStory(id: number): Promise<UserStory | undefined> {
-    return this.userStories.get(id);
+    const [result] = await db.select().from(userStories).where(eq(userStories.id, id));
+    return result || undefined;
   }
 
   async getUserStoriesByIds(ids: number[]): Promise<UserStory[]> {
-    const stories: UserStory[] = [];
-    for (const id of ids) {
-      const story = this.userStories.get(id);
-      if (story) stories.push(story);
-    }
-    return stories;
+    if (ids.length === 0) return [];
+    return await db.select().from(userStories).where(inArray(userStories.id, ids));
   }
 
   async clearUserStories(configId: number): Promise<void> {
-    const storiesToDelete = Array.from(this.userStories.entries())
-      .filter(([_, story]) => story.configId === configId)
-      .map(([id]) => id);
-    
-    storiesToDelete.forEach(id => this.userStories.delete(id));
+    await db.delete(userStories).where(eq(userStories.configId, configId));
   }
 
   // Test Cases methods
   async createTestCase(testCase: InsertTestCase): Promise<TestCase> {
-    const id = this.currentTestCaseId++;
-    const test: TestCase = {
-      ...testCase,
-      id,
-      status: testCase.status || "pending",
-      prerequisites: Array.isArray(testCase.prerequisites) ? testCase.prerequisites : null,
-      testSteps: Array.isArray(testCase.testSteps) ? testCase.testSteps : null,
-      userStoryId: testCase.userStoryId || null,
-      azureTestCaseId: testCase.azureTestCaseId || null,
-      createdAt: new Date(),
-    };
-    this.testCases.set(id, test);
-    return test;
+    const [result] = await db.insert(testCases).values(testCase).returning();
+    return result;
   }
 
   async getTestCases(userStoryId?: number): Promise<TestCase[]> {
-    const tests = Array.from(this.testCases.values());
-    if (userStoryId !== undefined) {
-      return tests.filter(test => test.userStoryId === userStoryId);
+    if (userStoryId) {
+      return await db.select().from(testCases).where(eq(testCases.userStoryId, userStoryId));
     }
-    return tests;
+    return await db.select().from(testCases);
   }
 
   async getTestCase(id: number): Promise<TestCase | undefined> {
-    return this.testCases.get(id);
+    const [result] = await db.select().from(testCases).where(eq(testCases.id, id));
+    return result || undefined;
   }
 
   async updateTestCase(id: number, testCase: Partial<InsertTestCase>): Promise<TestCase | undefined> {
-    const existing = this.testCases.get(id);
-    if (!existing) return undefined;
-
-    const updated: TestCase = { ...existing, ...testCase };
-    this.testCases.set(id, updated);
-    return updated;
+    const [result] = await db.update(testCases).set(testCase).where(eq(testCases.id, id)).returning();
+    return result || undefined;
   }
 
   async deleteTestCase(id: number): Promise<boolean> {
-    return this.testCases.delete(id);
+    const result = await db.delete(testCases).where(eq(testCases.id, id));
+    return (result as any).rowCount > 0;
   }
 
   async getTestCasesByIds(ids: number[]): Promise<TestCase[]> {
-    const tests: TestCase[] = [];
-    for (const id of ids) {
-      const test = this.testCases.get(id);
-      if (test) tests.push(test);
-    }
-    return tests;
+    if (ids.length === 0) return [];
+    return await db.select().from(testCases).where(inArray(testCases.id, ids));
   }
 
   // Test Plans methods
   async createTestPlan(testPlan: InsertTestPlan): Promise<TestPlan> {
-    const id = this.currentTestPlanId++;
-    const plan: TestPlan = {
-      ...testPlan,
-      id,
-      createdAt: new Date(),
-    };
-    this.testPlans.set(id, plan);
-    return plan;
+    const [result] = await db.insert(testPlans).values(testPlan).returning();
+    return result;
   }
 
   async getTestPlans(configId?: number): Promise<TestPlan[]> {
-    const plans = Array.from(this.testPlans.values());
-    if (configId !== undefined) {
-      return plans.filter(plan => plan.configId === configId);
+    if (configId) {
+      return await db.select().from(testPlans).where(eq(testPlans.configId, configId));
     }
-    return plans;
+    return await db.select().from(testPlans);
   }
 
   async getTestPlan(id: number): Promise<TestPlan | undefined> {
-    return this.testPlans.get(id);
+    const [result] = await db.select().from(testPlans).where(eq(testPlans.id, id));
+    return result || undefined;
   }
 
   async clearTestPlans(configId: number): Promise<void> {
-    const plansToDelete = Array.from(this.testPlans.entries())
-      .filter(([_, plan]) => plan.configId === configId)
-      .map(([id]) => id);
-    
-    plansToDelete.forEach(id => this.testPlans.delete(id));
+    await db.delete(testPlans).where(eq(testPlans.configId, configId));
   }
 
   // Test Suites methods
   async createTestSuite(testSuite: InsertTestSuite): Promise<TestSuite> {
-    const id = this.currentTestSuiteId++;
-    const suite: TestSuite = {
-      ...testSuite,
-      id,
-      createdAt: new Date(),
-    };
-    this.testSuites.set(id, suite);
-    return suite;
+    const [result] = await db.insert(testSuites).values(testSuite).returning();
+    return result;
   }
 
   async getTestSuites(testPlanId?: number): Promise<TestSuite[]> {
-    const suites = Array.from(this.testSuites.values());
-    if (testPlanId !== undefined) {
-      return suites.filter(suite => suite.testPlanId === testPlanId);
+    if (testPlanId) {
+      return await db.select().from(testSuites).where(eq(testSuites.testPlanId, testPlanId));
     }
-    return suites;
+    return await db.select().from(testSuites);
   }
 
   async getTestSuite(id: number): Promise<TestSuite | undefined> {
-    return this.testSuites.get(id);
+    const [result] = await db.select().from(testSuites).where(eq(testSuites.id, id));
+    return result || undefined;
   }
 
   async clearTestSuites(configId: number): Promise<void> {
-    const suitesToDelete = Array.from(this.testSuites.entries())
-      .filter(([_, suite]) => suite.configId === configId)
-      .map(([id]) => id);
-    
-    suitesToDelete.forEach(id => this.testSuites.delete(id));
+    await db.delete(testSuites).where(eq(testSuites.configId, configId));
   }
 
   // Test Case Links methods
   async createTestCaseLink(link: InsertTestCaseLink): Promise<TestCaseLink> {
-    const id = this.currentLinkId++;
-    const testCaseLink: TestCaseLink = {
-      ...link,
-      id,
-      createdAt: new Date(),
-    };
-    this.testCaseLinks.set(id, testCaseLink);
-    return testCaseLink;
+    const [result] = await db.insert(testCaseLinks).values(link).returning();
+    return result;
   }
 
   async getTestCaseLinks(testCaseId: number): Promise<TestCaseLink[]> {
-    return Array.from(this.testCaseLinks.values())
-      .filter(link => link.testCaseId === testCaseId);
+    return await db.select().from(testCaseLinks).where(eq(testCaseLinks.testCaseId, testCaseId));
   }
 
   async deleteTestCaseLink(id: number): Promise<boolean> {
-    return this.testCaseLinks.delete(id);
+    const result = await db.delete(testCaseLinks).where(eq(testCaseLinks.id, id));
+    return (result as any).rowCount > 0;
   }
 
   // Test Case Feedback methods
   async createTestCaseFeedback(feedback: InsertTestCaseFeedback): Promise<TestCaseFeedback> {
-    const id = this.currentFeedbackId++;
-    const testCaseFeedback: TestCaseFeedback = {
-      ...feedback,
-      id,
-      createdAt: new Date(),
-    };
-    this.testCaseFeedback.set(id, testCaseFeedback);
-    return testCaseFeedback;
+    const [result] = await db.insert(testCaseFeedback).values(feedback).returning();
+    return result;
   }
 
   async getTestCaseFeedback(testCaseId: number): Promise<TestCaseFeedback[]> {
-    return Array.from(this.testCaseFeedback.values())
-      .filter(feedback => feedback.testCaseId === testCaseId);
+    return await db.select().from(testCaseFeedback).where(eq(testCaseFeedback.testCaseId, testCaseId));
   }
 
   async getAllFeedback(): Promise<TestCaseFeedback[]> {
-    return Array.from(this.testCaseFeedback.values());
+    return await db.select().from(testCaseFeedback);
   }
 
   // AI Context methods
   async createOrUpdateAiContext(context: InsertAiContext): Promise<AiContext> {
-    // Find existing context for this config
-    const existing = Array.from(this.aiContexts.values())
-      .find(ctx => ctx.configId === context.configId);
+    const existing = await db.select().from(aiContext).where(eq(aiContext.configId, context.configId!)).limit(1);
     
-    if (existing) {
-      const updated: AiContext = {
-        ...existing,
-        ...context,
-        updatedAt: new Date(),
-      };
-      this.aiContexts.set(existing.id, updated);
-      return updated;
+    if (existing.length > 0) {
+      const [result] = await db.update(aiContext).set(context).where(eq(aiContext.configId, context.configId!)).returning();
+      return result;
     } else {
-      const id = this.currentContextId++;
-      const newContext: AiContext = {
-        ...context,
-        id,
-        updatedAt: new Date(),
-      };
-      this.aiContexts.set(id, newContext);
-      return newContext;
+      const [result] = await db.insert(aiContext).values(context).returning();
+      return result;
     }
   }
 
   async getAiContext(configId: number): Promise<AiContext | undefined> {
-    return Array.from(this.aiContexts.values())
-      .find(context => context.configId === configId);
+    const [result] = await db.select().from(aiContext).where(eq(aiContext.configId, configId));
+    return result || undefined;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
