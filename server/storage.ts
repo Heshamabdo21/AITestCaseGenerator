@@ -2,12 +2,27 @@ import {
   azureConfigs, 
   userStories, 
   testCases,
+  testPlans,
+  testSuites,
+  testCaseLinks,
+  testCaseFeedback,
+  aiContext,
   type AzureConfig,
   type InsertAzureConfig,
   type UserStory,
   type InsertUserStory,
   type TestCase,
-  type InsertTestCase
+  type InsertTestCase,
+  type TestPlan,
+  type InsertTestPlan,
+  type TestSuite,
+  type InsertTestSuite,
+  type TestCaseLink,
+  type InsertTestCaseLink,
+  type TestCaseFeedback,
+  type InsertTestCaseFeedback,
+  type AiContext,
+  type InsertAiContext
 } from "@shared/schema";
 
 export interface IStorage {
@@ -31,15 +46,51 @@ export interface IStorage {
   updateTestCase(id: number, testCase: Partial<InsertTestCase>): Promise<TestCase | undefined>;
   deleteTestCase(id: number): Promise<boolean>;
   getTestCasesByIds(ids: number[]): Promise<TestCase[]>;
+
+  // Test Plans methods
+  createTestPlan(testPlan: InsertTestPlan): Promise<TestPlan>;
+  getTestPlans(configId?: number): Promise<TestPlan[]>;
+  getTestPlan(id: number): Promise<TestPlan | undefined>;
+  clearTestPlans(configId: number): Promise<void>;
+
+  // Test Suites methods
+  createTestSuite(testSuite: InsertTestSuite): Promise<TestSuite>;
+  getTestSuites(testPlanId?: number): Promise<TestSuite[]>;
+  getTestSuite(id: number): Promise<TestSuite | undefined>;
+  clearTestSuites(configId: number): Promise<void>;
+
+  // Test Case Links methods
+  createTestCaseLink(link: InsertTestCaseLink): Promise<TestCaseLink>;
+  getTestCaseLinks(testCaseId: number): Promise<TestCaseLink[]>;
+  deleteTestCaseLink(id: number): Promise<boolean>;
+
+  // Test Case Feedback methods
+  createTestCaseFeedback(feedback: InsertTestCaseFeedback): Promise<TestCaseFeedback>;
+  getTestCaseFeedback(testCaseId: number): Promise<TestCaseFeedback[]>;
+  getAllFeedback(): Promise<TestCaseFeedback[]>;
+
+  // AI Context methods
+  createOrUpdateAiContext(context: InsertAiContext): Promise<AiContext>;
+  getAiContext(configId: number): Promise<AiContext | undefined>;
 }
 
 export class MemStorage implements IStorage {
   private azureConfigs: Map<number, AzureConfig> = new Map();
   private userStories: Map<number, UserStory> = new Map();
   private testCases: Map<number, TestCase> = new Map();
+  private testPlans: Map<number, TestPlan> = new Map();
+  private testSuites: Map<number, TestSuite> = new Map();
+  private testCaseLinks: Map<number, TestCaseLink> = new Map();
+  private testCaseFeedback: Map<number, TestCaseFeedback> = new Map();
+  private aiContexts: Map<number, AiContext> = new Map();
   private currentConfigId = 1;
   private currentStoryId = 1;
   private currentTestCaseId = 1;
+  private currentTestPlanId = 1;
+  private currentTestSuiteId = 1;
+  private currentLinkId = 1;
+  private currentFeedbackId = 1;
+  private currentContextId = 1;
 
   // Azure Config methods
   async createAzureConfig(config: InsertAzureConfig): Promise<AzureConfig> {
@@ -77,6 +128,12 @@ export class MemStorage implements IStorage {
     const userStory: UserStory = {
       ...story,
       id,
+      description: story.description || null,
+      assignedTo: story.assignedTo || null,
+      priority: story.priority || null,
+      createdDate: story.createdDate || null,
+      tags: story.tags || null,
+      configId: story.configId || null,
     };
     this.userStories.set(id, userStory);
     return userStory;
@@ -117,6 +174,11 @@ export class MemStorage implements IStorage {
     const test: TestCase = {
       ...testCase,
       id,
+      status: testCase.status || "pending",
+      prerequisites: testCase.prerequisites || null,
+      testSteps: testCase.testSteps || null,
+      userStoryId: testCase.userStoryId || null,
+      azureTestCaseId: testCase.azureTestCaseId || null,
       createdAt: new Date(),
     };
     this.testCases.set(id, test);

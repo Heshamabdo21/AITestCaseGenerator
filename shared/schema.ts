@@ -82,13 +82,110 @@ export type AzureWorkItem = {
   };
 };
 
-// Test case generation request
+// Test Plans and Test Suites
+export const testPlans = pgTable("test_plans", {
+  id: serial("id").primaryKey(),
+  azureId: text("azure_id").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description"),
+  state: text("state").notNull(),
+  configId: integer("config_id").references(() => azureConfigs.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const testSuites = pgTable("test_suites", {
+  id: serial("id").primaryKey(),
+  azureId: text("azure_id").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description"),
+  testPlanId: integer("test_plan_id").references(() => testPlans.id),
+  configId: integer("config_id").references(() => azureConfigs.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Enhanced test cases with linking and feedback
+export const testCaseLinks = pgTable("test_case_links", {
+  id: serial("id").primaryKey(),
+  testCaseId: integer("test_case_id").references(() => testCases.id),
+  linkedUserStoryId: text("linked_user_story_id").notNull(),
+  linkType: text("link_type").notNull().default("tests"), // tests, blocks, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const testCaseFeedback = pgTable("test_case_feedback", {
+  id: serial("id").primaryKey(),
+  testCaseId: integer("test_case_id").references(() => testCases.id),
+  feedbackType: text("feedback_type").notNull(), // improvement, issue, positive
+  feedbackText: text("feedback_text").notNull(),
+  userEmail: text("user_email"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// AI Context and Learning
+export const aiContext = pgTable("ai_context", {
+  id: serial("id").primaryKey(),
+  projectContext: json("project_context").$type<string[]>().default([]),
+  domainKnowledge: json("domain_knowledge").$type<string[]>().default([]),
+  testingPatterns: json("testing_patterns").$type<string[]>().default([]),
+  customInstructions: text("custom_instructions"),
+  configId: integer("config_id").references(() => azureConfigs.id),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Test case generation request with enhanced options
 export const generateTestCaseRequestSchema = z.object({
   userStoryIds: z.array(z.number()),
   style: z.enum(["gherkin", "step-by-step", "scenario-based"]).default("step-by-step"),
   coverageLevel: z.enum(["comprehensive", "standard", "minimal"]).default("standard"),
   includeNegative: z.boolean().default(true),
   includePerformance: z.boolean().default(false),
+  includeAccessibility: z.boolean().default(false),
+  includeSecurity: z.boolean().default(false),
+  targetTestPlan: z.string().optional(),
+  targetTestSuite: z.string().optional(),
+  customContext: z.string().optional(),
 });
+
+// Schema exports for new tables
+export const insertTestPlanSchema = createInsertSchema(testPlans).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTestSuiteSchema = createInsertSchema(testSuites).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTestCaseLinkSchema = createInsertSchema(testCaseLinks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTestCaseFeedbackSchema = createInsertSchema(testCaseFeedback).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiContextSchema = createInsertSchema(aiContext).omit({
+  id: true,
+  updatedAt: true,
+});
+
+// Type exports for new models
+export type TestPlan = typeof testPlans.$inferSelect;
+export type InsertTestPlan = z.infer<typeof insertTestPlanSchema>;
+
+export type TestSuite = typeof testSuites.$inferSelect;
+export type InsertTestSuite = z.infer<typeof insertTestSuiteSchema>;
+
+export type TestCaseLink = typeof testCaseLinks.$inferSelect;
+export type InsertTestCaseLink = z.infer<typeof insertTestCaseLinkSchema>;
+
+export type TestCaseFeedback = typeof testCaseFeedback.$inferSelect;
+export type InsertTestCaseFeedback = z.infer<typeof insertTestCaseFeedbackSchema>;
+
+export type AiContext = typeof aiContext.$inferSelect;
+export type InsertAiContext = z.infer<typeof insertAiContextSchema>;
 
 export type GenerateTestCaseRequest = z.infer<typeof generateTestCaseRequestSchema>;
