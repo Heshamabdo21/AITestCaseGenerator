@@ -309,14 +309,15 @@ For each test case, provide the following in JSON format:
       for (const testCase of approvedTests) {
         try {
           // Create test case in Azure DevOps
+          const testSteps = testCase.testSteps || [];
           const workItem = {
             fields: {
               "System.WorkItemType": "Test Case",
               "System.Title": testCase.title,
-              "Microsoft.VSTS.TCM.Steps": testCase.testSteps.map((step, index) => ({
+              "Microsoft.VSTS.TCM.Steps": testSteps.map((step, index) => ({
                 id: index + 1,
                 action: step,
-                expectedResult: index === testCase.testSteps.length - 1 ? testCase.expectedResult : ""
+                expectedResult: index === testSteps.length - 1 ? testCase.expectedResult : ""
               })),
               "System.Description": testCase.objective,
               "Microsoft.VSTS.Common.Priority": testCase.priority === "High" ? 1 : testCase.priority === "Medium" ? 2 : 3,
