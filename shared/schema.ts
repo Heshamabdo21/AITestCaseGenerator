@@ -19,6 +19,7 @@ export const userStories = pgTable("user_stories", {
   azureId: text("azure_id").notNull().unique(),
   title: text("title").notNull(),
   description: text("description"),
+  acceptanceCriteria: text("acceptance_criteria"),
   state: text("state").notNull(),
   assignedTo: text("assigned_to"),
   priority: text("priority"),

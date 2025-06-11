@@ -275,6 +275,54 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db.select().from(aiContext).where(eq(aiContext.configId, configId));
     return result || undefined;
   }
+
+  // Test Data Config methods
+  async createTestDataConfig(config: InsertTestDataConfig): Promise<TestDataConfig> {
+    const [result] = await db.insert(testDataConfigs).values(config).returning();
+    return result;
+  }
+
+  async getTestDataConfig(configId: number): Promise<TestDataConfig | undefined> {
+    const [result] = await db.select().from(testDataConfigs).where(eq(testDataConfigs.configId, configId));
+    return result || undefined;
+  }
+
+  async updateTestDataConfig(configId: number, config: Partial<InsertTestDataConfig>): Promise<TestDataConfig | undefined> {
+    const [result] = await db.update(testDataConfigs).set(config).where(eq(testDataConfigs.configId, configId)).returning();
+    return result || undefined;
+  }
+
+  // Environment Config methods
+  async createEnvironmentConfig(config: InsertEnvironmentConfig): Promise<EnvironmentConfig> {
+    const [result] = await db.insert(environmentConfigs).values(config).returning();
+    return result;
+  }
+
+  async getEnvironmentConfig(configId: number): Promise<EnvironmentConfig | undefined> {
+    const [result] = await db.select().from(environmentConfigs).where(eq(environmentConfigs.configId, configId));
+    return result || undefined;
+  }
+
+  async updateEnvironmentConfig(configId: number, config: Partial<InsertEnvironmentConfig>): Promise<EnvironmentConfig | undefined> {
+    const [result] = await db.update(environmentConfigs).set(config).where(eq(environmentConfigs.configId, configId)).returning();
+    return result || undefined;
+  }
+
+  // AI Configuration methods
+  async createAiConfiguration(config: InsertAiConfiguration): Promise<AiConfiguration> {
+    const [result] = await db.insert(aiConfigurations).values(config).returning();
+    return result;
+  }
+
+  async getAiConfiguration(configId: number): Promise<AiConfiguration | undefined> {
+    const [result] = await db.select().from(aiConfigurations).where(eq(aiConfigurations.configId, configId));
+    return result || undefined;
+  }
+
+  async updateAiConfiguration(configId: number, config: Partial<InsertAiConfiguration>): Promise<AiConfiguration | undefined> {
+    const [result] = await db.update(aiConfigurations).set(config).where(eq(aiConfigurations.configId, configId)).returning();
+    return result || undefined;
+  }
 }
 
 export const storage = new DatabaseStorage();
