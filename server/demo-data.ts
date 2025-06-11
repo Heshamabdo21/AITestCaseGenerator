@@ -99,6 +99,14 @@ AC5: Cart total is calculated correctly`,
       await simpleStorage.createUserStory(story);
     }
 
+    // Create demo test data configuration with password
+    await simpleStorage.createTestDataConfig({
+      configId: azureConfig.id,
+      username: "testuser@demo.com",
+      password: "TestPass123!",
+      webPortalUrl: "https://demo-portal.example.com"
+    });
+
     console.log("Demo data initialized successfully");
   } catch (error) {
     console.error("Error initializing demo data:", error);
