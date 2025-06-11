@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,13 +42,33 @@ export function TestDataPanel() {
     }
   });
 
-  const { data: testDataConfig } = useQuery({
+  const { data: testDataConfig } = useQuery<TestDataConfig>({
     queryKey: ["/api/test-data-config"],
   });
 
+  useEffect(() => {
+    if (testDataConfig && typeof testDataConfig === 'object') {
+      const config = testDataConfig as any;
+      form.reset({
+        username: config.username || "",
+        password: config.password || "",
+        webPortalUrl: config.webPortalUrl || "",
+        permissions: config.permissions || [],
+        additionalData: config.additionalData || {},
+        uploadedFiles: config.uploadedFiles || []
+      });
+      setPermissions(config.permissions || []);
+    }
+  }, [testDataConfig, form]);
+
   const saveTestDataMutation = useMutation({
     mutationFn: async (data: TestDataFormData) => {
-      return apiRequest(`/api/test-data-config`, "POST", { ...data, permissions });
+      const configData = { ...data, permissions };
+      if (testDataConfig) {
+        return api.updateTestDataConfig(configData);
+      } else {
+        return api.createTestDataConfig(configData as InsertTestDataConfig);
+      }
     },
     onSuccess: () => {
       toast({

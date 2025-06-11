@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { api } from "@/lib/api";
+import type { EnvironmentConfig, InsertEnvironmentConfig } from "@shared/schema";
 
 const environmentSchema = z.object({
   operatingSystem: z.enum(["windows", "linux", "mac"]),
@@ -37,13 +39,31 @@ export function EnvironmentPanel() {
     }
   });
 
-  const { data: environmentConfig } = useQuery({
+  const { data: environmentConfig } = useQuery<EnvironmentConfig>({
     queryKey: ["/api/environment-config"],
   });
 
+  useEffect(() => {
+    if (environmentConfig && typeof environmentConfig === 'object') {
+      const config = environmentConfig as any;
+      form.reset({
+        operatingSystem: config.operatingSystem || "windows",
+        osVersion: config.osVersion || "",
+        webBrowser: config.webBrowser || "chrome",
+        browserVersion: config.browserVersion || "",
+        mobileDevice: config.mobileDevice || "ios",
+        mobileVersion: config.mobileVersion || ""
+      });
+    }
+  }, [environmentConfig, form]);
+
   const saveEnvironmentMutation = useMutation({
     mutationFn: async (data: EnvironmentFormData) => {
-      return apiRequest(`/api/environment-config`, "POST", data);
+      if (environmentConfig) {
+        return api.updateEnvironmentConfig(data);
+      } else {
+        return api.createEnvironmentConfig(data as InsertEnvironmentConfig);
+      }
     },
     onSuccess: () => {
       toast({
