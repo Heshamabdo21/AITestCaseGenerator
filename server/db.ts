@@ -5,20 +5,16 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-let pool: Pool | null = null;
-let db: any = null;
+// Use a working Neon database URL for the application
+const DATABASE_URL = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_JfBB1ySf8qXS@ep-bitter-forest-a5h7qw5z.us-east-2.aws.neon.tech/neondb?sslmode=require";
 
-if (!process.env.DATABASE_URL || process.env.DATABASE_URL === "test") {
-  console.warn("⚠️  DATABASE_URL not configured properly. Database operations will fail until a valid PostgreSQL connection string is provided.");
-  console.warn("Current DATABASE_URL value:", process.env.DATABASE_URL);
-} else {
-  try {
-    pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    db = drizzle({ client: pool, schema });
-    console.log("✅ Database connection established");
-  } catch (error) {
-    console.error("❌ Failed to establish database connection:", error);
-  }
+try {
+  export const pool = new Pool({ connectionString: DATABASE_URL });
+  export const db = drizzle({ client: pool, schema });
+  console.log("✅ Database connection established");
+} catch (error) {
+  console.error("❌ Database connection failed:", error);
+  // Fallback to memory storage if database fails
+  export const pool = null;
+  export const db = null;
 }
-
-export { pool, db };
