@@ -57,8 +57,10 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
         description: `Generated ${data.length} test cases successfully`,
       });
       setSelectedStories([]);
-      onTestCasesGenerated();
+      // Force refresh of test cases data
       queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
+      queryClient.refetchQueries({ queryKey: ['/api/test-cases'] });
+      onTestCasesGenerated();
     },
     onError: (error: any) => {
       toast({

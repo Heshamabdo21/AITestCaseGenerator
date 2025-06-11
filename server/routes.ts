@@ -248,26 +248,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Temporarily bypass OpenAI to debug user story selection
       const generatedTestCases: TestCase[] = [];
 
-      // Create mock test cases for debugging
+      // Create and store test cases based on user stories
       for (const story of userStories) {
         console.log(`Processing story: ${story.id} - ${story.title}`);
+        console.log(`Acceptance Criteria: ${story.acceptanceCriteria || 'Not provided'}`);
         
-        const mockTestCase: TestCase = {
-          id: Date.now() + Math.random(), // temporary ID
-          title: `Mock Test Case for ${story.title}`,
-          objective: "Test the functionality described in the user story",
-          prerequisites: ["User is logged in", "System is available"],
-          testSteps: ["Navigate to feature", "Perform action", "Verify result"],
-          expectedResult: "Feature works as expected",
-          priority: "Medium",
+        // Create test case using acceptance criteria
+        const testCaseTitle = `Test Case: ${story.title}`;
+        const objective = story.acceptanceCriteria 
+          ? `Verify that the feature meets the following criteria: ${story.acceptanceCriteria}`
+          : "Test the functionality described in the user story";
+        
+        // Generate test steps based on acceptance criteria
+        const testSteps = story.acceptanceCriteria
+          ? [
+              "Navigate to the relevant page/feature",
+              `Verify: ${story.acceptanceCriteria}`,
+              "Test positive scenarios",
+              "Test edge cases if applicable"
+            ]
+          : [
+              "Navigate to the feature",
+              "Perform the required action",
+              "Verify the expected result"
+            ];
+
+        const testCaseData = {
+          title: testCaseTitle,
+          objective: objective,
+          prerequisites: ["User has appropriate access", "System is available"],
+          testSteps: testSteps,
+          expectedResult: story.acceptanceCriteria || "Feature works as expected",
+          priority: story.priority || "Medium",
           status: "Draft",
-          testType: "Functional",
+          testType: request.testType || "Functional",
           userStoryId: story.id,
           azureTestCaseId: null,
-          createdAt: new Date()
         };
 
-        generatedTestCases.push(mockTestCase);
+        // Store the test case in storage
+        const createdTestCase = await storage.createTestCase(testCaseData);
+        generatedTestCases.push(createdTestCase);
+        console.log(`Created test case with ID: ${createdTestCase.id}`);
       }
 
       // Skip OpenAI processing for now - using mock data instead
