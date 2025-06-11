@@ -393,6 +393,107 @@ export function generateSeparateTestCases(
 ✓ Help documentation is accessible and useful
 ✓ Mobile experience is optimized for touch interaction
 ✓ Users can complete tasks efficiently without confusion`;
+      
+    } else if (testType.type === 'UI') {
+      testSteps = [
+        "USER INTERFACE TESTING:",
+        "",
+        "1. VISUAL ELEMENTS TESTING:",
+        "   - Verify all buttons, links, and interactive elements are visible",
+        "   - Test button states (normal, hover, active, disabled)",
+        "   - Verify form field styling and alignment",
+        "   - Test image loading and display quality",
+        "   - Verify icon consistency and clarity",
+        "",
+        "2. LAYOUT AND RESPONSIVENESS:",
+        "   - Test responsive design on different screen sizes",
+        "   - Verify element positioning and alignment",
+        "   - Test scroll behavior and overflow handling",
+        "   - Verify header and footer consistency",
+        "   - Test sidebar and navigation menu behavior",
+        "",
+        "3. INTERACTIVE ELEMENTS:",
+        "   - Test dropdown menus and select boxes",
+        "   - Verify modal dialogs and popups",
+        "   - Test accordion and collapsible elements",
+        "   - Verify tooltip and help text display",
+        "   - Test tab navigation and content switching",
+        "",
+        "4. FORM UI VALIDATION:",
+        "   - Test field focus and blur states",
+        "   - Verify error message styling and positioning",
+        "   - Test form validation visual indicators",
+        "   - Verify submit button states during processing",
+        "   - Test progress indicators and loading states"
+      ];
+      
+      expectedResult = `UI TEST EXPECTED RESULTS:
+✓ All visual elements render correctly and consistently
+✓ Interactive elements respond appropriately to user actions
+✓ Layout maintains integrity across different screen sizes
+✓ Form elements display proper validation states
+✓ Loading indicators provide clear user feedback
+✓ Color scheme and typography are consistent
+✓ Icons and images load properly without distortion
+✓ Hover and focus states enhance user experience
+✓ Modal dialogs display correctly and are accessible
+✓ Navigation elements are intuitive and functional
+✓ Error messages are clearly visible and helpful
+✓ UI components follow design system guidelines`;
+      
+    } else if (testType.type === 'API') {
+      testSteps = [
+        "API TESTING:",
+        "",
+        "1. ENDPOINT FUNCTIONALITY:",
+        "   - Test all CRUD operations (Create, Read, Update, Delete)",
+        "   - Verify API endpoint accessibility and response codes",
+        "   - Test request methods (GET, POST, PUT, DELETE, PATCH)",
+        "   - Verify request and response payload formats",
+        "   - Test API versioning and backward compatibility",
+        "",
+        "2. DATA VALIDATION:",
+        "   - Test input parameter validation",
+        "   - Verify required field enforcement",
+        "   - Test data type validation (string, number, boolean)",
+        "   - Verify response data structure and completeness",
+        "   - Test character encoding and special characters",
+        "",
+        "3. ERROR HANDLING:",
+        "   - Test invalid request formats (400 Bad Request)",
+        "   - Verify authentication failures (401 Unauthorized)",
+        "   - Test permission violations (403 Forbidden)",
+        "   - Verify resource not found scenarios (404 Not Found)",
+        "   - Test server error handling (500 Internal Server Error)",
+        "",
+        "4. PERFORMANCE AND SECURITY:",
+        "   - Test API response times under normal load",
+        "   - Verify rate limiting and throttling mechanisms",
+        "   - Test authentication token validation",
+        "   - Verify CORS policy implementation",
+        "   - Test API security headers and encryption",
+        "",
+        "5. INTEGRATION TESTING:",
+        "   - Test API calls from frontend application",
+        "   - Verify database integration and data persistence",
+        "   - Test third-party API integrations",
+        "   - Verify webhook and callback functionality"
+      ];
+      
+      expectedResult = `API TEST EXPECTED RESULTS:
+✓ All API endpoints respond with correct HTTP status codes
+✓ Request and response payloads follow defined schemas
+✓ Authentication and authorization work correctly
+✓ Data validation prevents invalid inputs
+✓ Error responses provide clear and helpful messages
+✓ API performance meets acceptable response time standards
+✓ Rate limiting protects against abuse
+✓ CORS policies allow legitimate cross-origin requests
+✓ API documentation matches actual implementation
+✓ Integration with frontend and database functions properly
+✓ Third-party API calls handle errors gracefully
+✓ Security measures protect against common vulnerabilities`;
+      
     } else if (testType.type === 'Compatibility') {
       testSteps = [
         "CROSS-PLATFORM COMPATIBILITY TESTING:",

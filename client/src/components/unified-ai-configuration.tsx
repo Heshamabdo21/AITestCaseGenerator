@@ -21,6 +21,11 @@ const unifiedAiSchema = z.object({
   includeNegativeTests: z.boolean().default(true),
   includeEdgeCases: z.boolean().default(true),
   includeSecurityCases: z.boolean().default(false),
+  includePerformanceTests: z.boolean().default(false),
+  includeUiTests: z.boolean().default(false),
+  includeUsabilityTests: z.boolean().default(false),
+  includeApiTests: z.boolean().default(false),
+  includeCompatibilityTests: z.boolean().default(false),
   testComplexity: z.enum(["simple", "medium", "complex"]).default("medium"),
   additionalInstructions: z.string().optional(),
   
@@ -47,6 +52,11 @@ export function UnifiedAiConfiguration() {
       includeNegativeTests: true,
       includeEdgeCases: true,
       includeSecurityCases: false,
+      includePerformanceTests: false,
+      includeUiTests: false,
+      includeUsabilityTests: false,
+      includeApiTests: false,
+      includeCompatibilityTests: false,
       testComplexity: "medium",
       additionalInstructions: "",
       projectContext: [],
@@ -72,8 +82,14 @@ export function UnifiedAiConfiguration() {
     if (aiConfig && typeof aiConfig === 'object') {
       const config = aiConfig as any;
       form.setValue("includePositiveTests", config.includePositiveTests ?? true);
+      form.setValue("includeNegativeTests", config.includeNegativeTests ?? true);
       form.setValue("includeEdgeCases", config.includeEdgeCases ?? true);
       form.setValue("includeSecurityCases", config.includeSecurityCases ?? false);
+      form.setValue("includePerformanceTests", config.includePerformanceTests ?? false);
+      form.setValue("includeUiTests", config.includeUiTests ?? false);
+      form.setValue("includeUsabilityTests", config.includeUsabilityTests ?? false);
+      form.setValue("includeApiTests", config.includeApiTests ?? false);
+      form.setValue("includeCompatibilityTests", config.includeCompatibilityTests ?? false);
       form.setValue("testComplexity", config.testComplexity ?? "medium");
       form.setValue("additionalInstructions", config.additionalInstructions ?? "");
     }
@@ -150,8 +166,14 @@ export function UnifiedAiConfiguration() {
     // Save AI Configuration
     await saveAiConfigMutation.mutateAsync({
       includePositiveTests: data.includePositiveTests,
+      includeNegativeTests: data.includeNegativeTests,
       includeEdgeCases: data.includeEdgeCases,
       includeSecurityCases: data.includeSecurityCases,
+      includePerformanceTests: data.includePerformanceTests,
+      includeUiTests: data.includeUiTests,
+      includeUsabilityTests: data.includeUsabilityTests,
+      includeApiTests: data.includeApiTests,
+      includeCompatibilityTests: data.includeCompatibilityTests,
       testComplexity: data.testComplexity,
       additionalInstructions: data.additionalInstructions,
     });
@@ -217,6 +239,51 @@ export function UnifiedAiConfiguration() {
                   onCheckedChange={(checked) => form.setValue("includeSecurityCases", !!checked)}
                 />
                 <Label htmlFor="includeSecurityCases">Include Security Test Cases</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="includePerformanceTests"
+                  checked={form.watch("includePerformanceTests")}
+                  onCheckedChange={(checked) => form.setValue("includePerformanceTests", !!checked)}
+                />
+                <Label htmlFor="includePerformanceTests">Include Performance Test Cases</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="includeUiTests"
+                  checked={form.watch("includeUiTests")}
+                  onCheckedChange={(checked) => form.setValue("includeUiTests", !!checked)}
+                />
+                <Label htmlFor="includeUiTests">Include UI Test Cases</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="includeUsabilityTests"
+                  checked={form.watch("includeUsabilityTests")}
+                  onCheckedChange={(checked) => form.setValue("includeUsabilityTests", !!checked)}
+                />
+                <Label htmlFor="includeUsabilityTests">Include Usability Test Cases</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="includeApiTests"
+                  checked={form.watch("includeApiTests")}
+                  onCheckedChange={(checked) => form.setValue("includeApiTests", !!checked)}
+                />
+                <Label htmlFor="includeApiTests">Include API Test Cases</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="includeCompatibilityTests"
+                  checked={form.watch("includeCompatibilityTests")}
+                  onCheckedChange={(checked) => form.setValue("includeCompatibilityTests", !!checked)}
+                />
+                <Label htmlFor="includeCompatibilityTests">Include Compatibility Test Cases</Label>
               </div>
             </div>
 

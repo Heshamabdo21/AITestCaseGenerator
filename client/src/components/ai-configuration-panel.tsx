@@ -38,6 +38,11 @@ export function AiConfigurationPanel() {
       includeNegativeTests: true,
       includeEdgeCases: true,
       includeSecurityCases: false,
+      includePerformanceTests: false,
+      includeUiTests: false,
+      includeUsabilityTests: false,
+      includeApiTests: false,
+      includeCompatibilityTests: false,
       testComplexity: "medium",
       additionalInstructions: ""
     }
@@ -169,6 +174,121 @@ export function AiConfigurationPanel() {
                       </FormLabel>
                       <p className="text-sm text-muted-foreground">
                         Generate test cases for security vulnerabilities and authentication
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="includePerformanceTests"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Include Performance Test Cases
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Generate test cases for load testing, response time, and scalability
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="includeUiTests"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Include UI Test Cases
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Generate test cases for user interface elements and interactions
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="includeUsabilityTests"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Include Usability Test Cases
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Generate test cases for user experience and ease of use validation
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="includeApiTests"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Include API Test Cases
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Generate test cases for API endpoints, requests, and responses
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="includeCompatibilityTests"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Include Compatibility Test Cases
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Generate test cases for cross-browser and device testing
                       </p>
                     </div>
                   </FormItem>
