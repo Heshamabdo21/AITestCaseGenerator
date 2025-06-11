@@ -32,6 +32,7 @@ export interface IStorage {
 
   // User Stories methods
   createUserStory(story: InsertUserStory): Promise<UserStory>;
+  upsertUserStory(story: InsertUserStory): Promise<UserStory>;
   getUserStories(configId?: number): Promise<UserStory[]>;
   getUserStory(id: number): Promise<UserStory | undefined>;
   getUserStoriesByIds(ids: number[]): Promise<UserStory[]>;
@@ -140,6 +141,25 @@ export class DatabaseStorage implements IStorage {
     this.checkDatabase();
     const [result] = await db.insert(userStories).values(story).returning();
     return result;
+  }
+
+  async upsertUserStory(story: InsertUserStory): Promise<UserStory> {
+    this.checkDatabase();
+    // First try to find existing story by azureId
+    const existing = await db.select().from(userStories).where(eq(userStories.azureId, story.azureId)).limit(1);
+    
+    if (existing.length > 0) {
+      // Update existing story
+      const [result] = await db.update(userStories)
+        .set(story)
+        .where(eq(userStories.azureId, story.azureId))
+        .returning();
+      return result;
+    } else {
+      // Create new story
+      const [result] = await db.insert(userStories).values(story).returning();
+      return result;
+    }
   }
 
   async getUserStories(configId?: number): Promise<UserStory[]> {

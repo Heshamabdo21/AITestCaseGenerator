@@ -132,9 +132,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      // Clear existing user stories for this config
-      await storage.clearUserStories(config.id);
-
       // First, get work item IDs using a query
       const queryUrl = `${config.organizationUrl}/${config.project}/_apis/wit/wiql?api-version=7.0`;
       const queryPayload = {
@@ -192,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                  item.fields["System.Description"] || 
                                  "";
         
-        const userStory = await storage.createUserStory({
+        const userStory = await storage.upsertUserStory({
           azureId: item.id.toString(),
           title: item.fields["System.Title"],
           description: item.fields["System.Description"] || "",
