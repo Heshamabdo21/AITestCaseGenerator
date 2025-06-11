@@ -32,14 +32,22 @@ export const userStories = pgTable("user_stories", {
   configId: integer("config_id").references(() => azureConfigs.id),
 });
 
+// Test Step structure for individual steps with expected results
+export interface TestStep {
+  stepNumber: number;
+  action: string;
+  expectedResult: string;
+}
+
 // Generated Test Cases
 export const testCases = pgTable("test_cases", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   objective: text("objective").notNull(),
   prerequisites: text("prerequisites").notNull(),
-  testSteps: text("test_steps").notNull(),
-  expectedResult: text("expected_result").notNull(),
+  testSteps: text("test_steps").notNull(), // Keep as text for compatibility
+  testStepsStructured: json("test_steps_structured").$type<TestStep[]>(), // New structured format
+  expectedResult: text("expected_result").notNull(), // Overall expected result
   testPassword: text("test_password"), // Password for test execution
   requiredPermissions: text("required_permissions"), // Required permissions for test execution
   priority: text("priority").notNull(),

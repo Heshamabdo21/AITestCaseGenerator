@@ -1,4 +1,4 @@
-import type { UserStory, TestDataConfig, EnvironmentConfig, AiConfiguration } from "@shared/schema";
+import type { UserStory, TestDataConfig, EnvironmentConfig, AiConfiguration, TestStep } from "@shared/schema";
 
 interface TestCaseStructure {
   type: string;
@@ -138,37 +138,85 @@ export function generateSeparateTestCases(
 
     // Generate comprehensive test steps and expected results based on CSV analysis
     let testSteps: string[] = [];
+    let testStepsStructured: TestStep[] = [];
     let expectedResult = "";
 
     if (testType.type === 'Positive') {
       if (platform === 'web') {
         testSteps = [
-          "PRECONDITIONS:",
-          "1. Verify user has required permissions for the web page/feature under test",
-          "2. Ensure test environment is accessible and stable via web browser",
-          "3. Confirm all required services and dependencies are running",
-          "",
-          "WEB PORTAL TEST EXECUTION STEPS:",
-          "4. Open the specified web browser in the configured environment",
-          "5. Navigate to the web application login page",
-          "6. Login using valid test credentials with appropriate user role",
-          "7. Access the main navigation menu/sidebar in the web portal",
-          "8. Navigate to the target page/module as specified in user story"
+          {
+            stepNumber: 1,
+            action: "Verify user has required permissions for the web page/feature under test",
+            expectedResult: "User account has appropriate permissions and access rights confirmed"
+          },
+          {
+            stepNumber: 2,
+            action: "Ensure test environment is accessible and stable via web browser",
+            expectedResult: "Test environment loads successfully without errors"
+          },
+          {
+            stepNumber: 3,
+            action: "Open the specified web browser in the configured environment",
+            expectedResult: "Web browser launches and displays properly"
+          },
+          {
+            stepNumber: 4,
+            action: "Navigate to the web application login page",
+            expectedResult: "Login page loads correctly with all required elements visible"
+          },
+          {
+            stepNumber: 5,
+            action: "Login using valid test credentials with appropriate user role",
+            expectedResult: "User successfully authenticates and gains access to the application"
+          },
+          {
+            stepNumber: 6,
+            action: "Access the main navigation menu/sidebar in the web portal",
+            expectedResult: "Navigation menu displays with appropriate options for user role"
+          },
+          {
+            stepNumber: 7,
+            action: "Navigate to the target page/module as specified in user story",
+            expectedResult: "Target page loads successfully with all required functionality visible"
+          }
         ];
       } else if (platform === 'mobile') {
         testSteps = [
-          "PRECONDITIONS:",
-          "1. Verify user has required permissions for the mobile app feature under test",
-          "2. Ensure mobile device/emulator is properly configured",
-          "3. Confirm mobile app is installed and updated to latest version",
-          "4. Verify network connectivity on mobile device",
-          "",
-          "MOBILE APP TEST EXECUTION STEPS:",
-          "5. Launch the mobile application on the test device",
-          "6. Navigate to the login screen if required",
-          "7. Login using valid test credentials with appropriate user role",
-          "8. Access the main navigation (menu, tabs, or drawer)",
-          "9. Navigate to the target screen/feature as specified in user story"
+          {
+            stepNumber: 1,
+            action: "Verify user has required permissions for the mobile app feature under test",
+            expectedResult: "User account has appropriate mobile app permissions confirmed"
+          },
+          {
+            stepNumber: 2,
+            action: "Ensure mobile device/emulator is properly configured",
+            expectedResult: "Mobile device/emulator is set up correctly with proper network connectivity"
+          },
+          {
+            stepNumber: 3,
+            action: "Launch the mobile application on the test device",
+            expectedResult: "Mobile app launches successfully without crashes or errors"
+          },
+          {
+            stepNumber: 4,
+            action: "Navigate to the login screen if required",
+            expectedResult: "Login screen displays correctly with all required input fields"
+          },
+          {
+            stepNumber: 5,
+            action: "Login using valid test credentials with appropriate user role",
+            expectedResult: "User successfully authenticates and accesses the mobile app"
+          },
+          {
+            stepNumber: 6,
+            action: "Access the main navigation (menu, tabs, or drawer)",
+            expectedResult: "Navigation interface displays with appropriate options for user role"
+          },
+          {
+            stepNumber: 7,
+            action: "Navigate to the target screen/feature as specified in user story",
+            expectedResult: "Target mobile screen loads successfully with all required functionality"
+          }
         ];
       } else if (platform === 'api') {
         testSteps = [
