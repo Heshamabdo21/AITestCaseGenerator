@@ -271,78 +271,240 @@ export function generateSeparateTestCases(
         ];
         testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       } else if (platform === 'api') {
-        testSteps = [
-          "PRECONDITIONS:",
-          "1. Verify API endpoints are accessible and properly configured",
-          "2. Ensure test environment has valid API authentication tokens",
-          "3. Confirm all required API services and dependencies are running",
-          "4. Set up API testing tools (Postman, curl, or automated scripts)",
-          "",
-          "API TEST EXECUTION STEPS:",
-          "5. Authenticate with the API using valid credentials/tokens",
-          "6. Prepare valid request payloads according to API documentation",
-          "7. Send API requests to the endpoints specified in user story",
-          "8. Validate response status codes and response structure",
-          "9. Verify response data matches expected business logic"
+        testStepsStructured = [
+          {
+            stepNumber: 1,
+            action: "Verify API endpoints are accessible and properly configured",
+            expectedResult: "API endpoints respond to connectivity tests successfully"
+          },
+          {
+            stepNumber: 2,
+            action: "Ensure test environment has valid API authentication tokens",
+            expectedResult: "Authentication tokens are valid and not expired"
+          },
+          {
+            stepNumber: 3,
+            action: "Confirm all required API services and dependencies are running",
+            expectedResult: "All API services are operational and responding correctly"
+          },
+          {
+            stepNumber: 4,
+            action: "Set up API testing tools (Postman, curl, or automated scripts)",
+            expectedResult: "API testing tools are properly configured and ready for use"
+          },
+          {
+            stepNumber: 5,
+            action: "Authenticate with the API using valid credentials/tokens",
+            expectedResult: "API authentication succeeds and returns valid access tokens"
+          },
+          {
+            stepNumber: 6,
+            action: "Prepare valid request payloads according to API documentation",
+            expectedResult: "Request payloads are properly formatted and validated"
+          },
+          {
+            stepNumber: 7,
+            action: "Send API requests to the endpoints specified in user story",
+            expectedResult: "API requests are sent successfully without connection errors"
+          },
+          {
+            stepNumber: 8,
+            action: "Validate response status codes and response structure",
+            expectedResult: "Response returns correct HTTP status codes (200, 201, etc.) and proper JSON structure"
+          },
+          {
+            stepNumber: 9,
+            action: "Verify response data matches expected business logic",
+            expectedResult: "Response data follows business rules and contains expected values"
+          }
         ];
+        testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       }
       
-      let stepNumber = platform === 'api' ? 10 : (platform === 'mobile' ? 10 : 9);
+      let stepNumber = platform === 'api' ? 10 : (platform === 'mobile' ? 8 : (testStepsStructured.length + 1));
       if (criteriaLines.length > 0) {
         criteriaLines.forEach((criteria) => {
           if (criteria.trim()) {
             if (platform === 'api') {
-              testSteps.push(`${stepNumber}. Execute API call: ${criteria.trim().replace(/\s+/g, ' ')}`);
-              testSteps.push(`${stepNumber + 1}. Verify API response is successful and data structure is correct`);
+              testStepsStructured.push({
+                stepNumber: stepNumber,
+                action: `Execute API call: ${criteria.trim().replace(/\s+/g, ' ')}`,
+                expectedResult: "API call executes successfully with valid response"
+              });
+              testStepsStructured.push({
+                stepNumber: stepNumber + 1,
+                action: "Verify API response is successful and data structure is correct",
+                expectedResult: "API response contains expected data structure and valid business data"
+              });
             } else if (platform === 'mobile') {
-              testSteps.push(`${stepNumber}. Perform mobile action: ${criteria.trim().replace(/\s+/g, ' ')}`);
-              testSteps.push(`${stepNumber + 1}. Verify the mobile interface responds correctly`);
+              testStepsStructured.push({
+                stepNumber: stepNumber,
+                action: `Perform mobile action: ${criteria.trim().replace(/\s+/g, ' ')}`,
+                expectedResult: "Mobile action executes successfully without errors"
+              });
+              testStepsStructured.push({
+                stepNumber: stepNumber + 1,
+                action: "Verify the mobile interface responds correctly",
+                expectedResult: "Mobile interface updates appropriately and shows expected results"
+              });
             } else {
-              testSteps.push(`${stepNumber}. Execute web action: ${criteria.trim().replace(/\s+/g, ' ')}`);
-              testSteps.push(`${stepNumber + 1}. Verify the action completes successfully and UI responds correctly`);
+              // Web platform - these steps are already added in the initial testStepsStructured array above
+              // No need to add duplicate steps for web platform when acceptance criteria exist
             }
             stepNumber += 2;
           }
         });
       } else {
         if (platform === 'api') {
-          testSteps.push(`${stepNumber}. Execute the main API functionality described in the user story`);
-          testSteps.push(`${stepNumber + 1}. Verify API response status codes are correct`);
-          testSteps.push(`${stepNumber + 2}. Confirm response data structure matches API documentation`);
-          testSteps.push(`${stepNumber + 3}. Validate response data against business rules`);
+          testStepsStructured.push({
+            stepNumber: stepNumber,
+            action: "Execute the main API functionality described in the user story",
+            expectedResult: "Main API functionality works as specified in user story requirements"
+          });
+          testStepsStructured.push({
+            stepNumber: stepNumber + 1,
+            action: "Verify API response status codes are correct",
+            expectedResult: "API returns appropriate HTTP status codes (200, 201, 404, etc.)"
+          });
+          testStepsStructured.push({
+            stepNumber: stepNumber + 2,
+            action: "Confirm response data structure matches API documentation",
+            expectedResult: "Response JSON structure matches documented API specifications"
+          });
+          testStepsStructured.push({
+            stepNumber: stepNumber + 3,
+            action: "Validate response data against business rules",
+            expectedResult: "Response data follows business logic and validation rules"
+          });
         } else if (platform === 'mobile') {
-          testSteps.push(`${stepNumber}. Perform the main mobile functionality described in the user story`);
-          testSteps.push(`${stepNumber + 1}. Verify all mobile screen elements load correctly`);
-          testSteps.push(`${stepNumber + 2}. Confirm data is displayed in mobile-optimized format`);
-          testSteps.push(`${stepNumber + 3}. Test all touch interactions and gestures`);
+          testStepsStructured.push({
+            stepNumber: stepNumber,
+            action: "Perform the main mobile functionality described in the user story",
+            expectedResult: "Main mobile functionality works as specified in user story requirements"
+          });
+          testStepsStructured.push({
+            stepNumber: stepNumber + 1,
+            action: "Verify all mobile screen elements load correctly",
+            expectedResult: "All mobile UI elements display properly and are responsive"
+          });
+          testStepsStructured.push({
+            stepNumber: stepNumber + 2,
+            action: "Confirm data is displayed in mobile-optimized format",
+            expectedResult: "Data displays correctly formatted for mobile screen sizes"
+          });
+          testStepsStructured.push({
+            stepNumber: stepNumber + 3,
+            action: "Test all touch interactions and gestures",
+            expectedResult: "Touch interactions work smoothly and gestures respond appropriately"
+          });
         } else {
-          testSteps.push(`${stepNumber}. Perform the main web functionality described in the user story`);
-          testSteps.push(`${stepNumber + 1}. Verify all page elements load correctly`);
-          testSteps.push(`${stepNumber + 2}. Confirm data is displayed in the expected format`);
-          testSteps.push(`${stepNumber + 3}. Test all interactive elements (buttons, links, forms)`);
+          testStepsStructured.push({
+            stepNumber: stepNumber,
+            action: "Perform the main web functionality described in the user story",
+            expectedResult: "Main web functionality works as specified in user story requirements"
+          });
+          testStepsStructured.push({
+            stepNumber: stepNumber + 1,
+            action: "Verify all page elements load correctly",
+            expectedResult: "All web page elements display properly and are functional"
+          });
+          testStepsStructured.push({
+            stepNumber: stepNumber + 2,
+            action: "Confirm data is displayed in the expected format",
+            expectedResult: "Data appears in correct format with proper styling and layout"
+          });
+          testStepsStructured.push({
+            stepNumber: stepNumber + 3,
+            action: "Test all interactive elements (buttons, links, forms)",
+            expectedResult: "Interactive elements respond correctly and perform expected actions"
+          });
         }
       }
       
-      testSteps.push("", "VALIDATION STEPS:");
+      // Add validation steps to structured format
+      const nextStepNumber = testStepsStructured.length + 1;
       if (platform === 'api') {
-        testSteps.push(`${stepNumber + 4}. Verify API response headers are correct`);
-        testSteps.push(`${stepNumber + 5}. Confirm all required response fields are present`);
-        testSteps.push(`${stepNumber + 6}. Test error handling for invalid requests`);
-        testSteps.push(`${stepNumber + 7}. Verify data consistency across API calls`);
-        testSteps.push(`${stepNumber + 8}. Test API rate limiting if applicable`);
+        testStepsStructured.push({
+          stepNumber: nextStepNumber,
+          action: "Verify API response headers are correct",
+          expectedResult: "Response headers contain appropriate content-type, cache-control, and security headers"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 1,
+          action: "Confirm all required response fields are present",
+          expectedResult: "All mandatory fields specified in API documentation are included in response"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 2,
+          action: "Test error handling for invalid requests",
+          expectedResult: "API returns appropriate error codes and messages for invalid inputs"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 3,
+          action: "Verify data consistency across API calls",
+          expectedResult: "Data remains consistent when retrieved through different API endpoints"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 4,
+          action: "Test API rate limiting if applicable",
+          expectedResult: "API rate limiting functions correctly and returns 429 status when limits exceeded"
+        });
       } else if (platform === 'mobile') {
-        testSteps.push(`${stepNumber + 4}. Verify mobile screen orientation handling`);
-        testSteps.push(`${stepNumber + 5}. Confirm all required mobile UI elements are present`);
-        testSteps.push(`${stepNumber + 6}. Test pull-to-refresh functionality if applicable`);
-        testSteps.push(`${stepNumber + 7}. Verify offline/online mode transitions`);
-        testSteps.push(`${stepNumber + 8}. Test multi-language support on mobile`);
+        testStepsStructured.push({
+          stepNumber: nextStepNumber,
+          action: "Verify mobile screen orientation handling",
+          expectedResult: "App properly adjusts layout when device orientation changes"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 1,
+          action: "Confirm all required mobile UI elements are present",
+          expectedResult: "All necessary buttons, inputs, and navigation elements are visible and accessible"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 2,
+          action: "Test pull-to-refresh functionality if applicable",
+          expectedResult: "Pull-to-refresh gesture updates content and shows loading indicator"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 3,
+          action: "Verify offline/online mode transitions",
+          expectedResult: "App handles network connectivity changes gracefully with appropriate messages"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 4,
+          action: "Test multi-language support on mobile",
+          expectedResult: "App displays content correctly in different languages with proper text direction"
+        });
       } else {
-        testSteps.push(`${stepNumber + 4}. Verify page title and headers are displayed correctly`);
-        testSteps.push(`${stepNumber + 5}. Confirm all required columns/fields are present`);
-        testSteps.push(`${stepNumber + 6}. Test search functionality if applicable`);
-        testSteps.push(`${stepNumber + 7}. Verify data filtering and sorting work correctly`);
-        testSteps.push(`${stepNumber + 8}. Test multi-language support if required`);
+        testStepsStructured.push({
+          stepNumber: nextStepNumber,
+          action: "Verify page title and headers are displayed correctly",
+          expectedResult: "Page title and section headers match expected content and are properly formatted"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 1,
+          action: "Confirm all required columns/fields are present",
+          expectedResult: "All mandatory data columns and form fields are visible and properly labeled"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 2,
+          action: "Test search functionality if applicable",
+          expectedResult: "Search feature returns accurate results and handles edge cases appropriately"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 3,
+          action: "Verify data filtering and sorting work correctly",
+          expectedResult: "Filtering and sorting functions produce expected results in correct order"
+        });
+        testStepsStructured.push({
+          stepNumber: nextStepNumber + 4,
+          action: "Test multi-language support if required",
+          expectedResult: "Content displays correctly in different languages with proper formatting"
+        });
       }
+      
+      // Update testSteps array from structured format
+      testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       
       if (platform === 'api') {
         expectedResult = `API POSITIVE TEST EXPECTED RESULTS:
@@ -382,37 +544,69 @@ export function generateSeparateTestCases(
       }
       
     } else if (testType.type === 'Negative') {
-      testSteps = [
-        "NEGATIVE TEST SCENARIOS:",
-        "1. AUTHENTICATION FAILURES:",
-        "   - Attempt login with invalid/expired credentials",
-        "   - Test with locked/suspended user accounts",
-        "   - Try accessing pages without proper authentication",
-        "",
-        "2. AUTHORIZATION VIOLATIONS:",
-        "   - Access restricted pages without required permissions",
-        "   - Attempt actions beyond user role capabilities",
-        "   - Test cross-user data access attempts",
-        "",
-        "3. INPUT VALIDATION TESTS:",
-        "   - Submit forms with empty required fields",
-        "   - Input invalid characters in text fields",
-        "   - Test with SQL injection attempts",
-        "   - Input excessively long strings",
-        "   - Use special characters and script tags",
-        "",
-        "4. UI INTERACTION FAILURES:",
-        "   - Double-click submit buttons rapidly",
-        "   - Navigate using browser back/forward during operations",
-        "   - Test with disabled JavaScript",
-        "   - Attempt operations during network interruptions",
-        "",
-        "5. DATA INTEGRITY TESTS:",
-        "   - Modify form data using browser developer tools",
-        "   - Submit requests with missing CSRF tokens",
-        "   - Test concurrent user modifications",
-        "   - Attempt to access deleted/non-existent records"
+      testStepsStructured = [
+        {
+          stepNumber: 1,
+          action: "Attempt login with invalid/expired credentials",
+          expectedResult: "System rejects login attempt with clear error message indicating invalid credentials"
+        },
+        {
+          stepNumber: 2,
+          action: "Test with locked/suspended user accounts",
+          expectedResult: "System prevents access and displays appropriate account status message"
+        },
+        {
+          stepNumber: 3,
+          action: "Try accessing pages without proper authentication",
+          expectedResult: "System redirects to login page or displays authentication required message"
+        },
+        {
+          stepNumber: 4,
+          action: "Access restricted pages without required permissions",
+          expectedResult: "System blocks access and displays insufficient permissions error"
+        },
+        {
+          stepNumber: 5,
+          action: "Attempt actions beyond user role capabilities",
+          expectedResult: "System prevents unauthorized actions and logs security violation"
+        },
+        {
+          stepNumber: 6,
+          action: "Submit forms with empty required fields",
+          expectedResult: "Form validation prevents submission and highlights missing required fields"
+        },
+        {
+          stepNumber: 7,
+          action: "Input invalid characters in text fields",
+          expectedResult: "Input validation rejects invalid characters with appropriate error messages"
+        },
+        {
+          stepNumber: 8,
+          action: "Test with SQL injection attempts",
+          expectedResult: "System prevents SQL injection and maintains data security"
+        },
+        {
+          stepNumber: 9,
+          action: "Input excessively long strings in form fields",
+          expectedResult: "System enforces field length limits and displays validation errors"
+        },
+        {
+          stepNumber: 10,
+          action: "Double-click submit buttons rapidly",
+          expectedResult: "System prevents duplicate submissions and handles rapid clicks gracefully"
+        },
+        {
+          stepNumber: 11,
+          action: "Navigate using browser back/forward during operations",
+          expectedResult: "System maintains data integrity and provides appropriate navigation warnings"
+        },
+        {
+          stepNumber: 12,
+          action: "Attempt operations during network interruptions",
+          expectedResult: "System handles network failures gracefully with timeout and retry mechanisms"
+        }
       ];
+      testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       
       expectedResult = `NEGATIVE TEST EXPECTED RESULTS:
 ✓ Invalid login attempts are rejected with clear error messages
