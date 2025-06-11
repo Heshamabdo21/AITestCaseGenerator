@@ -901,6 +901,11 @@ For each test case, provide the following in JSON format:
     }
   });
 
+  // Health check endpoint for Docker
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
