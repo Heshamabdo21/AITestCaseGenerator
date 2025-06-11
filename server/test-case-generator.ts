@@ -649,6 +649,7 @@ export function generateSeparateTestCases(
       prerequisites: prerequisites.join('\n'),
       testSteps: testSteps.join('\n'),
       expectedResult,
+      testPassword: testDataConfig?.password || null, // Use password from test data config
       priority: testType.priority,
       testType: platform,
       status: "pending" as const,
