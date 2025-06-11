@@ -342,6 +342,15 @@ export function TestCasesSection() {
                             <Label htmlFor="expectedResult">Expected Result</Label>
                             <Textarea id="expectedResult" defaultValue={testCase.expectedResult} />
                           </div>
+                          <div>
+                            <Label htmlFor="testPassword">Test Password</Label>
+                            <Input 
+                              id="testPassword" 
+                              type="password" 
+                              defaultValue={testCase.testPassword || ''} 
+                              placeholder="Enter test password for execution"
+                            />
+                          </div>
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -381,6 +390,15 @@ export function TestCasesSection() {
                       <span className="text-sm font-medium text-gray-900">Expected Result:</span>
                       <p className="text-sm text-gray-700 mt-1">{testCase.expectedResult}</p>
                     </div>
+
+                    {testCase.testPassword && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">Test Password:</span>
+                        <p className="text-sm text-gray-700 mt-1 font-mono bg-gray-100 px-2 py-1 rounded">
+                          {testCase.testPassword}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
