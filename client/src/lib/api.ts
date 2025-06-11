@@ -88,6 +88,34 @@ export const api = {
     return safeJsonParse(response);
   },
 
+  async exportTestCasesToExcel(): Promise<void> {
+    const response = await fetch("/api/test-cases/export");
+    if (!response.ok) {
+      throw new Error("Failed to export test cases");
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Get filename from Content-Disposition header or use default
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'test-cases-export.xlsx';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+    
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
+
   // Test Data Configuration
   async createTestDataConfig(config: InsertTestDataConfig): Promise<TestDataConfig> {
     const response = await apiRequest("POST", "/api/test-data-config", config);

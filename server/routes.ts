@@ -248,6 +248,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Temporarily bypass OpenAI to debug user story selection
       const generatedTestCases: TestCase[] = [];
 
+      // Get test data and environment configurations
+      const azureConfig = await storage.getLatestAzureConfig();
+      let testDataConfig = null;
+      let environmentConfig = null;
+      
+      if (azureConfig) {
+        testDataConfig = await storage.getTestDataConfig(azureConfig.id);
+        environmentConfig = await storage.getEnvironmentConfig(azureConfig.id);
+      }
+
       // Create and store test cases based on user stories
       for (const story of userStories) {
         console.log(`Processing story: ${story.id} - ${story.title}`);
@@ -256,29 +266,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create test case using acceptance criteria
         const testCaseTitle = `Test Case: ${story.title}`;
         const objective = story.acceptanceCriteria 
-          ? `Verify that the feature meets the following criteria: ${story.acceptanceCriteria}`
+          ? `Verify that the feature meets the following acceptance criteria: ${story.acceptanceCriteria}`
           : "Test the functionality described in the user story";
         
-        // Generate test steps based on acceptance criteria
-        const testSteps = story.acceptanceCriteria
-          ? [
-              "Navigate to the relevant page/feature",
-              `Verify: ${story.acceptanceCriteria}`,
-              "Test positive scenarios",
-              "Test edge cases if applicable"
-            ]
-          : [
-              "Navigate to the feature",
-              "Perform the required action",
-              "Verify the expected result"
-            ];
+        // Build comprehensive prerequisites including test data and environment
+        const prerequisites = [
+          "System Prerequisites:",
+          "- Application is deployed and accessible",
+          "- User has valid login credentials with appropriate permissions"
+        ];
+
+        if (testDataConfig) {
+          prerequisites.push("Test Data Requirements:");
+          if (testDataConfig.username) prerequisites.push(`- Test Username: ${testDataConfig.username}`);
+          if (testDataConfig.password) prerequisites.push(`- Test Password: Available in test environment`);
+          if (testDataConfig.webPortalUrl) prerequisites.push(`- Web Portal URL: ${testDataConfig.webPortalUrl}`);
+          if (testDataConfig.additionalData) prerequisites.push(`- Additional Data: ${JSON.stringify(testDataConfig.additionalData)}`);
+        }
+
+        if (environmentConfig) {
+          prerequisites.push("Environment Configuration:");
+          if (environmentConfig.operatingSystem) prerequisites.push(`- OS: ${environmentConfig.operatingSystem}`);
+          if (environmentConfig.webBrowser) prerequisites.push(`- Browser: ${environmentConfig.webBrowser}`);
+          if (environmentConfig.browserVersion) prerequisites.push(`- Browser Version: ${environmentConfig.browserVersion}`);
+          if (environmentConfig.osVersion) prerequisites.push(`- OS Version: ${environmentConfig.osVersion}`);
+        }
+
+        // Generate detailed test steps based on acceptance criteria
+        const testSteps = [];
+        
+        if (story.acceptanceCriteria) {
+          const cleanCriteria = story.acceptanceCriteria.replace(/<[^>]*>/g, '').trim();
+          const criteriaLines = cleanCriteria.split(/AC\d+:/).filter(line => line.trim());
+          
+          testSteps.push("Setup:");
+          testSteps.push("1. Open browser and navigate to the application URL");
+          testSteps.push("2. Login with valid test credentials");
+          testSteps.push("3. Navigate to the relevant page/module");
+          
+          testSteps.push("Test Execution:");
+          criteriaLines.forEach((criteria, index) => {
+            if (criteria.trim()) {
+              testSteps.push(`${index + 4}. Test: ${criteria.trim()}`);
+            }
+          });
+          
+          testSteps.push("Verification:");
+          testSteps.push(`${testSteps.length + 1}. Verify all acceptance criteria are met`);
+          testSteps.push(`${testSteps.length + 1}. Verify no unexpected errors or behaviors occur`);
+          
+          if (request.includeNegative) {
+            testSteps.push("Negative Testing:");
+            testSteps.push(`${testSteps.length + 1}. Test with invalid inputs (if applicable)`);
+            testSteps.push(`${testSteps.length + 1}. Verify appropriate error messages are displayed`);
+          }
+        } else {
+          testSteps.push("1. Navigate to the application");
+          testSteps.push("2. Login with test credentials");
+          testSteps.push("3. Access the feature under test");
+          testSteps.push("4. Perform the required functionality");
+          testSteps.push("5. Verify the expected behavior");
+          testSteps.push("6. Test edge cases and error scenarios");
+        }
+
+        const expectedResult = story.acceptanceCriteria 
+          ? `All acceptance criteria are satisfied: ${story.acceptanceCriteria.replace(/<[^>]*>/g, '').trim()}`
+          : "Feature functions correctly according to requirements";
 
         const testCaseData = {
           title: testCaseTitle,
           objective: objective,
-          prerequisites: ["User has appropriate access", "System is available"],
+          prerequisites: prerequisites,
           testSteps: testSteps,
-          expectedResult: story.acceptanceCriteria || "Feature works as expected",
+          expectedResult: expectedResult,
           priority: story.priority || "Medium",
           status: "Draft",
           testType: request.testType || "Functional",
@@ -371,6 +431,74 @@ For each test case, provide the following in JSON format:
       res.json(testCases);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Export test cases to Excel
+  app.get("/api/test-cases/export", async (req, res) => {
+    try {
+      const XLSX = await import('xlsx');
+      const testCases = await storage.getTestCases();
+      
+      if (testCases.length === 0) {
+        return res.status(400).json({ message: "No test cases to export" });
+      }
+
+      // Prepare data for Excel export
+      const excelData = testCases.map((testCase, index) => ({
+        'Test Case ID': `TC-${String(testCase.id).padStart(3, '0')}`,
+        'Title': testCase.title,
+        'Objective': testCase.objective,
+        'Prerequisites': Array.isArray(testCase.prerequisites) ? testCase.prerequisites.join('\n') : testCase.prerequisites || '',
+        'Test Steps': Array.isArray(testCase.testSteps) ? testCase.testSteps.map((step, i) => `${i + 1}. ${step}`).join('\n') : testCase.testSteps || '',
+        'Expected Result': testCase.expectedResult,
+        'Priority': testCase.priority,
+        'Status': testCase.status,
+        'Test Type': testCase.testType,
+        'User Story ID': testCase.userStoryId,
+        'Azure Test Case ID': testCase.azureTestCaseId || 'Not Linked',
+        'Created Date': testCase.createdAt ? new Date(testCase.createdAt).toLocaleDateString() : ''
+      }));
+
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      
+      // Set column widths
+      const columnWidths = [
+        { wch: 15 }, // Test Case ID
+        { wch: 40 }, // Title
+        { wch: 50 }, // Objective
+        { wch: 40 }, // Prerequisites
+        { wch: 60 }, // Test Steps
+        { wch: 40 }, // Expected Result
+        { wch: 12 }, // Priority
+        { wch: 12 }, // Status
+        { wch: 15 }, // Test Type
+        { wch: 15 }, // User Story ID
+        { wch: 20 }, // Azure Test Case ID
+        { wch: 15 }  // Created Date
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Test Cases');
+
+      // Generate Excel file buffer
+      const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+      // Set response headers for file download
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const filename = `test-cases-export-${timestamp}.xlsx`;
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', excelBuffer.length);
+
+      res.send(excelBuffer);
+    } catch (error: any) {
+      console.error('Excel export error:', error);
+      res.status(500).json({ message: `Failed to export test cases: ${error.message}` });
     }
   });
 

@@ -66,6 +66,24 @@ export function TestCasesSection() {
     },
   });
 
+  // Mutation to export test cases to Excel
+  const exportToExcelMutation = useMutation({
+    mutationFn: () => api.exportTestCasesToExcel(),
+    onSuccess: () => {
+      toast({
+        title: "Export Successful",
+        description: "Test cases have been exported to Excel file",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Export Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSelectAll = () => {
     if (selectedTestCases.length === testCases.length) {
       setSelectedTestCases([]);
