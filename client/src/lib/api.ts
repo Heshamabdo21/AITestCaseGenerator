@@ -4,7 +4,15 @@ import type {
   InsertAzureConfig, 
   UserStory, 
   TestCase, 
-  GenerateTestCaseRequest 
+  GenerateTestCaseRequest,
+  TestDataConfig,
+  EnvironmentConfig,
+  AiConfiguration,
+  AiContext,
+  InsertTestDataConfig,
+  InsertEnvironmentConfig,
+  InsertAiConfiguration,
+  InsertAiContext
 } from "@shared/schema";
 
 export const api = {
@@ -26,6 +34,11 @@ export const api = {
 
   async fetchAzureProjects(config: { organizationUrl: string; patToken: string }): Promise<Array<{ name: string; id: string }>> {
     const response = await apiRequest("POST", "/api/azure-devops/projects", config);
+    return response.json();
+  },
+
+  async fetchIterationPaths(config: { organizationUrl: string; patToken: string; project: string }): Promise<Array<{ name: string; path: string }>> {
+    const response = await apiRequest("POST", "/api/azure-devops/iterations", config);
     return response.json();
   },
 
@@ -58,6 +71,65 @@ export const api = {
 
   async addTestCasesToAzure(testCaseIds: number[]): Promise<{ message: string; results: any[]; successCount: number }> {
     const response = await apiRequest("POST", "/api/test-cases/add-to-azure", { testCaseIds });
+    return response.json();
+  },
+
+  // Test Data Configuration
+  async createTestDataConfig(config: InsertTestDataConfig): Promise<TestDataConfig> {
+    const response = await apiRequest("POST", "/api/test-data-config", config);
+    return response.json();
+  },
+
+  async getTestDataConfig(): Promise<TestDataConfig | null> {
+    const response = await apiRequest("GET", "/api/test-data-config");
+    return response.json();
+  },
+
+  async updateTestDataConfig(config: Partial<InsertTestDataConfig>): Promise<TestDataConfig> {
+    const response = await apiRequest("PATCH", "/api/test-data-config", config);
+    return response.json();
+  },
+
+  // Environment Configuration
+  async createEnvironmentConfig(config: InsertEnvironmentConfig): Promise<EnvironmentConfig> {
+    const response = await apiRequest("POST", "/api/environment-config", config);
+    return response.json();
+  },
+
+  async getEnvironmentConfig(): Promise<EnvironmentConfig | null> {
+    const response = await apiRequest("GET", "/api/environment-config");
+    return response.json();
+  },
+
+  async updateEnvironmentConfig(config: Partial<InsertEnvironmentConfig>): Promise<EnvironmentConfig> {
+    const response = await apiRequest("PATCH", "/api/environment-config", config);
+    return response.json();
+  },
+
+  // AI Configuration
+  async createAiConfiguration(config: InsertAiConfiguration): Promise<AiConfiguration> {
+    const response = await apiRequest("POST", "/api/ai-configuration", config);
+    return response.json();
+  },
+
+  async getAiConfiguration(): Promise<AiConfiguration | null> {
+    const response = await apiRequest("GET", "/api/ai-configuration");
+    return response.json();
+  },
+
+  async updateAiConfiguration(config: Partial<InsertAiConfiguration>): Promise<AiConfiguration> {
+    const response = await apiRequest("PATCH", "/api/ai-configuration", config);
+    return response.json();
+  },
+
+  // AI Context
+  async createOrUpdateAiContext(context: InsertAiContext): Promise<AiContext> {
+    const response = await apiRequest("POST", "/api/ai-context", context);
+    return response.json();
+  },
+
+  async getAiContext(): Promise<AiContext | null> {
+    const response = await apiRequest("GET", "/api/ai-context");
     return response.json();
   },
 };

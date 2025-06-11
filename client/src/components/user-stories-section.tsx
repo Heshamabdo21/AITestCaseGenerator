@@ -69,6 +69,9 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
     },
   });
 
+  // Get unique states from all stories
+  const availableStates = Array.from(new Set(userStories.map((story: UserStory) => story.state)));
+
   const filteredStories = userStories.filter((story: UserStory) => {
     const matchesSearch = story.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          story.description?.toLowerCase().includes(searchTerm.toLowerCase());

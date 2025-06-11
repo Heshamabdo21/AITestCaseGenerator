@@ -33,6 +33,7 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
   const [showPatToken, setShowPatToken] = useState(false);
   const [showOpenAiKey, setShowOpenAiKey] = useState(false);
   const [projects, setProjects] = useState<Array<{ name: string; id: string }>>([]);
+  const [iterations, setIterations] = useState<Array<{ name: string; path: string }>>([]);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [connectionMessage, setConnectionMessage] = useState('');
   
@@ -56,13 +57,13 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
   });
 
   useEffect(() => {
-    if (existingConfig) {
+    if (existingConfig && typeof existingConfig === 'object') {
       form.reset({
-        organizationUrl: existingConfig.organizationUrl || "",
-        patToken: existingConfig.patToken || "",
-        project: existingConfig.project || "",
-        iterationPath: existingConfig.iterationPath || "",
-        openaiKey: existingConfig.openaiKey || "",
+        organizationUrl: (existingConfig as any).organizationUrl || "",
+        patToken: (existingConfig as any).patToken || "",
+        project: (existingConfig as any).project || "",
+        iterationPath: (existingConfig as any).iterationPath || "",
+        openaiKey: (existingConfig as any).openaiKey || "",
       });
       setConnectionStatus('success');
       setConnectionMessage('Configuration loaded successfully');
@@ -106,6 +107,23 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
     onError: (error: any) => {
       toast({
         title: "Failed to Fetch Projects",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Fetch iteration paths mutation
+  const fetchIterationsMutation = useMutation({
+    mutationFn: async (data: { organizationUrl: string; patToken: string; project: string }) => {
+      return api.fetchIterationPaths(data);
+    },
+    onSuccess: (iterationList) => {
+      setIterations(iterationList);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Fetch Iterations",
         description: error.message,
         variant: "destructive",
       });
@@ -157,6 +175,27 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
         organizationUrl: values.organizationUrl,
         patToken: values.patToken,
         project: values.project,
+      });
+    }
+  };
+
+  const handleProjectChange = async (projectName: string) => {
+    form.setValue("project", projectName);
+    
+    const values = form.getValues();
+    if (values.organizationUrl && values.patToken && projectName) {
+      // Fetch iterations for the selected project
+      await fetchIterationsMutation.mutateAsync({
+        organizationUrl: values.organizationUrl,
+        patToken: values.patToken,
+        project: projectName,
+      });
+      
+      // Test connection with the selected project
+      await testConnectionMutation.mutateAsync({
+        organizationUrl: values.organizationUrl,
+        patToken: values.patToken,
+        project: projectName,
       });
     }
   };
@@ -222,7 +261,7 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
 
             <div>
               <Label htmlFor="project">Project</Label>
-              <Select onValueChange={(value) => form.setValue("project", value)} value={form.watch("project")}>
+              <Select onValueChange={handleProjectChange} value={form.watch("project")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a project..." />
                 </SelectTrigger>
@@ -243,11 +282,18 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
 
             <div>
               <Label htmlFor="iterationPath">Iteration Path (Optional)</Label>
-              <Input
-                id="iterationPath"
-                placeholder="e.g., Project\\Sprint 1"
-                {...form.register("iterationPath")}
-              />
+              <Select onValueChange={(value) => form.setValue("iterationPath", value)} value={form.watch("iterationPath")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an iteration path..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {iterations.map((iteration) => (
+                    <SelectItem key={iteration.path} value={iteration.path}>
+                      {iteration.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <p className="text-xs text-gray-600 mt-1">
                 Leave empty to use default iteration path
               </p>
