@@ -1007,34 +1007,59 @@ export function generateSeparateTestCases(
 ✓ Security measures protect against common vulnerabilities`;
       
     } else if (testType.type === 'Compatibility') {
-      testSteps = [
-        "CROSS-PLATFORM COMPATIBILITY TESTING:",
-        "",
-        "1. BROWSER COMPATIBILITY:",
-        "   - Test on Chrome (latest 2 versions)",
-        "   - Test on Firefox (latest 2 versions)",
-        "   - Test on Safari (latest 2 versions)",
-        "   - Test on Edge (latest 2 versions)",
-        "   - Verify functionality on older browser versions",
-        "",
-        "2. OPERATING SYSTEM TESTING:",
-        "   - Test on Windows 10/11",
-        "   - Test on macOS (latest 2 versions)",
-        "   - Test on Linux distributions (Ubuntu, CentOS)",
-        "   - Verify mobile OS compatibility (iOS, Android)",
-        "",
-        "3. DEVICE TESTING:",
-        "   - Test on desktop computers (various resolutions)",
-        "   - Test on tablets (iPad, Android tablets)",
-        "   - Test on smartphones (various screen sizes)",
-        "   - Verify touch interface functionality",
-        "",
-        "4. INTEGRATION COMPATIBILITY:",
-        "   - Test with third-party integrations",
-        "   - Verify API compatibility with external systems",
-        "   - Test plugin and extension compatibility",
-        "   - Verify database compatibility across versions"
+      testStepsStructured = [
+        {
+          stepNumber: 1,
+          action: "Test functionality on Chrome browser (latest 2 versions)",
+          expectedResult: "Application works correctly on current and previous Chrome versions"
+        },
+        {
+          stepNumber: 2,
+          action: "Test functionality on Firefox browser (latest 2 versions)",
+          expectedResult: "Application works correctly on current and previous Firefox versions"
+        },
+        {
+          stepNumber: 3,
+          action: "Test functionality on Safari browser (latest 2 versions)",
+          expectedResult: "Application works correctly on current and previous Safari versions"
+        },
+        {
+          stepNumber: 4,
+          action: "Test on Windows 10/11 operating systems",
+          expectedResult: "Application functions properly on Windows desktop environments"
+        },
+        {
+          stepNumber: 5,
+          action: "Test on macOS (latest 2 versions)",
+          expectedResult: "Application functions properly on macOS desktop environments"
+        },
+        {
+          stepNumber: 6,
+          action: "Test on tablets (iPad, Android tablets) with touch interface",
+          expectedResult: "Touch interface works correctly on tablet devices with appropriate gestures"
+        },
+        {
+          stepNumber: 7,
+          action: "Test on smartphones with various screen sizes",
+          expectedResult: "Application adapts properly to different mobile screen sizes and orientations"
+        },
+        {
+          stepNumber: 8,
+          action: "Test with third-party integrations and external systems",
+          expectedResult: "Third-party integrations function without conflicts or compatibility issues"
+        },
+        {
+          stepNumber: 9,
+          action: "Verify API compatibility with external systems",
+          expectedResult: "API calls work correctly across different environments and platforms"
+        },
+        {
+          stepNumber: 10,
+          action: "Test responsive design adapts to all supported screen resolutions",
+          expectedResult: "Layout and functionality remain optimal across all tested screen sizes"
+        }
       ];
+      testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       
       expectedResult = `COMPATIBILITY TEST EXPECTED RESULTS:
 ✓ Application functions consistently across all major browsers

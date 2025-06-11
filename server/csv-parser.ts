@@ -1,4 +1,4 @@
-import type { UserStory, InsertTestCase } from "@shared/schema";
+import type { UserStory, InsertTestCase, TestStep } from "@shared/schema";
 
 export interface CsvTestCase {
   id: string;
@@ -81,17 +81,27 @@ export function convertCsvToTestCases(csvTestCases: CsvTestCase[], userStoryId: 
   const testCases: InsertTestCase[] = [];
   
   groupedSteps.forEach((steps, title) => {
-    // Combine all steps into comprehensive test case
+    // Combine all steps into comprehensive test case with structured format
     const prerequisites: string[] = [];
     const testSteps: string[] = [];
+    const testStepsStructured: TestStep[] = [];
     let expectedResult = '';
+    let stepNumber = 1;
     
     steps.forEach((step, index) => {
       if (step.stepAction) {
         if (step.stepAction.toLowerCase().includes('precondition')) {
           prerequisites.push(`${index + 1}. ${step.stepAction}`);
         } else {
-          testSteps.push(`${index + 1}. ${step.stepAction}`);
+          // Create structured test step
+          const structuredStep: TestStep = {
+            stepNumber: stepNumber,
+            action: step.stepAction,
+            expectedResult: step.stepExpected || `Step ${stepNumber} should complete successfully`
+          };
+          testStepsStructured.push(structuredStep);
+          testSteps.push(`${stepNumber}. ${step.stepAction}`);
+          stepNumber++;
         }
       }
       
@@ -120,6 +130,7 @@ export function convertCsvToTestCases(csvTestCases: CsvTestCase[], userStoryId: 
       objective: `Imported test case to verify: ${title}`,
       prerequisites: prerequisites.length > 0 ? prerequisites.join('\n') : 'No specific prerequisites defined',
       testSteps: testSteps.length > 0 ? testSteps.join('\n') : 'Execute the test scenario as described',
+      testStepsStructured: testStepsStructured.length > 0 ? testStepsStructured : null,
       expectedResult: expectedResult || 'Test should complete successfully according to specified criteria',
       testPassword: null, // Will be set by user or derived from test data config
       requiredPermissions: 'read-write, basic-user', // Default permissions for imported test cases
