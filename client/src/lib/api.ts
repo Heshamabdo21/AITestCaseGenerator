@@ -41,6 +41,11 @@ export const api = {
     return safeJsonParse(response);
   },
 
+  async updateAzureConfig(id: number, config: Partial<InsertAzureConfig>): Promise<AzureConfig> {
+    const response = await apiRequest("PUT", `/api/azure-config/${id}`, config);
+    return safeJsonParse(response);
+  },
+
   async testAzureConnection(config: { organizationUrl: string; patToken: string; project: string }): Promise<{ success: boolean; message: string }> {
     const response = await apiRequest("POST", "/api/azure-config/test", config);
     return safeJsonParse(response);

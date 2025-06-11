@@ -84,6 +84,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update Azure DevOps Configuration
+  app.put("/api/azure-config/:id", async (req, res) => {
+    try {
+      const configId = parseInt(req.params.id);
+      const configData = insertAzureConfigSchema.partial().parse(req.body);
+      const config = await storage.updateAzureConfig(configId, configData);
+      if (!config) {
+        return res.status(404).json({ message: "Configuration not found" });
+      }
+      res.json(config);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.get("/api/azure-config/latest", async (req, res) => {
     try {
       const config = await storage.getLatestAzureConfig();
@@ -695,6 +710,7 @@ For each test case, provide the following in JSON format:
             // Add test case to test plan if configured
             if (config.testPlanId && config.testPlanId !== 'none' && config.testPlanId.trim() !== '') {
               try {
+                console.log(`Attempting to add test case ${azureTestCase.id} to test plan ${config.testPlanId}`);
                 const testPlanApiUrl = `${config.organizationUrl}/${config.project}/_apis/testplan/Plans/${config.testPlanId}/suites?api-version=7.0`;
                 
                 // First, get the root test suite
@@ -707,10 +723,14 @@ For each test case, provide the following in JSON format:
 
                 if (suitesResponse.ok) {
                   const suitesData = await suitesResponse.json();
+                  console.log(`Found ${suitesData.value?.length || 0} suites in test plan ${config.testPlanId}`);
+                  
                   const rootSuite = suitesData.value?.find((suite: any) => suite.suiteType === 'StaticTestSuite' && suite.name === 'Root Suite') || suitesData.value?.[0];
                   
                   if (rootSuite) {
-                    // Add test case to the root suite
+                    console.log(`Using suite ${rootSuite.id} (${rootSuite.name}) for test case assignment`);
+                    
+                    // Add test case to the suite
                     const addTestCaseUrl = `${config.organizationUrl}/${config.project}/_apis/testplan/Plans/${config.testPlanId}/Suites/${rootSuite.id}/TestCase/${azureTestCase.id}?api-version=7.0`;
                     
                     const addTestCaseResponse = await fetch(addTestCaseUrl, {
@@ -722,15 +742,23 @@ For each test case, provide the following in JSON format:
                     });
 
                     if (addTestCaseResponse.ok) {
-                      console.log(`Successfully added test case ${azureTestCase.id} to test plan ${config.testPlanId}`);
+                      console.log(`Successfully added test case ${azureTestCase.id} to test plan ${config.testPlanId}, suite ${rootSuite.id}`);
                     } else {
-                      console.log(`Warning: Could not add test case to test plan. Status: ${addTestCaseResponse.status}`);
+                      const errorText = await addTestCaseResponse.text();
+                      console.log(`Warning: Could not add test case to test plan. Status: ${addTestCaseResponse.status}, Error: ${errorText}`);
                     }
+                  } else {
+                    console.log(`No suitable suite found in test plan ${config.testPlanId}`);
                   }
+                } else {
+                  const errorText = await suitesResponse.text();
+                  console.log(`Failed to fetch suites for test plan ${config.testPlanId}. Status: ${suitesResponse.status}, Error: ${errorText}`);
                 }
               } catch (testPlanError) {
                 console.log("Warning: Could not add test case to test plan:", testPlanError);
               }
+            } else {
+              console.log(`Test plan not configured or invalid. testPlanId: ${config.testPlanId}`);
             }
             
             await storage.updateTestCase(testCase.id, { azureTestCaseId: azureTestCase.id.toString() });

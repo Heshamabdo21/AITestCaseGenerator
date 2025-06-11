@@ -157,7 +157,11 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
   // Save configuration mutation
   const saveConfigMutation = useMutation({
     mutationFn: async (data: InsertAzureConfig) => {
-      return api.createAzureConfig(data);
+      if (existingConfig && typeof existingConfig === 'object' && (existingConfig as any).id) {
+        return api.updateAzureConfig((existingConfig as any).id, data);
+      } else {
+        return api.createAzureConfig(data);
+      }
     },
     onSuccess: () => {
       toast({
@@ -328,9 +332,9 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
               <Label htmlFor="testPlan">Test Plan (Optional)</Label>
               <Select onValueChange={(value) => {
                 const selectedPlan = testPlans.find(plan => plan.id === value);
-                form.setValue("testPlanId", value);
+                form.setValue("testPlanId", value === "none" ? "" : value);
                 form.setValue("testPlanName", selectedPlan?.name || "");
-              }} value={form.watch("testPlanId")}>
+              }} value={form.watch("testPlanId") || "none"}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a test plan..." />
                 </SelectTrigger>
@@ -346,18 +350,23 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
               <p className="text-xs text-gray-600 mt-1">
                 Test cases will be automatically added to the selected test plan
               </p>
-              {form.watch("testPlanId") && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => fetchTestPlansMutation.mutate()}
-                  disabled={fetchTestPlansMutation.isPending}
-                >
-                  Refresh Test Plans
-                </Button>
+              {form.watch("testPlanId") && form.watch("testPlanId") !== "none" && (
+                <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                  <p className="text-sm text-blue-800">
+                    Selected: <strong>{form.watch("testPlanName")}</strong>
+                  </p>
+                </div>
               )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => fetchTestPlansMutation.mutate()}
+                disabled={fetchTestPlansMutation.isPending}
+              >
+                {fetchTestPlansMutation.isPending ? "Loading..." : "Load Test Plans"}
+              </Button>
             </div>
 
             <div>
