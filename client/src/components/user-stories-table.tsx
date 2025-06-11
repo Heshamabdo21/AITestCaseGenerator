@@ -60,21 +60,22 @@ export function UserStoriesTable({ onStoriesSelect }: UserStoriesTableProps) {
     }
   };
 
-  const getPriorityColor = (priority?: number) => {
+  const getPriorityColor = (priority?: string | null) => {
     if (!priority) return "secondary";
-    if (priority === 1) return "destructive";
-    if (priority === 2) return "default";
+    if (priority === "1" || priority.toLowerCase() === "high") return "destructive";
+    if (priority === "2" || priority.toLowerCase() === "medium") return "default";
     return "secondary";
   };
 
-  const getPriorityText = (priority?: number) => {
+  const getPriorityText = (priority?: string | null) => {
     if (!priority) return "Unassigned";
-    if (priority === 1) return "High";
-    if (priority === 2) return "Medium";
-    return "Low";
+    if (priority === "1" || priority.toLowerCase() === "high") return "High";
+    if (priority === "2" || priority.toLowerCase() === "medium") return "Medium";
+    if (priority === "3" || priority.toLowerCase() === "low") return "Low";
+    return priority;
   };
 
-  const cleanAcceptanceCriteria = (criteria?: string) => {
+  const cleanAcceptanceCriteria = (criteria?: string | null) => {
     if (!criteria) return "No acceptance criteria provided";
     return criteria
       .replace(/<[^>]*>/g, '')
@@ -168,10 +169,10 @@ export function UserStoriesTable({ onStoriesSelect }: UserStoriesTableProps) {
               </div>
               <div className="col-span-4 flex items-center">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate" title={story.title}>
+                  <p className="text-sm font-medium truncate" title={story.title || undefined}>
                     {story.title}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate" title={story.description}>
+                  <p className="text-xs text-muted-foreground truncate" title={story.description ?? undefined}>
                     {story.description || "No description available"}
                   </p>
                 </div>
@@ -208,7 +209,7 @@ export function UserStoriesTable({ onStoriesSelect }: UserStoriesTableProps) {
                       <div>
                         <h4 className="font-medium mb-2">Description</h4>
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                          {story.description || "No description provided"}
+                          {story.description ?? "No description provided"}
                         </p>
                       </div>
                       
@@ -216,7 +217,7 @@ export function UserStoriesTable({ onStoriesSelect }: UserStoriesTableProps) {
                         <h4 className="font-medium mb-2">Acceptance Criteria</h4>
                         <div className="bg-muted/50 p-4 rounded-lg">
                           <pre className="text-sm whitespace-pre-wrap font-mono">
-                            {cleanAcceptanceCriteria(story.acceptanceCriteria)}
+                            {cleanAcceptanceCriteria(story.acceptanceCriteria ?? undefined)}
                           </pre>
                         </div>
                       </div>
@@ -243,11 +244,11 @@ export function UserStoriesTable({ onStoriesSelect }: UserStoriesTableProps) {
                         </div>
                       )}
 
-                      {story.tags && (
+                      {story.tags && Array.isArray(story.tags) && story.tags.length > 0 && (
                         <div>
                           <h4 className="font-medium mb-2">Tags</h4>
                           <div className="flex flex-wrap gap-2">
-                            {story.tags.split(';').filter(tag => tag.trim()).map((tag, index) => (
+                            {story.tags.map((tag: string, index: number) => (
                               <Badge key={index} variant="outline" className="text-xs">
                                 {tag.trim()}
                               </Badge>
