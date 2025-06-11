@@ -143,7 +143,7 @@ export function generateSeparateTestCases(
 
     if (testType.type === 'Positive') {
       if (platform === 'web') {
-        testSteps = [
+        testStepsStructured = [
           {
             stepNumber: 1,
             action: "Verify user has required permissions for the web page/feature under test",
@@ -180,8 +180,9 @@ export function generateSeparateTestCases(
             expectedResult: "Target page loads successfully with all required functionality visible"
           }
         ];
+        testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       } else if (platform === 'mobile') {
-        testSteps = [
+        testStepsStructured = [
           {
             stepNumber: 1,
             action: "Verify user has required permissions for the mobile app feature under test",
@@ -218,6 +219,7 @@ export function generateSeparateTestCases(
             expectedResult: "Target mobile screen loads successfully with all required functionality"
           }
         ];
+        testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       } else if (platform === 'api') {
         testSteps = [
           "PRECONDITIONS:",
@@ -720,6 +722,7 @@ export function generateSeparateTestCases(
       objective: `${testType.description} - ${objective}`,
       prerequisites: prerequisites.join('\n'),
       testSteps: testSteps.join('\n'),
+      testStepsStructured: testStepsStructured.length > 0 ? testStepsStructured : null,
       expectedResult,
       testPassword: testDataConfig?.password || null, // Use password from test data config
       requiredPermissions,

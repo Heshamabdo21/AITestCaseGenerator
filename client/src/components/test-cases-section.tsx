@@ -387,10 +387,34 @@ export function TestCasesSection() {
                     {testCase.testSteps && (
                       <div>
                         <span className="text-sm font-medium text-gray-900">Test Steps:</span>
-                        <div className="text-sm text-gray-700 mt-1 whitespace-pre-line">
-                          {Array.isArray(testCase.testSteps) 
-                            ? testCase.testSteps.join('\n')
-                            : testCase.testSteps}
+                        <div className="text-sm text-gray-700 mt-1">
+                          {testCase.testStepsStructured && testCase.testStepsStructured.length > 0 ? (
+                            <div className="space-y-3">
+                              {testCase.testStepsStructured.map((step, index) => (
+                                <div key={index} className="border border-gray-200 rounded-md p-3 bg-white">
+                                  <div className="mb-2">
+                                    <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                      Step {step.stepNumber}
+                                    </span>
+                                  </div>
+                                  <div className="mb-2">
+                                    <span className="text-xs font-medium text-gray-600">Action:</span>
+                                    <p className="text-sm text-gray-800 mt-1">{step.action}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs font-medium text-gray-600">Expected Result:</span>
+                                    <p className="text-sm text-green-700 mt-1">{step.expectedResult}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="whitespace-pre-line">
+                              {Array.isArray(testCase.testSteps) 
+                                ? testCase.testSteps.join('\n')
+                                : testCase.testSteps}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
