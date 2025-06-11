@@ -134,7 +134,7 @@ export function TestDataPanel() {
                   <FormItem>
                     <FormLabel>Test Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="test password" {...field} />
+                      <Input type="text" placeholder="test password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
