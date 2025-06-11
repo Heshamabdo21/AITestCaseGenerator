@@ -89,6 +89,10 @@ export const aiConfigurations = pgTable("ai_configurations", {
   includeCompatibilityTests: boolean("include_compatibility_tests").default(false),
   testComplexity: text("test_complexity").default("medium"), // simple, medium, complex
   additionalInstructions: text("additional_instructions"),
+  // Test type preferences
+  enableWebPortalTests: boolean("enable_web_portal_tests").default(true),
+  enableMobileAppTests: boolean("enable_mobile_app_tests").default(false),
+  enableApiTests: boolean("enable_api_tests").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -29,6 +29,11 @@ const unifiedAiSchema = z.object({
   testComplexity: z.enum(["simple", "medium", "complex"]).default("medium"),
   additionalInstructions: z.string().optional(),
   
+  // Test type preferences
+  enableWebPortalTests: z.boolean().default(true),
+  enableMobileAppTests: z.boolean().default(false),
+  enableApiTests: z.boolean().default(false),
+  
   // AI Context fields
   projectContext: z.array(z.string()).default([]),
   domainKnowledge: z.array(z.string()).default([]),
@@ -59,6 +64,9 @@ export function UnifiedAiConfiguration() {
       includeCompatibilityTests: false,
       testComplexity: "medium",
       additionalInstructions: "",
+      enableWebPortalTests: true,
+      enableMobileAppTests: false,
+      enableApiTests: false,
       projectContext: [],
       domainKnowledge: [],
       testingPatterns: [],
@@ -92,6 +100,9 @@ export function UnifiedAiConfiguration() {
       form.setValue("includeCompatibilityTests", config.includeCompatibilityTests ?? false);
       form.setValue("testComplexity", config.testComplexity ?? "medium");
       form.setValue("additionalInstructions", config.additionalInstructions ?? "");
+      form.setValue("enableWebPortalTests", config.enableWebPortalTests ?? true);
+      form.setValue("enableMobileAppTests", config.enableMobileAppTests ?? false);
+      form.setValue("enableApiTests", config.enableApiTests ?? false);
     }
   }, [aiConfig, form]);
 
@@ -176,6 +187,9 @@ export function UnifiedAiConfiguration() {
       includeCompatibilityTests: data.includeCompatibilityTests,
       testComplexity: data.testComplexity,
       additionalInstructions: data.additionalInstructions,
+      enableWebPortalTests: data.enableWebPortalTests,
+      enableMobileAppTests: data.enableMobileAppTests,
+      enableApiTests: data.enableApiTests,
     });
 
     // Save AI Context
@@ -285,6 +299,42 @@ export function UnifiedAiConfiguration() {
                 />
                 <Label htmlFor="includeCompatibilityTests">Include Compatibility Test Cases</Label>
               </div>
+            </div>
+
+            {/* Test Type Preferences */}
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Test Target Platforms</Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="enableWebPortalTests"
+                    checked={form.watch("enableWebPortalTests")}
+                    onCheckedChange={(checked) => form.setValue("enableWebPortalTests", !!checked)}
+                  />
+                  <Label htmlFor="enableWebPortalTests" className="text-sm font-medium">Web Portal Tests</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="enableMobileAppTests"
+                    checked={form.watch("enableMobileAppTests")}
+                    onCheckedChange={(checked) => form.setValue("enableMobileAppTests", !!checked)}
+                  />
+                  <Label htmlFor="enableMobileAppTests" className="text-sm font-medium">Mobile App Tests</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="enableApiTests"
+                    checked={form.watch("enableApiTests")}
+                    onCheckedChange={(checked) => form.setValue("enableApiTests", !!checked)}
+                  />
+                  <Label htmlFor="enableApiTests" className="text-sm font-medium">API Tests</Label>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Select the platforms you want to create test cases for. This will influence the test case generation to focus on platform-specific scenarios.
+              </p>
             </div>
 
             <div>
