@@ -43,7 +43,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required configuration" });
       }
 
-      const apiUrl = `${organizationUrl}/${project}/_apis/wit/workitems?api-version=7.0&$top=1`;
+      // Test with a simple project endpoint instead of work items
+      const apiUrl = `${organizationUrl}/_apis/projects/${project}?api-version=7.0`;
       const authHeader = `Basic ${Buffer.from(`:${patToken}`).toString('base64')}`;
       
       const response = await fetch(apiUrl, {
