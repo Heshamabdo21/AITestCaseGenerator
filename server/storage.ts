@@ -485,7 +485,11 @@ export class MemoryStorage implements IStorage {
   }
 
   async getUserStoriesByIds(ids: number[]): Promise<UserStory[]> {
-    return ids.map(id => this.data.userStories.get(id)).filter(Boolean) as UserStory[];
+    console.log("MemoryStorage getUserStoriesByIds called with IDs:", ids);
+    console.log("Available user stories in memory:", Array.from(this.data.userStories.keys()));
+    const result = ids.map(id => this.data.userStories.get(id)).filter(Boolean) as UserStory[];
+    console.log("Found user stories:", result.map(s => ({ id: s.id, title: s.title })));
+    return result;
   }
 
   async clearUserStories(configId: number): Promise<void> {

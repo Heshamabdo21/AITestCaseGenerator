@@ -235,19 +235,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const request = generateTestCaseRequestSchema.parse(req.body);
+      console.log("Test case generation request:", JSON.stringify(request, null, 2));
+      
       const userStories = await storage.getUserStoriesByIds(request.userStoryIds);
+      console.log(`Found ${userStories.length} user stories for IDs:`, request.userStoryIds);
+      console.log("User stories:", userStories.map(s => ({ id: s.id, title: s.title })));
 
       if (userStories.length === 0) {
         return res.status(404).json({ message: "No user stories found" });
       }
 
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      const openai = new OpenAI({ 
-        apiKey: config.openaiKey || process.env.OPENAI_API_KEY 
-      });
-
+      // Temporarily bypass OpenAI to debug user story selection
       const generatedTestCases: TestCase[] = [];
 
+      // Create mock test cases for debugging
+      for (const story of userStories) {
+        console.log(`Processing story: ${story.id} - ${story.title}`);
+        
+        const mockTestCase: TestCase = {
+          id: Date.now() + Math.random(), // temporary ID
+          title: `Mock Test Case for ${story.title}`,
+          objective: "Test the functionality described in the user story",
+          prerequisites: ["User is logged in", "System is available"],
+          testSteps: ["Navigate to feature", "Perform action", "Verify result"],
+          expectedResult: "Feature works as expected",
+          priority: "Medium",
+          status: "Draft",
+          testType: "Functional",
+          userStoryId: story.id,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+
+        generatedTestCases.push(mockTestCase);
+      }
+
+      // Skip OpenAI processing for now
+      /*
       for (const story of userStories) {
         const prompt = `Generate test cases for the following user story:
 
