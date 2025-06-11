@@ -19,6 +19,7 @@ const configSchema = z.object({
   organizationUrl: z.string().url("Please enter a valid Azure DevOps organization URL"),
   patToken: z.string().min(1, "Personal Access Token is required"),
   project: z.string().min(1, "Project selection is required"),
+  iterationPath: z.string().optional(),
   openaiKey: z.string().min(1, "OpenAI API Key is required"),
 });
 
@@ -43,6 +44,7 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
       organizationUrl: "",
       patToken: "",
       project: "",
+      iterationPath: "",
       openaiKey: "",
     },
   });
@@ -56,10 +58,11 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
   useEffect(() => {
     if (existingConfig) {
       form.reset({
-        organizationUrl: existingConfig.organizationUrl,
-        patToken: existingConfig.patToken,
-        project: existingConfig.project,
-        openaiKey: existingConfig.openaiKey,
+        organizationUrl: existingConfig.organizationUrl || "",
+        patToken: existingConfig.patToken || "",
+        project: existingConfig.project || "",
+        iterationPath: existingConfig.iterationPath || "",
+        openaiKey: existingConfig.openaiKey || "",
       });
       setConnectionStatus('success');
       setConnectionMessage('Configuration loaded successfully');
@@ -236,6 +239,18 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
                   {form.formState.errors.project.message}
                 </p>
               )}
+            </div>
+
+            <div>
+              <Label htmlFor="iterationPath">Iteration Path (Optional)</Label>
+              <Input
+                id="iterationPath"
+                placeholder="e.g., Project\\Sprint 1"
+                {...form.register("iterationPath")}
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                Leave empty to use default iteration path
+              </p>
             </div>
 
             <div>

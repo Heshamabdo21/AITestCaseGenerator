@@ -3,6 +3,10 @@ import { WorkflowProgress } from "@/components/workflow-progress";
 import { ConfigurationPanel } from "@/components/configuration-panel";
 import { UserStoriesSection } from "@/components/user-stories-section";
 import { TestCasesSection } from "@/components/test-cases-section";
+import { TestDataPanel } from "@/components/test-data-panel";
+import { EnvironmentPanel } from "@/components/environment-panel";
+import { AiConfigurationPanel } from "@/components/ai-configuration-panel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -50,7 +54,22 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Configuration Panel */}
           <div className="lg:col-span-1">
-            <ConfigurationPanel onConfigurationSaved={handleConfigurationSaved} />
+            <Tabs defaultValue="azure" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="azure">Azure & AI</TabsTrigger>
+                <TabsTrigger value="test">Test Setup</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="azure" className="space-y-4">
+                <ConfigurationPanel onConfigurationSaved={handleConfigurationSaved} />
+                <AiConfigurationPanel />
+              </TabsContent>
+              
+              <TabsContent value="test" className="space-y-4">
+                <TestDataPanel />
+                <EnvironmentPanel />
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Main Work Area */}

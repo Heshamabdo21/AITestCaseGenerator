@@ -405,6 +405,102 @@ For each test case, provide the following in JSON format:
     }
   });
 
+  // Test Data Configuration API
+  app.post("/api/test-data-config", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const testDataConfig = await storage.createTestDataConfig({
+        ...req.body,
+        configId: config.id
+      });
+      res.json(testDataConfig);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/test-data-config", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const testDataConfig = await storage.getTestDataConfig(config.id);
+      res.json(testDataConfig || {});
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Environment Configuration API
+  app.post("/api/environment-config", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const environmentConfig = await storage.createEnvironmentConfig({
+        ...req.body,
+        configId: config.id
+      });
+      res.json(environmentConfig);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/environment-config", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const environmentConfig = await storage.getEnvironmentConfig(config.id);
+      res.json(environmentConfig || {});
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // AI Configuration API
+  app.post("/api/ai-configuration", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const aiConfig = await storage.createAiConfiguration({
+        ...req.body,
+        configId: config.id
+      });
+      res.json(aiConfig);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/ai-configuration", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const aiConfig = await storage.getAiConfiguration(config.id);
+      res.json(aiConfig || {});
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
