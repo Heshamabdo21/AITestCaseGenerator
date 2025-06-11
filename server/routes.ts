@@ -100,6 +100,49 @@ async function getOrCreateTestSuite(
   }
 }
 
+// Helper function to get the root test suite (for when test suite creation is disabled)
+async function getRootTestSuite(
+  organizationUrl: string,
+  project: string,
+  testPlanId: string,
+  authHeader: string
+): Promise<{ id: number; name: string } | null> {
+  try {
+    const suitesApiUrl = `${organizationUrl}/${project}/_apis/testplan/Plans/${testPlanId}/suites?api-version=7.0`;
+    
+    const suitesResponse = await fetch(suitesApiUrl, {
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!suitesResponse.ok) {
+      console.log(`Failed to fetch suites for test plan ${testPlanId}. Status: ${suitesResponse.status}`);
+      return null;
+    }
+
+    const suitesData = await suitesResponse.json();
+    const existingSuites = suitesData.value || [];
+    
+    // Find the root suite
+    const rootSuite = existingSuites.find((suite: any) => 
+      suite.suiteType === 'StaticTestSuite' && (suite.name === 'Root Suite' || suite.parentSuite === null)
+    ) || existingSuites[0];
+
+    if (rootSuite) {
+      console.log(`Using root test suite: ${rootSuite.name} (ID: ${rootSuite.id})`);
+      return { id: rootSuite.id, name: rootSuite.name };
+    }
+
+    console.log(`No root suite found in test plan ${testPlanId}`);
+    return null;
+  } catch (error) {
+    console.log(`Error in getRootTestSuite: ${error}`);
+    return null;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure multer for file uploads
   const upload = multer({ 
@@ -799,19 +842,40 @@ For each test case, provide the following in JSON format:
               try {
                 console.log(`Attempting to add test case ${azureTestCase.id} to test plan ${config.testPlanId}`);
                 
-                // Determine suite name based on user story or test case type
-                const suiteName = userStory ? 
-                  `${userStory.title} (ID: ${userStory.azureId})` : 
-                  `Test Cases - ${testCase.testType || 'General'}`;
+                // Determine suite name based on configuration strategy
+                let suiteName = 'Test Cases';
                 
-                // Get or create appropriate test suite
-                const targetSuite = await getOrCreateTestSuite(
-                  config.organizationUrl,
-                  config.project,
-                  config.testPlanId,
-                  suiteName,
-                  authHeader
-                );
+                if (config.createTestSuites && config.testSuiteStrategy) {
+                  switch (config.testSuiteStrategy) {
+                    case 'user_story':
+                      suiteName = userStory ? 
+                        `${userStory.title} (ID: ${userStory.azureId})` : 
+                        'General Test Cases';
+                      break;
+                    case 'test_type':
+                      suiteName = `${testCase.testType || 'Functional'} Tests`;
+                      break;
+                    case 'single':
+                      suiteName = 'Generated Test Cases';
+                      break;
+                  }
+                }
+                
+                // Get or create appropriate test suite (or use root if disabled)
+                const targetSuite = config.createTestSuites ? 
+                  await getOrCreateTestSuite(
+                    config.organizationUrl,
+                    config.project,
+                    config.testPlanId,
+                    suiteName,
+                    authHeader
+                  ) :
+                  await getRootTestSuite(
+                    config.organizationUrl,
+                    config.project,
+                    config.testPlanId,
+                    authHeader
+                  );
                 
                 if (targetSuite) {
                   console.log(`Using suite ${targetSuite.id} (${targetSuite.name}) for test case assignment`);

@@ -75,6 +75,8 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
         iterationPath: (existingConfig as any).iterationPath || "",
         testPlanId: (existingConfig as any).testPlanId || "",
         testPlanName: (existingConfig as any).testPlanName || "",
+        testSuiteStrategy: (existingConfig as any).testSuiteStrategy || "user_story",
+        createTestSuites: (existingConfig as any).createTestSuites !== undefined ? (existingConfig as any).createTestSuites : true,
         openaiKey: (existingConfig as any).openaiKey || "",
       });
       setConnectionStatus('success');
@@ -406,6 +408,42 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
                   </Button>
                 )}
               </div>
+            </div>
+
+            <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <h4 className="font-medium text-gray-900">Test Suite Management</h4>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="createTestSuites"
+                  checked={form.watch("createTestSuites")}
+                  onCheckedChange={(checked) => form.setValue("createTestSuites", checked as boolean)}
+                />
+                <Label htmlFor="createTestSuites" className="text-sm font-medium">
+                  Automatically create and organize test suites
+                </Label>
+              </div>
+              
+              {form.watch("createTestSuites") && (
+                <div>
+                  <Label htmlFor="testSuiteStrategy">Test Suite Organization Strategy</Label>
+                  <Select onValueChange={(value) => form.setValue("testSuiteStrategy", value as "user_story" | "test_type" | "single")} value={form.watch("testSuiteStrategy")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select organization strategy..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user_story">Group by User Story</SelectItem>
+                      <SelectItem value="test_type">Group by Test Type</SelectItem>
+                      <SelectItem value="single">Single Suite for All</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {form.watch("testSuiteStrategy") === "user_story" && "Creates separate test suites for each user story"}
+                    {form.watch("testSuiteStrategy") === "test_type" && "Creates test suites based on test case types (Functional, Security, etc.)"}
+                    {form.watch("testSuiteStrategy") === "single" && "Places all test cases in the root suite"}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
