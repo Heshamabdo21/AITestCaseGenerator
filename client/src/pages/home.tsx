@@ -7,6 +7,7 @@ import { TestDataPanel } from "@/components/test-data-panel";
 import { EnvironmentPanel } from "@/components/environment-panel";
 import { UnifiedAiConfiguration } from "@/components/unified-ai-configuration";
 import { CsvImportPanel } from "@/components/csv-import-panel";
+import { DemoBanner } from "@/components/demo-banner";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ export default function Home() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        <DemoBanner />
         <WorkflowProgress currentStep={currentStep} onReset={handleReset} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
