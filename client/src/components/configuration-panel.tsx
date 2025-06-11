@@ -144,13 +144,26 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
     },
     onSuccess: (testPlanList) => {
       setTestPlans(testPlanList);
+      toast({
+        title: "Test Plans Loaded",
+        description: `Found ${testPlanList.length} test plans`,
+      });
     },
     onError: (error: any) => {
-      toast({
-        title: "Failed to Fetch Test Plans",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Handle the specific case when no Azure DevOps configuration exists
+      if (error.message.includes("No Azure DevOps configuration found")) {
+        toast({
+          title: "Configuration Required",
+          description: "Please save your Azure DevOps configuration first before loading test plans.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Failed to Fetch Test Plans",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -363,10 +376,15 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
                   variant="outline"
                   size="sm"
                   onClick={() => fetchTestPlansMutation.mutate()}
-                  disabled={fetchTestPlansMutation.isPending}
+                  disabled={fetchTestPlansMutation.isPending || !existingConfig}
                 >
                   {fetchTestPlansMutation.isPending ? "Loading..." : "Load Test Plans"}
                 </Button>
+                {!existingConfig && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Save configuration first to load test plans
+                  </p>
+                )}
                 {form.watch("testPlanId") && form.watch("testPlanId") !== "none" && (
                   <Button
                     type="button"
