@@ -160,21 +160,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json([]);
       }
 
-      // Now fetch the actual work items with their details including acceptance criteria
-      const fieldsToExpand = [
-        'System.Title',
-        'System.Description', 
-        'System.State',
-        'System.AssignedTo',
-        'System.CreatedDate',
-        'System.Tags',
-        'Microsoft.VSTS.Common.Priority',
-        'Microsoft.VSTS.Common.AcceptanceCriteria',
-        'Microsoft.VSTS.Common.UserAcceptanceCriteria',
-        'System.AcceptanceCriteria'
-      ].join(',');
-      
-      const apiUrl = `${config.organizationUrl}/${config.project}/_apis/wit/workitems?ids=${workItemIds.slice(0, 50).join(',')}&api-version=7.0&$expand=All&fields=${fieldsToExpand}`;
+      // Now fetch the actual work items with their details
+      const apiUrl = `${config.organizationUrl}/${config.project}/_apis/wit/workitems?ids=${workItemIds.slice(0, 50).join(',')}&api-version=7.0&$expand=All`;
       
       console.log(`Fetching work items from: ${apiUrl}`);
       
@@ -186,7 +173,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (!response.ok) {
-        throw new Error(`Azure DevOps API error: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`Azure DevOps API error: ${response.status} ${response.statusText}`);
+        console.error(`Error details: ${errorText}`);
+        console.error(`Request URL: ${apiUrl}`);
+        throw new Error(`Azure DevOps API error: ${response.status} ${response.statusText}. Details: ${errorText}`);
       }
 
       const data = await response.json();
