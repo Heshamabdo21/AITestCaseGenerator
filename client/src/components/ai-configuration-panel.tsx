@@ -13,6 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 
 const aiConfigurationSchema = z.object({
   includePositiveTests: z.boolean().default(true),
+  includeNegativeTests: z.boolean().default(true),
   includeEdgeCases: z.boolean().default(true),
   includeSecurityCases: z.boolean().default(false),
   testComplexity: z.enum(["simple", "medium", "complex"]).default("medium"),
@@ -29,6 +30,7 @@ export function AiConfigurationPanel() {
     resolver: zodResolver(aiConfigurationSchema),
     defaultValues: {
       includePositiveTests: true,
+      includeNegativeTests: true,
       includeEdgeCases: true,
       includeSecurityCases: false,
       testComplexity: "medium",
@@ -93,6 +95,29 @@ export function AiConfigurationPanel() {
                       </FormLabel>
                       <p className="text-sm text-muted-foreground">
                         Generate test cases for expected valid scenarios
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="includeNegativeTests"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Include Negative Test Cases
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Generate test cases for invalid inputs and error scenarios
                       </p>
                     </div>
                   </FormItem>

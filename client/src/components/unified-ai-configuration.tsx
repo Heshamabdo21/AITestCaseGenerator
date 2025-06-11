@@ -192,6 +192,15 @@ export function UnifiedAiConfiguration() {
               
               <div className="flex items-center space-x-2">
                 <Checkbox
+                  id="includeNegativeTests"
+                  checked={form.watch("includeNegativeTests")}
+                  onCheckedChange={(checked) => form.setValue("includeNegativeTests", !!checked)}
+                />
+                <Label htmlFor="includeNegativeTests">Include Negative Test Cases</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
                   id="includeEdgeCases"
                   checked={form.watch("includeEdgeCases")}
                   onCheckedChange={(checked) => form.setValue("includeEdgeCases", !!checked)}

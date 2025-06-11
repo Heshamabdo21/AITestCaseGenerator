@@ -75,6 +75,7 @@ export const aiConfigurations = pgTable("ai_configurations", {
   id: serial("id").primaryKey(),
   configId: integer("config_id").references(() => azureConfigs.id),
   includePositiveTests: boolean("include_positive_tests").default(true),
+  includeNegativeTests: boolean("include_negative_tests").default(true),
   includeEdgeCases: boolean("include_edge_cases").default(true),
   includeSecurityCases: boolean("include_security_cases").default(false),
   testComplexity: text("test_complexity").default("medium"), // simple, medium, complex
