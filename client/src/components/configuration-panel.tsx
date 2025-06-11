@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { EyeIcon, EyeOffIcon, Settings, Brain } from "lucide-react";
+import { EyeIcon, EyeOffIcon, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -376,59 +376,6 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
               </AlertDescription>
             </Alert>
           )}
-        </CardContent>
-      </Card>
-
-      {/* AI Configuration Panel */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Brain className="h-5 w-5 text-blue-600" />
-            <span>AI Configuration</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="testCaseStyle">Test Case Style</Label>
-            <Select defaultValue="step-by-step">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gherkin">Gherkin (BDD)</SelectItem>
-                <SelectItem value="step-by-step">Step-by-step</SelectItem>
-                <SelectItem value="scenario-based">Scenario-based</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="coverageLevel">Coverage Level</Label>
-            <Select defaultValue="standard">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="comprehensive">Comprehensive</SelectItem>
-                <SelectItem value="standard">Standard</SelectItem>
-                <SelectItem value="minimal">Minimal</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox id="includeNegative" defaultChecked />
-            <Label htmlFor="includeNegative" className="text-sm">
-              Include negative test cases
-            </Label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox id="includePerformance" />
-            <Label htmlFor="includePerformance" className="text-sm">
-              Generate performance tests
-            </Label>
-          </div>
         </CardContent>
       </Card>
     </div>
