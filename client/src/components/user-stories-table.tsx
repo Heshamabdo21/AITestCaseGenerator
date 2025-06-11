@@ -145,9 +145,10 @@ export function UserStoriesTable({ onStoriesSelect }: UserStoriesTableProps) {
           <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-muted/50 rounded-lg font-medium text-sm">
             <div className="col-span-1">Select</div>
             <div className="col-span-1">ID</div>
-            <div className="col-span-4">Title</div>
-            <div className="col-span-2">Priority</div>
-            <div className="col-span-2">State</div>
+            <div className="col-span-3">Title</div>
+            <div className="col-span-3">Acceptance Criteria</div>
+            <div className="col-span-1">Priority</div>
+            <div className="col-span-1">State</div>
             <div className="col-span-2">Actions</div>
           </div>
 
@@ -167,7 +168,7 @@ export function UserStoriesTable({ onStoriesSelect }: UserStoriesTableProps) {
                   {story.azureId}
                 </Badge>
               </div>
-              <div className="col-span-4 flex items-center">
+              <div className="col-span-3 flex items-center">
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate" title={story.title || undefined}>
                     {story.title}
@@ -177,12 +178,19 @@ export function UserStoriesTable({ onStoriesSelect }: UserStoriesTableProps) {
                   </p>
                 </div>
               </div>
-              <div className="col-span-2 flex items-center">
+              <div className="col-span-3 flex items-center">
+                <div className="min-w-0 w-full">
+                  <p className="text-xs text-muted-foreground line-clamp-2" title={cleanAcceptanceCriteria(story.acceptanceCriteria)}>
+                    {cleanAcceptanceCriteria(story.acceptanceCriteria)}
+                  </p>
+                </div>
+              </div>
+              <div className="col-span-1 flex items-center">
                 <Badge variant={getPriorityColor(story.priority)}>
                   {getPriorityText(story.priority)}
                 </Badge>
               </div>
-              <div className="col-span-2 flex items-center">
+              <div className="col-span-1 flex items-center">
                 <Badge variant="secondary">
                   {story.state || "Unknown"}
                 </Badge>

@@ -160,8 +160,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json([]);
       }
 
-      // Now fetch the actual work items with their details
-      const apiUrl = `${config.organizationUrl}/${config.project}/_apis/wit/workitems?ids=${workItemIds.slice(0, 50).join(',')}&api-version=7.0&$expand=All`;
+      // Now fetch the actual work items with their details including acceptance criteria
+      const fieldsToExpand = [
+        'System.Title',
+        'System.Description', 
+        'System.State',
+        'System.AssignedTo',
+        'System.CreatedDate',
+        'System.Tags',
+        'Microsoft.VSTS.Common.Priority',
+        'Microsoft.VSTS.Common.AcceptanceCriteria',
+        'Microsoft.VSTS.Common.UserAcceptanceCriteria',
+        'System.AcceptanceCriteria'
+      ].join(',');
+      
+      const apiUrl = `${config.organizationUrl}/${config.project}/_apis/wit/workitems?ids=${workItemIds.slice(0, 50).join(',')}&api-version=7.0&$expand=All&fields=${fieldsToExpand}`;
       
       console.log(`Fetching work items from: ${apiUrl}`);
       
@@ -184,9 +197,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const item of workItems) {
         const tags = item.fields["System.Tags"] ? item.fields["System.Tags"].split(";").map(t => t.trim()) : [];
         
-        // Extract acceptance criteria from the description or dedicated field
+        // Extract acceptance criteria from multiple possible fields
         const acceptanceCriteria = item.fields["Microsoft.VSTS.Common.AcceptanceCriteria"] || 
-                                 item.fields["System.Description"] || 
+                                 item.fields["Microsoft.VSTS.Common.UserAcceptanceCriteria"] ||
+                                 item.fields["System.AcceptanceCriteria"] ||
+                                 (item.fields["System.Description"] && item.fields["System.Description"].includes("AC") ? item.fields["System.Description"] : "") ||
                                  "";
         
         const userStory = await storage.upsertUserStory({
