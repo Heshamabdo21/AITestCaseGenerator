@@ -137,6 +137,7 @@ export type AzureWorkItem = {
   fields: {
     "System.Title": string;
     "System.Description"?: string;
+    "Microsoft.VSTS.Common.AcceptanceCriteria"?: string;
     "System.State": string;
     "System.AssignedTo"?: {
       displayName: string;

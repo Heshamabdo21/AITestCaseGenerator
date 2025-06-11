@@ -93,6 +93,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fetch iteration paths from Azure DevOps
+  app.post("/api/azure-devops/iterations", async (req, res) => {
+    try {
+      const { organizationUrl, patToken, project } = req.body;
+      
+      if (!organizationUrl || !patToken || !project) {
+        return res.status(400).json({ message: "Missing required parameters" });
+      }
+
+      const apiUrl = `${organizationUrl}/${project}/_apis/work/teamsettings/iterations?api-version=7.0`;
+      const authHeader = `Basic ${Buffer.from(`:${patToken}`).toString('base64')}`;
+      
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Azure DevOps API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      res.json(data.value || []);
+    } catch (error: any) {
+      res.status(400).json({ message: `Failed to fetch iteration paths: ${error.message}` });
+    }
+  });
+
   // Fetch user stories from Azure DevOps
   app.get("/api/user-stories", async (req, res) => {
     try {
@@ -156,11 +186,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const item of workItems) {
         const tags = item.fields["System.Tags"] ? item.fields["System.Tags"].split(";").map(t => t.trim()) : [];
         
+        // Extract acceptance criteria from the description or dedicated field
+        const acceptanceCriteria = item.fields["Microsoft.VSTS.Common.AcceptanceCriteria"] || 
+                                 item.fields["System.Description"] || 
+                                 "";
+        
         const userStory = await storage.createUserStory({
           azureId: item.id.toString(),
           title: item.fields["System.Title"],
           description: item.fields["System.Description"] || "",
-          acceptanceCriteria: item.fields["System.Description"] || "",
+          acceptanceCriteria,
           state: item.fields["System.State"],
           assignedTo: item.fields["System.AssignedTo"]?.displayName || "",
           priority: item.fields["Microsoft.VSTS.Common.Priority"]?.toString() || "Medium",
@@ -220,6 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 Title: ${story.title}
 Description: ${story.description}
+Acceptance Criteria: ${story.acceptanceCriteria}
 Priority: ${story.priority}
 
 Requirements:
@@ -496,6 +532,81 @@ For each test case, provide the following in JSON format:
 
       const aiConfig = await storage.getAiConfiguration(config.id);
       res.json(aiConfig || {});
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Update configuration endpoints
+  app.patch("/api/test-data-config", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const updated = await storage.updateTestDataConfig(config.id, req.body);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/environment-config", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const updated = await storage.updateEnvironmentConfig(config.id, req.body);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/ai-configuration", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const updated = await storage.updateAiConfiguration(config.id, req.body);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // AI Context API
+  app.post("/api/ai-context", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const aiContext = await storage.createOrUpdateAiContext({
+        ...req.body,
+        configId: config.id
+      });
+      res.json(aiContext);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/ai-context", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const aiContext = await storage.getAiContext(config.id);
+      res.json(aiContext || {});
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
