@@ -296,12 +296,12 @@ export class DatabaseStorage implements IStorage {
   // AI Context methods
   async createOrUpdateAiContext(context: InsertAiContext): Promise<AiContext> {
     this.checkDatabase();
-    const existing = await db.select().from(aiContext).where(eq(aiContext.configId, context.configId)).limit(1);
+    const existing = await db.select().from(aiContext).where(eq(aiContext.configId, context.configId!)).limit(1);
     
     if (existing.length > 0) {
       const [result] = await db.update(aiContext)
         .set(context)
-        .where(eq(aiContext.configId, context.configId))
+        .where(eq(aiContext.configId, context.configId!))
         .returning();
       return result;
     } else {
@@ -312,8 +312,8 @@ export class DatabaseStorage implements IStorage {
 
   async getAiContext(configId: number): Promise<AiContext | undefined> {
     this.checkDatabase();
-    const [result] = await db.select().from(aiContext).where(eq(aiContext.configId, configId));
-    return result || undefined;
+    const results = await db.select().from(aiContext).where(eq(aiContext.configId, configId));
+    return results[0] || undefined;
   }
 
   // Test Data Config methods
