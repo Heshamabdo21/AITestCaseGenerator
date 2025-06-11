@@ -351,6 +351,15 @@ export function TestCasesSection() {
                               placeholder="Enter test password for execution"
                             />
                           </div>
+                          <div>
+                            <Label htmlFor="requiredPermissions">Required Permissions</Label>
+                            <Textarea 
+                              id="requiredPermissions" 
+                              defaultValue={testCase.requiredPermissions || ''} 
+                              placeholder="Enter required permissions for test execution (e.g., admin, read-write, user-management)"
+                              rows={3}
+                            />
+                          </div>
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -396,6 +405,15 @@ export function TestCasesSection() {
                         <span className="text-sm font-medium text-gray-900">Test Password:</span>
                         <p className="text-sm text-gray-700 mt-1 font-mono bg-gray-100 px-2 py-1 rounded">
                           {testCase.testPassword}
+                        </p>
+                      </div>
+                    )}
+
+                    {testCase.requiredPermissions && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">Required Permissions:</span>
+                        <p className="text-sm text-gray-700 mt-1 whitespace-pre-line bg-blue-50 px-3 py-2 rounded border-l-4 border-blue-400">
+                          {testCase.requiredPermissions}
                         </p>
                       </div>
                     )}

@@ -41,6 +41,7 @@ export const testCases = pgTable("test_cases", {
   testSteps: text("test_steps").notNull(),
   expectedResult: text("expected_result").notNull(),
   testPassword: text("test_password"), // Password for test execution
+  requiredPermissions: text("required_permissions"), // Required permissions for test execution
   priority: text("priority").notNull(),
   testType: text("test_type").notNull().default("web"), // web, api, mobile
   status: text("status").notNull().default("pending"), // pending, approved, rejected

@@ -122,6 +122,7 @@ export function convertCsvToTestCases(csvTestCases: CsvTestCase[], userStoryId: 
       testSteps: testSteps.length > 0 ? testSteps.join('\n') : 'Execute the test scenario as described',
       expectedResult: expectedResult || 'Test should complete successfully according to specified criteria',
       testPassword: null, // Will be set by user or derived from test data config
+      requiredPermissions: 'read-write, basic-user', // Default permissions for imported test cases
       priority: steps[0]?.state === 'Design' ? 'High' : 'Medium',
       testType: 'web',
       status: 'pending',
@@ -167,7 +168,8 @@ ADDITIONAL VALIDATIONS:
 ✓ Performance meets acceptable standards
 ✓ Security measures are enforced
 ✓ User experience is optimized`,
-    testPassword: baseTestCase.testPassword // Inherit from base test case
+    testPassword: baseTestCase.testPassword, // Inherit from base test case
+    requiredPermissions: baseTestCase.requiredPermissions // Inherit permissions
   };
   
   // Create comprehensive negative test case
@@ -201,7 +203,8 @@ ${baseTestCase.testSteps}`,
 ✓ Security measures prevent malicious activities
 ✓ Data integrity is maintained during failures
 ✓ Graceful degradation occurs when needed`,
-    testPassword: baseTestCase.testPassword // Inherit from base test case
+    testPassword: baseTestCase.testPassword, // Inherit from base test case
+    requiredPermissions: baseTestCase.requiredPermissions // Inherit permissions
   };
   
   enhancedCases.push(positiveCase, negativeCase);

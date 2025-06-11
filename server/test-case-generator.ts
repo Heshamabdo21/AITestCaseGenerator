@@ -643,6 +643,30 @@ export function generateSeparateTestCases(
 ✓ No browser-specific bugs or rendering issues exist`;
     }
 
+    // Generate required permissions based on test type and test data config
+    let requiredPermissions = '';
+    if (testDataConfig?.permissions && Array.isArray(testDataConfig.permissions)) {
+      requiredPermissions = testDataConfig.permissions.join(', ');
+    } else {
+      // Default permissions based on test type
+      switch (testType.type) {
+        case 'Security':
+          requiredPermissions = 'admin, security-admin, audit-read';
+          break;
+        case 'Performance':
+          requiredPermissions = 'read-write, performance-monitor';
+          break;
+        case 'API':
+          requiredPermissions = 'api-access, read-write';
+          break;
+        case 'Negative':
+          requiredPermissions = 'read-write, error-simulation';
+          break;
+        default:
+          requiredPermissions = 'read-write, basic-user';
+      }
+    }
+
     testCases.push({
       title: testCaseTitle,
       objective: `${testType.description} - ${objective}`,
@@ -650,6 +674,7 @@ export function generateSeparateTestCases(
       testSteps: testSteps.join('\n'),
       expectedResult,
       testPassword: testDataConfig?.password || null, // Use password from test data config
+      requiredPermissions,
       priority: testType.priority,
       testType: platform,
       status: "pending" as const,
