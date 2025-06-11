@@ -56,6 +56,16 @@ export const api = {
     return safeJsonParse(response);
   },
 
+  async fetchTestPlans(): Promise<Array<{ id: string; name: string; description: string }>> {
+    const response = await apiRequest("GET", "/api/azure/test-plans");
+    return safeJsonParse(response);
+  },
+
+  async fetchIterations(): Promise<Array<{ id: string; name: string; path: string }>> {
+    const response = await apiRequest("GET", "/api/azure/iterations");
+    return safeJsonParse(response);
+  },
+
   // User Stories
   async fetchUserStories(): Promise<UserStory[]> {
     const response = await apiRequest("GET", "/api/user-stories");

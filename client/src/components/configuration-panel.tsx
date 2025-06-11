@@ -49,6 +49,8 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
       patToken: "",
       project: "",
       iterationPath: "",
+      testPlanId: "",
+      testPlanName: "",
       openaiKey: "",
     },
   });
@@ -66,6 +68,8 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
         patToken: (existingConfig as any).patToken || "",
         project: (existingConfig as any).project || "",
         iterationPath: (existingConfig as any).iterationPath || "",
+        testPlanId: (existingConfig as any).testPlanId || "",
+        testPlanName: (existingConfig as any).testPlanName || "",
         openaiKey: (existingConfig as any).openaiKey || "",
       });
       setConnectionStatus('success');
@@ -127,6 +131,23 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
     onError: (error: any) => {
       toast({
         title: "Failed to Fetch Iterations",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Fetch test plans mutation
+  const fetchTestPlansMutation = useMutation({
+    mutationFn: async () => {
+      return api.fetchTestPlans();
+    },
+    onSuccess: (testPlanList) => {
+      setTestPlans(testPlanList);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Fetch Test Plans",
         description: error.message,
         variant: "destructive",
       });
@@ -290,16 +311,53 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
                   <SelectValue placeholder="Select an iteration path..." />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Iterations</SelectItem>
                   {iterations.map((iteration) => (
                     <SelectItem key={iteration.path} value={iteration.path}>
-                      {iteration.name}
+                      {iteration.path}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-gray-600 mt-1">
-                Leave empty to use default iteration path
+                Filter user stories by iteration path when fetching from Azure DevOps
               </p>
+            </div>
+
+            <div>
+              <Label htmlFor="testPlan">Test Plan (Optional)</Label>
+              <Select onValueChange={(value) => {
+                const selectedPlan = testPlans.find(plan => plan.id === value);
+                form.setValue("testPlanId", value);
+                form.setValue("testPlanName", selectedPlan?.name || "");
+              }} value={form.watch("testPlanId")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a test plan..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Test Plan</SelectItem>
+                  {testPlans.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-600 mt-1">
+                Test cases will be automatically added to the selected test plan
+              </p>
+              {form.watch("testPlanId") && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => fetchTestPlansMutation.mutate()}
+                  disabled={fetchTestPlansMutation.isPending}
+                >
+                  Refresh Test Plans
+                </Button>
+              )}
             </div>
 
             <div>

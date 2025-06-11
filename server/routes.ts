@@ -198,7 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const queryUrl = `${config.organizationUrl}/${config.project}/_apis/wit/wiql?api-version=7.0`;
       
       let query = "SELECT [System.Id] FROM WorkItems WHERE [System.WorkItemType] = 'User Story'";
-      if (config.iterationPath) {
+      if (config.iterationPath && config.iterationPath !== 'all' && config.iterationPath.trim() !== '') {
         query += ` AND [System.IterationPath] UNDER '${config.iterationPath}'`;
       }
       query += " ORDER BY [System.CreatedDate] DESC";
@@ -693,7 +693,7 @@ For each test case, provide the following in JSON format:
             }
 
             // Add test case to test plan if configured
-            if (config.testPlanId) {
+            if (config.testPlanId && config.testPlanId !== 'none' && config.testPlanId.trim() !== '') {
               try {
                 const testPlanApiUrl = `${config.organizationUrl}/${config.project}/_apis/testplan/Plans/${config.testPlanId}/suites?api-version=7.0`;
                 
