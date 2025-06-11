@@ -344,7 +344,7 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
             <div>
               <Label htmlFor="testPlan">Test Plan (Optional)</Label>
               <Select onValueChange={(value) => {
-                const selectedPlan = testPlans.find(plan => plan.id === value);
+                const selectedPlan = testPlans.find(plan => String(plan.id) === value);
                 form.setValue("testPlanId", value === "none" ? "" : value);
                 form.setValue("testPlanName", selectedPlan?.name || "");
               }} value={form.watch("testPlanId") || "none"}>
@@ -354,7 +354,7 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
                 <SelectContent>
                   <SelectItem value="none">No Test Plan</SelectItem>
                   {testPlans.map((plan) => (
-                    <SelectItem key={plan.id} value={plan.id}>
+                    <SelectItem key={plan.id} value={String(plan.id)}>
                       {plan.name}
                     </SelectItem>
                   ))}
