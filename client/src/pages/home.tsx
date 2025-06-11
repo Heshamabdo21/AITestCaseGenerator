@@ -26,24 +26,25 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-card shadow-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <i className="fas fa-robot text-white text-lg"></i>
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <Bot className="text-primary-foreground text-lg" size={20} />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">AI Test Case Generator</h1>
-                <p className="text-sm text-gray-600">Powered by Azure DevOps Integration</p>
+                <h1 className="text-xl font-semibold text-foreground">AI Test Case Generator</h1>
+                <p className="text-sm text-muted-foreground">Powered by Azure DevOps Integration</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">test-user@company.com</span>
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                <i className="fas fa-user text-white text-sm"></i>
+              <ModeToggle />
+              <span className="text-sm text-muted-foreground">test-user@company.com</span>
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                <User className="text-primary-foreground text-sm" size={16} />
               </div>
             </div>
           </div>

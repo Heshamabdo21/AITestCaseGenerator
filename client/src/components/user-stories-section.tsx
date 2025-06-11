@@ -153,21 +153,38 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
     }
   };
 
-  if (error) {
+  if (error || (userStories.length === 0 && !isLoading)) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <ListChecks className="h-5 w-5 text-blue-600" />
+            <ListChecks className="h-5 w-5 text-primary" />
             <span>User Stories</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">No user stories found. Please configure Azure DevOps connection first.</p>
-            <Button onClick={() => fetchStoriesMutation.mutate()} disabled={fetchStoriesMutation.isPending}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Fetch User Stories
+          <div className="text-center py-12">
+            <ListChecks className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No User Stories Found</h3>
+            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+              Configure your Azure DevOps connection and fetch user stories to get started with test case generation.
+            </p>
+            <Button 
+              onClick={() => fetchStoriesMutation.mutate()} 
+              disabled={fetchStoriesMutation.isPending}
+              className="flex items-center gap-2"
+            >
+              {fetchStoriesMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                  Fetching...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4" />
+                  Fetch User Stories
+                </>
+              )}
             </Button>
           </div>
         </CardContent>
