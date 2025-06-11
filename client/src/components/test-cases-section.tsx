@@ -21,7 +21,7 @@ export function TestCasesSection() {
   const queryClient = useQueryClient();
 
   // Query for test cases
-  const { data: testCases = [], isLoading } = useQuery({
+  const { data: testCases = [], isLoading } = useQuery<TestCase[]>({
     queryKey: ['/api/test-cases'],
     retry: false,
   });
@@ -85,10 +85,11 @@ export function TestCasesSection() {
   });
 
   const handleSelectAll = () => {
-    if (selectedTestCases.length === testCases.length) {
+    const typedTestCases = testCases as TestCase[];
+    if (selectedTestCases.length === typedTestCases.length) {
       setSelectedTestCases([]);
     } else {
-      setSelectedTestCases(testCases.map((tc: TestCase) => tc.id));
+      setSelectedTestCases(typedTestCases.map((tc) => tc.id));
     }
   };
 
@@ -101,14 +102,15 @@ export function TestCasesSection() {
   };
 
   const handleApproveSelected = () => {
-    const approvedTestCases = testCases.filter((tc: TestCase) => 
+    const typedTestCases = testCases as TestCase[];
+    const approvedTestCases = typedTestCases.filter((tc) => 
       selectedTestCases.includes(tc.id) && tc.status === "approved"
     );
 
     if (approvedTestCases.length === 0) {
       // First approve all selected test cases
       selectedTestCases.forEach(id => {
-        const testCase = testCases.find((tc: TestCase) => tc.id === id);
+        const testCase = typedTestCases.find((tc) => tc.id === id);
         if (testCase && testCase.status === "pending") {
           updateStatusMutation.mutate({ id, status: "approved" });
         }
@@ -148,18 +150,24 @@ export function TestCasesSection() {
     }
   };
 
-  if (testCases.length === 0 && !isLoading) {
+  const typedTestCases = testCases as TestCase[];
+  
+  if (typedTestCases.length === 0 && !isLoading) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <FlaskRound className="h-5 w-5 text-blue-600" />
+            <FlaskRound className="h-5 w-5 text-primary" />
             <span>Generated Test Cases</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <p className="text-gray-600">No test cases generated yet. Generate test cases from user stories first.</p>
+          <div className="text-center py-12">
+            <FlaskRound className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No Test Cases Generated</h3>
+            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+              Select user stories and generate test cases to begin the testing workflow.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -174,7 +182,7 @@ export function TestCasesSection() {
             <FlaskRound className="h-5 w-5 text-blue-600" />
             <CardTitle>Generated Test Cases</CardTitle>
             <Badge className="bg-green-100 text-green-800">
-              {testCases.length} generated
+              {typedTestCases.length} generated
             </Badge>
           </div>
           <div className="flex items-center space-x-3">
@@ -182,7 +190,7 @@ export function TestCasesSection() {
               variant="outline" 
               size="sm"
               onClick={() => exportToExcelMutation.mutate()}
-              disabled={testCases.length === 0 || exportToExcelMutation.isPending}
+              disabled={typedTestCases.length === 0 || exportToExcelMutation.isPending}
             >
               {exportToExcelMutation.isPending ? (
                 <>
@@ -241,7 +249,7 @@ export function TestCasesSection() {
               </div>
             ))
           ) : (
-            testCases.map((testCase: TestCase) => (
+            typedTestCases.map((testCase) => (
               <div
                 key={testCase.id}
                 className={`border border-gray-200 rounded-lg p-5 ${
