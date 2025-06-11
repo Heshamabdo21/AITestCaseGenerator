@@ -70,11 +70,23 @@ export function generateSeparateTestCases(
   
   const criteriaLines = cleanCriteria ? cleanCriteria.split(/AC\d+:/).filter(line => line.trim()) : [];
 
+  // Determine which platforms to generate tests for
+  const platforms = [];
+  if (aiConfig?.enableWebPortalTests) platforms.push('web');
+  if (aiConfig?.enableMobileAppTests) platforms.push('mobile');
+  if (aiConfig?.enableApiTests) platforms.push('api');
+  
+  // If no specific platforms selected, default to web
+  if (platforms.length === 0) platforms.push('web');
+
   for (const testType of testCaseTypes) {
-    const testCaseTitle = `${testType.type} Test Case: ${story.title}`;
-    const objective = story.acceptanceCriteria 
-      ? `${testType.type} testing to verify that the feature meets the following acceptance criteria: ${story.acceptanceCriteria}`
-      : `${testType.type} testing for the functionality described in the user story`;
+    for (const platform of platforms) {
+      const platformLabel = platform === 'web' ? 'Web Portal' : 
+                           platform === 'mobile' ? 'Mobile App' : 'API';
+      const testCaseTitle = `${testType.type} Test Case (${platformLabel}): ${story.title}`;
+      const objective = story.acceptanceCriteria 
+        ? `${testType.type} testing for ${platformLabel} to verify that the feature meets the following acceptance criteria: ${story.acceptanceCriteria}`
+        : `${testType.type} testing for ${platformLabel} functionality described in the user story`;
 
     // Build comprehensive prerequisites
     const prerequisites = [
@@ -129,53 +141,145 @@ export function generateSeparateTestCases(
     let expectedResult = "";
 
     if (testType.type === 'Positive') {
-      testSteps = [
-        "PRECONDITIONS:",
-        "1. Verify user has required permissions for the page/feature under test",
-        "2. Ensure test environment is accessible and stable",
-        "3. Confirm all required services and dependencies are running",
-        "",
-        "TEST EXECUTION STEPS:",
-        "4. Open the specified web browser in the configured environment",
-        "5. Navigate to the application login page",
-        "6. Login using valid test credentials with appropriate user role",
-        "7. Access the main navigation menu/sidebar",
-        "8. Navigate to the target page/module as specified in user story"
-      ];
+      if (platform === 'web') {
+        testSteps = [
+          "PRECONDITIONS:",
+          "1. Verify user has required permissions for the web page/feature under test",
+          "2. Ensure test environment is accessible and stable via web browser",
+          "3. Confirm all required services and dependencies are running",
+          "",
+          "WEB PORTAL TEST EXECUTION STEPS:",
+          "4. Open the specified web browser in the configured environment",
+          "5. Navigate to the web application login page",
+          "6. Login using valid test credentials with appropriate user role",
+          "7. Access the main navigation menu/sidebar in the web portal",
+          "8. Navigate to the target page/module as specified in user story"
+        ];
+      } else if (platform === 'mobile') {
+        testSteps = [
+          "PRECONDITIONS:",
+          "1. Verify user has required permissions for the mobile app feature under test",
+          "2. Ensure mobile device/emulator is properly configured",
+          "3. Confirm mobile app is installed and updated to latest version",
+          "4. Verify network connectivity on mobile device",
+          "",
+          "MOBILE APP TEST EXECUTION STEPS:",
+          "5. Launch the mobile application on the test device",
+          "6. Navigate to the login screen if required",
+          "7. Login using valid test credentials with appropriate user role",
+          "8. Access the main navigation (menu, tabs, or drawer)",
+          "9. Navigate to the target screen/feature as specified in user story"
+        ];
+      } else if (platform === 'api') {
+        testSteps = [
+          "PRECONDITIONS:",
+          "1. Verify API endpoints are accessible and properly configured",
+          "2. Ensure test environment has valid API authentication tokens",
+          "3. Confirm all required API services and dependencies are running",
+          "4. Set up API testing tools (Postman, curl, or automated scripts)",
+          "",
+          "API TEST EXECUTION STEPS:",
+          "5. Authenticate with the API using valid credentials/tokens",
+          "6. Prepare valid request payloads according to API documentation",
+          "7. Send API requests to the endpoints specified in user story",
+          "8. Validate response status codes and response structure",
+          "9. Verify response data matches expected business logic"
+        ];
+      }
       
-      let stepNumber = 9;
+      let stepNumber = platform === 'api' ? 10 : (platform === 'mobile' ? 10 : 9);
       if (criteriaLines.length > 0) {
         criteriaLines.forEach((criteria) => {
           if (criteria.trim()) {
-            testSteps.push(`${stepNumber}. Execute action: ${criteria.trim().replace(/\s+/g, ' ')}`);
-            testSteps.push(`${stepNumber + 1}. Verify the action completes successfully and UI responds correctly`);
+            if (platform === 'api') {
+              testSteps.push(`${stepNumber}. Execute API call: ${criteria.trim().replace(/\s+/g, ' ')}`);
+              testSteps.push(`${stepNumber + 1}. Verify API response is successful and data structure is correct`);
+            } else if (platform === 'mobile') {
+              testSteps.push(`${stepNumber}. Perform mobile action: ${criteria.trim().replace(/\s+/g, ' ')}`);
+              testSteps.push(`${stepNumber + 1}. Verify the mobile interface responds correctly`);
+            } else {
+              testSteps.push(`${stepNumber}. Execute web action: ${criteria.trim().replace(/\s+/g, ' ')}`);
+              testSteps.push(`${stepNumber + 1}. Verify the action completes successfully and UI responds correctly`);
+            }
             stepNumber += 2;
           }
         });
       } else {
-        testSteps.push(`${stepNumber}. Perform the main functionality described in the user story`);
-        testSteps.push(`${stepNumber + 1}. Verify all page elements load correctly`);
-        testSteps.push(`${stepNumber + 2}. Confirm data is displayed in the expected format`);
-        testSteps.push(`${stepNumber + 3}. Test all interactive elements (buttons, links, forms)`);
+        if (platform === 'api') {
+          testSteps.push(`${stepNumber}. Execute the main API functionality described in the user story`);
+          testSteps.push(`${stepNumber + 1}. Verify API response status codes are correct`);
+          testSteps.push(`${stepNumber + 2}. Confirm response data structure matches API documentation`);
+          testSteps.push(`${stepNumber + 3}. Validate response data against business rules`);
+        } else if (platform === 'mobile') {
+          testSteps.push(`${stepNumber}. Perform the main mobile functionality described in the user story`);
+          testSteps.push(`${stepNumber + 1}. Verify all mobile screen elements load correctly`);
+          testSteps.push(`${stepNumber + 2}. Confirm data is displayed in mobile-optimized format`);
+          testSteps.push(`${stepNumber + 3}. Test all touch interactions and gestures`);
+        } else {
+          testSteps.push(`${stepNumber}. Perform the main web functionality described in the user story`);
+          testSteps.push(`${stepNumber + 1}. Verify all page elements load correctly`);
+          testSteps.push(`${stepNumber + 2}. Confirm data is displayed in the expected format`);
+          testSteps.push(`${stepNumber + 3}. Test all interactive elements (buttons, links, forms)`);
+        }
       }
       
       testSteps.push("", "VALIDATION STEPS:");
-      testSteps.push(`${stepNumber + 4}. Verify page title and headers are displayed correctly`);
-      testSteps.push(`${stepNumber + 5}. Confirm all required columns/fields are present`);
-      testSteps.push(`${stepNumber + 6}. Test search functionality if applicable`);
-      testSteps.push(`${stepNumber + 7}. Verify data filtering and sorting work correctly`);
-      testSteps.push(`${stepNumber + 8}. Test multi-language support if required`);
+      if (platform === 'api') {
+        testSteps.push(`${stepNumber + 4}. Verify API response headers are correct`);
+        testSteps.push(`${stepNumber + 5}. Confirm all required response fields are present`);
+        testSteps.push(`${stepNumber + 6}. Test error handling for invalid requests`);
+        testSteps.push(`${stepNumber + 7}. Verify data consistency across API calls`);
+        testSteps.push(`${stepNumber + 8}. Test API rate limiting if applicable`);
+      } else if (platform === 'mobile') {
+        testSteps.push(`${stepNumber + 4}. Verify mobile screen orientation handling`);
+        testSteps.push(`${stepNumber + 5}. Confirm all required mobile UI elements are present`);
+        testSteps.push(`${stepNumber + 6}. Test pull-to-refresh functionality if applicable`);
+        testSteps.push(`${stepNumber + 7}. Verify offline/online mode transitions`);
+        testSteps.push(`${stepNumber + 8}. Test multi-language support on mobile`);
+      } else {
+        testSteps.push(`${stepNumber + 4}. Verify page title and headers are displayed correctly`);
+        testSteps.push(`${stepNumber + 5}. Confirm all required columns/fields are present`);
+        testSteps.push(`${stepNumber + 6}. Test search functionality if applicable`);
+        testSteps.push(`${stepNumber + 7}. Verify data filtering and sorting work correctly`);
+        testSteps.push(`${stepNumber + 8}. Test multi-language support if required`);
+      }
       
-      expectedResult = `POSITIVE TEST EXPECTED RESULTS:
-✓ User successfully accesses the page with proper permissions
+      if (platform === 'api') {
+        expectedResult = `API POSITIVE TEST EXPECTED RESULTS:
+✓ API authentication is successful with valid credentials
+✓ API endpoints respond with correct HTTP status codes (200, 201, etc.)
+✓ Response data structure matches API documentation specifications
+✓ All required response fields are present and correctly formatted
+✓ API response times are within acceptable limits (< 500ms)
+✓ Data returned follows business logic and validation rules
+✓ Error handling works correctly for invalid requests
+✓ API rate limiting functions as designed
+✓ No server errors or exceptions occur during normal operation`;
+      } else if (platform === 'mobile') {
+        expectedResult = `MOBILE APP POSITIVE TEST EXPECTED RESULTS:
+✓ Mobile app launches successfully on target device
+✓ User authentication works correctly on mobile interface
+✓ All mobile screens load completely with correct title: "${story.title}"
+✓ Mobile UI elements render correctly and are touch-responsive
+✓ Data is displayed in mobile-optimized format
+✓ Touch interactions and gestures work appropriately
+✓ Screen orientation changes are handled correctly
+✓ Pull-to-refresh functionality works as expected
+✓ Offline/online mode transitions function correctly
+✓ Mobile-specific features work without crashes
+✓ App performance is acceptable on target devices`;
+      } else {
+        expectedResult = `WEB PORTAL POSITIVE TEST EXPECTED RESULTS:
+✓ User successfully accesses the web page with proper permissions
 ✓ Page loads completely with correct title: "${story.title}"
-✓ All UI elements render correctly and are functional
+✓ All web UI elements render correctly and are functional
 ✓ Data is displayed in the correct format and structure
 ✓ All interactive elements respond appropriately
 ✓ Search and filtering functions work as expected
 ✓ Multi-language support functions correctly (Arabic/English)
 ✓ No errors or exceptions occur during normal operation
-✓ System performance meets acceptable standards`;
+✓ Web page performance meets acceptable standards`;
+      }
       
     } else if (testType.type === 'Negative') {
       testSteps = [
@@ -540,16 +644,18 @@ export function generateSeparateTestCases(
     }
 
     testCases.push({
-      title: `${testType.type} Test Case: ${story.title}`,
+      title: testCaseTitle,
       objective: `${testType.description} - ${objective}`,
       prerequisites: prerequisites.join('\n'),
       testSteps: testSteps.join('\n'),
       expectedResult,
       priority: testType.priority,
+      testType: platform,
       status: "pending" as const,
       userStoryId: story.id,
       azureTestCaseId: null,
     });
+    }
   }
 
   return testCases;
