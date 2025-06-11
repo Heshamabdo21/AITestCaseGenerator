@@ -544,6 +544,14 @@ For each test case, provide the following in JSON format:
       }
 
       const updated = await storage.updateTestDataConfig(config.id, req.body);
+      if (!updated) {
+        // If no existing config, create a new one
+        const newConfig = await storage.createTestDataConfig({
+          ...req.body,
+          configId: config.id
+        });
+        return res.json(newConfig);
+      }
       res.json(updated);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -558,6 +566,14 @@ For each test case, provide the following in JSON format:
       }
 
       const updated = await storage.updateEnvironmentConfig(config.id, req.body);
+      if (!updated) {
+        // If no existing config, create a new one
+        const newConfig = await storage.createEnvironmentConfig({
+          ...req.body,
+          configId: config.id
+        });
+        return res.json(newConfig);
+      }
       res.json(updated);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
