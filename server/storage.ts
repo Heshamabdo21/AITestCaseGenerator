@@ -462,7 +462,7 @@ export class MemoryStorage implements IStorage {
       assignedTo: story.assignedTo || null,
       priority: story.priority || null,
       createdDate: story.createdDate || null,
-      tags: story.tags || null,
+      tags: Array.isArray(story.tags) ? story.tags : null,
       configId: story.configId || null
     };
     this.data.userStories.set(id, result);
