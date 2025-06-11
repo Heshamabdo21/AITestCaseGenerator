@@ -24,7 +24,7 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
   const queryClient = useQueryClient();
 
   // Query for stored user stories first
-  const { data: userStories = [], isLoading, error } = useQuery({
+  const { data: userStories = [], isLoading, error } = useQuery<UserStory[]>({
     queryKey: ['/api/user-stories/stored'],
     retry: false,
   });
@@ -70,9 +70,9 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
   });
 
   // Get unique states from all stories
-  const availableStates = Array.from(new Set(userStories.map((story: UserStory) => story.state)));
+  const availableStates = Array.from(new Set(userStories.map((story) => story.state)));
 
-  const filteredStories = userStories.filter((story: UserStory) => {
+  const filteredStories = userStories.filter((story) => {
     const matchesSearch = story.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          story.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesState = stateFilter === "all" || story.state.toLowerCase() === stateFilter.toLowerCase();
@@ -107,10 +107,16 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
 
     const request: GenerateTestCaseRequest = {
       userStoryIds: selectedStories,
+      testType: "web",
       style: "step-by-step",
       coverageLevel: "standard",
+      includePositive: true,
       includeNegative: true,
+      includeEdgeCases: true,
+      includeSecurity: false,
       includePerformance: false,
+      includeAccessibility: false,
+      testComplexity: "medium",
     };
 
     generateTestCasesMutation.mutate(request);
@@ -213,9 +219,11 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All States</SelectItem>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
+              {availableStates.map((state) => (
+                <SelectItem key={state} value={state.toLowerCase()}>
+                  {state}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -284,8 +292,8 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
                           {new Date(story.createdDate).toLocaleDateString()}
                         </span>
                       )}
-                      <Badge className={getPriorityColor(story.priority)}>
-                        {story.priority} Priority
+                      <Badge className={getPriorityColor(story.priority || "Medium")}>
+                        {story.priority || "Medium"} Priority
                       </Badge>
                     </div>
                   </div>
@@ -293,8 +301,20 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setSelectedStories([story.id]);
-                      handleGenerateTests();
+                      const request: GenerateTestCaseRequest = {
+                        userStoryIds: [story.id],
+                        testType: "web",
+                        style: "step-by-step",
+                        coverageLevel: "standard",
+                        includePositive: true,
+                        includeNegative: true,
+                        includeEdgeCases: true,
+                        includeSecurity: false,
+                        includePerformance: false,
+                        includeAccessibility: false,
+                        testComplexity: "medium",
+                      };
+                      generateTestCasesMutation.mutate(request);
                     }}
                     disabled={generateTestCasesMutation.isPending}
                   >

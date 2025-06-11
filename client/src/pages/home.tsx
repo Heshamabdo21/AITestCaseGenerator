@@ -5,7 +5,7 @@ import { UserStoriesSection } from "@/components/user-stories-section";
 import { TestCasesSection } from "@/components/test-cases-section";
 import { TestDataPanel } from "@/components/test-data-panel";
 import { EnvironmentPanel } from "@/components/environment-panel";
-import { AiConfigurationPanel } from "@/components/ai-configuration-panel";
+import { UnifiedAiConfiguration } from "@/components/unified-ai-configuration";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Home() {
@@ -62,7 +62,7 @@ export default function Home() {
               
               <TabsContent value="azure" className="space-y-4">
                 <ConfigurationPanel onConfigurationSaved={handleConfigurationSaved} />
-                <AiConfigurationPanel />
+                <UnifiedAiConfiguration />
               </TabsContent>
               
               <TabsContent value="test" className="space-y-4">
