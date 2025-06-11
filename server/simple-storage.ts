@@ -94,7 +94,24 @@ export class SimpleMemoryStorage implements ISimpleStorage {
   
   private nextId = 1;
 
+  // Get memory usage stats for monitoring
+  getMemoryStats() {
+    return {
+      azureConfigs: this.data.azureConfigs.size,
+      userStories: this.data.userStories.size,
+      testCases: this.data.testCases.size,
+      testPlans: this.data.testPlans.size,
+      testSuites: this.data.testSuites.size,
+      totalItems: this.data.azureConfigs.size + this.data.userStories.size + this.data.testCases.size,
+      nextId: this.nextId
+    };
+  }
+
   async createAzureConfig(config: InsertAzureConfig): Promise<AzureConfig> {
+    if (!config.organizationUrl || !config.project) {
+      throw new Error('Organization URL and project are required');
+    }
+    
     const id = this.nextId++;
     const result: AzureConfig = {
       id,
