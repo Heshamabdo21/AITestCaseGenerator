@@ -197,10 +197,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const item of workItems) {
         const tags = item.fields["System.Tags"] ? item.fields["System.Tags"].split(";").map(t => t.trim()) : [];
         
-        // Extract acceptance criteria from multiple possible fields
+        // Extract acceptance criteria from the available field
         const acceptanceCriteria = item.fields["Microsoft.VSTS.Common.AcceptanceCriteria"] || 
-                                 item.fields["Microsoft.VSTS.Common.UserAcceptanceCriteria"] ||
-                                 item.fields["System.AcceptanceCriteria"] ||
                                  (item.fields["System.Description"] && item.fields["System.Description"].includes("AC") ? item.fields["System.Description"] : "") ||
                                  "";
         

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { WorkflowProgress } from "@/components/workflow-progress";
 import { ConfigurationPanel } from "@/components/configuration-panel";
-import { UserStoriesSection } from "@/components/user-stories-section";
+import { EnhancedUserStories } from "@/components/enhanced-user-stories";
 import { TestCasesSection } from "@/components/test-cases-section";
 import { TestDataPanel } from "@/components/test-data-panel";
 import { EnvironmentPanel } from "@/components/environment-panel";
@@ -77,7 +77,7 @@ export default function Home() {
 
           {/* Main Work Area */}
           <div className="lg:col-span-2 space-y-8">
-            <UserStoriesSection onTestCasesGenerated={handleTestCasesGenerated} />
+            <EnhancedUserStories onTestCasesGenerated={handleTestCasesGenerated} />
             <TestCasesSection />
           </div>
         </div>
