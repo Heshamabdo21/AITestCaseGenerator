@@ -462,7 +462,7 @@ export class MemoryStorage implements IStorage {
       assignedTo: story.assignedTo || null,
       priority: story.priority || null,
       createdDate: story.createdDate || null,
-      tags: Array.isArray(story.tags) ? story.tags : null,
+      tags: story.tags as string[] | null,
       configId: story.configId || null
     };
     this.data.userStories.set(id, result);
@@ -472,7 +472,11 @@ export class MemoryStorage implements IStorage {
   async upsertUserStory(story: InsertUserStory): Promise<UserStory> {
     const existing = Array.from(this.data.userStories.values()).find(s => s.azureId === story.azureId);
     if (existing) {
-      const updated = { ...existing, ...story };
+      const updated: UserStory = {
+        ...existing,
+        ...story,
+        tags: story.tags as string[] | null
+      };
       this.data.userStories.set(existing.id, updated);
       return updated;
     }
@@ -776,4 +780,6 @@ export class MemoryStorage implements IStorage {
 }
 
 // Use memory storage as fallback when database is not available
-export const storage = db ? new DatabaseStorage() : new MemoryStorage();
+import { simpleStorage } from './simple-storage';
+
+export const storage = db ? new DatabaseStorage() : simpleStorage;
