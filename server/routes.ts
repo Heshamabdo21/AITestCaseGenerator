@@ -160,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           azureId: item.id.toString(),
           title: item.fields["System.Title"],
           description: item.fields["System.Description"] || "",
-          acceptanceCriteria: item.fields["Microsoft.VSTS.Common.AcceptanceCriteria"] || "",
+          acceptanceCriteria: item.fields["System.Description"] || "",
           state: item.fields["System.State"],
           assignedTo: item.fields["System.AssignedTo"]?.displayName || "",
           priority: item.fields["Microsoft.VSTS.Common.Priority"]?.toString() || "Medium",

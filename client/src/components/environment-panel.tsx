@@ -43,10 +43,7 @@ export function EnvironmentPanel() {
 
   const saveEnvironmentMutation = useMutation({
     mutationFn: async (data: EnvironmentFormData) => {
-      return apiRequest(`/api/environment-config`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return apiRequest(`/api/environment-config`, "POST", data);
     },
     onSuccess: () => {
       toast({

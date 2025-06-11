@@ -42,10 +42,7 @@ export function AiConfigurationPanel() {
 
   const saveAiConfigMutation = useMutation({
     mutationFn: async (data: AiConfigurationFormData) => {
-      return apiRequest(`/api/ai-configuration`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return apiRequest(`/api/ai-configuration`, "POST", data);
     },
     onSuccess: () => {
       toast({

@@ -47,10 +47,7 @@ export function TestDataPanel() {
 
   const saveTestDataMutation = useMutation({
     mutationFn: async (data: TestDataFormData) => {
-      return apiRequest(`/api/test-data-config`, {
-        method: "POST",
-        body: JSON.stringify({ ...data, permissions }),
-      });
+      return apiRequest(`/api/test-data-config`, "POST", { ...data, permissions });
     },
     onSuccess: () => {
       toast({
