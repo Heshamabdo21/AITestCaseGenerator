@@ -33,8 +33,8 @@ export const testCases = pgTable("test_cases", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   objective: text("objective").notNull(),
-  prerequisites: json("prerequisites").$type<string[]>().default([]),
-  testSteps: json("test_steps").$type<string[]>().default([]),
+  prerequisites: text("prerequisites").notNull(),
+  testSteps: text("test_steps").notNull(),
   expectedResult: text("expected_result").notNull(),
   priority: text("priority").notNull(),
   testType: text("test_type").notNull().default("web"), // web, api, mobile
