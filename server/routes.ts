@@ -13,6 +13,93 @@ import OpenAI from "openai";
 import { parseCsvTestCases, convertCsvToTestCases, enhanceImportedTestCase } from "./csv-parser";
 import multer from "multer";
 
+// Helper function to get or create a test suite in Azure DevOps
+async function getOrCreateTestSuite(
+  organizationUrl: string,
+  project: string,
+  testPlanId: string,
+  suiteName: string,
+  authHeader: string
+): Promise<{ id: number; name: string } | null> {
+  try {
+    // First, get all existing suites in the test plan
+    const suitesApiUrl = `${organizationUrl}/${project}/_apis/testplan/Plans/${testPlanId}/suites?api-version=7.0`;
+    
+    const suitesResponse = await fetch(suitesApiUrl, {
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!suitesResponse.ok) {
+      console.log(`Failed to fetch suites for test plan ${testPlanId}. Status: ${suitesResponse.status}`);
+      return null;
+    }
+
+    const suitesData = await suitesResponse.json();
+    const existingSuites = suitesData.value || [];
+    
+    // Look for existing suite with the same name
+    const existingSuite = existingSuites.find((suite: any) => 
+      suite.name === suiteName && suite.suiteType === 'StaticTestSuite'
+    );
+    
+    if (existingSuite) {
+      console.log(`Found existing test suite: ${existingSuite.name} (ID: ${existingSuite.id})`);
+      return { id: existingSuite.id, name: existingSuite.name };
+    }
+
+    // If no existing suite found, create a new one
+    console.log(`Creating new test suite: ${suiteName}`);
+    
+    // Get the root suite to use as parent
+    const rootSuite = existingSuites.find((suite: any) => 
+      suite.suiteType === 'StaticTestSuite' && (suite.name === 'Root Suite' || suite.parentSuite === null)
+    ) || existingSuites[0];
+
+    if (!rootSuite) {
+      console.log(`No root suite found in test plan ${testPlanId}`);
+      return null;
+    }
+
+    // Create new test suite
+    const createSuiteUrl = `${organizationUrl}/${project}/_apis/testplan/Plans/${testPlanId}/suites?api-version=7.0`;
+    
+    const createSuiteBody = {
+      suiteType: 'StaticTestSuite',
+      name: suiteName,
+      parentSuite: {
+        id: rootSuite.id
+      }
+    };
+
+    const createResponse = await fetch(createSuiteUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(createSuiteBody)
+    });
+
+    if (createResponse.ok) {
+      const newSuite = await createResponse.json();
+      console.log(`Successfully created test suite: ${newSuite.name} (ID: ${newSuite.id})`);
+      return { id: newSuite.id, name: newSuite.name };
+    } else {
+      const errorText = await createResponse.text();
+      console.log(`Failed to create test suite. Status: ${createResponse.status}, Error: ${errorText}`);
+      
+      // Fall back to root suite if creation fails
+      return { id: rootSuite.id, name: rootSuite.name };
+    }
+  } catch (error) {
+    console.log(`Error in getOrCreateTestSuite: ${error}`);
+    return null;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure multer for file uploads
   const upload = multer({ 
@@ -711,48 +798,43 @@ For each test case, provide the following in JSON format:
             if (config.testPlanId && config.testPlanId !== 'none' && config.testPlanId.trim() !== '') {
               try {
                 console.log(`Attempting to add test case ${azureTestCase.id} to test plan ${config.testPlanId}`);
-                const testPlanApiUrl = `${config.organizationUrl}/${config.project}/_apis/testplan/Plans/${config.testPlanId}/suites?api-version=7.0`;
                 
-                // First, get the root test suite
-                const suitesResponse = await fetch(testPlanApiUrl, {
-                  headers: {
-                    'Authorization': authHeader,
-                    'Content-Type': 'application/json'
-                  }
-                });
-
-                if (suitesResponse.ok) {
-                  const suitesData = await suitesResponse.json();
-                  console.log(`Found ${suitesData.value?.length || 0} suites in test plan ${config.testPlanId}`);
+                // Determine suite name based on user story or test case type
+                const suiteName = userStory ? 
+                  `${userStory.title} (ID: ${userStory.azureId})` : 
+                  `Test Cases - ${testCase.testType || 'General'}`;
+                
+                // Get or create appropriate test suite
+                const targetSuite = await getOrCreateTestSuite(
+                  config.organizationUrl,
+                  config.project,
+                  config.testPlanId,
+                  suiteName,
+                  authHeader
+                );
+                
+                if (targetSuite) {
+                  console.log(`Using suite ${targetSuite.id} (${targetSuite.name}) for test case assignment`);
                   
-                  const rootSuite = suitesData.value?.find((suite: any) => suite.suiteType === 'StaticTestSuite' && suite.name === 'Root Suite') || suitesData.value?.[0];
+                  // Add test case to the suite
+                  const addTestCaseUrl = `${config.organizationUrl}/${config.project}/_apis/testplan/Plans/${config.testPlanId}/Suites/${targetSuite.id}/TestCase/${azureTestCase.id}?api-version=7.0`;
                   
-                  if (rootSuite) {
-                    console.log(`Using suite ${rootSuite.id} (${rootSuite.name}) for test case assignment`);
-                    
-                    // Add test case to the suite
-                    const addTestCaseUrl = `${config.organizationUrl}/${config.project}/_apis/testplan/Plans/${config.testPlanId}/Suites/${rootSuite.id}/TestCase/${azureTestCase.id}?api-version=7.0`;
-                    
-                    const addTestCaseResponse = await fetch(addTestCaseUrl, {
-                      method: 'POST',
-                      headers: {
-                        'Authorization': authHeader,
-                        'Content-Type': 'application/json'
-                      }
-                    });
-
-                    if (addTestCaseResponse.ok) {
-                      console.log(`Successfully added test case ${azureTestCase.id} to test plan ${config.testPlanId}, suite ${rootSuite.id}`);
-                    } else {
-                      const errorText = await addTestCaseResponse.text();
-                      console.log(`Warning: Could not add test case to test plan. Status: ${addTestCaseResponse.status}, Error: ${errorText}`);
+                  const addTestCaseResponse = await fetch(addTestCaseUrl, {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': authHeader,
+                      'Content-Type': 'application/json'
                     }
+                  });
+
+                  if (addTestCaseResponse.ok) {
+                    console.log(`Successfully added test case ${azureTestCase.id} to test plan ${config.testPlanId}, suite ${targetSuite.id}`);
                   } else {
-                    console.log(`No suitable suite found in test plan ${config.testPlanId}`);
+                    const errorText = await addTestCaseResponse.text();
+                    console.log(`Warning: Could not add test case to test plan. Status: ${addTestCaseResponse.status}, Error: ${errorText}`);
                   }
                 } else {
-                  const errorText = await suitesResponse.text();
-                  console.log(`Failed to fetch suites for test plan ${config.testPlanId}. Status: ${suitesResponse.status}, Error: ${errorText}`);
+                  console.log(`Could not find or create suitable suite in test plan ${config.testPlanId}`);
                 }
               } catch (testPlanError) {
                 console.log("Warning: Could not add test case to test plan:", testPlanError);

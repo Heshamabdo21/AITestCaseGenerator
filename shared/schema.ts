@@ -11,6 +11,8 @@ export const azureConfigs = pgTable("azure_configs", {
   iterationPath: text("iteration_path"), // Optional iteration path for filtering user stories
   testPlanId: text("test_plan_id"), // Optional test plan ID for test case creation
   testPlanName: text("test_plan_name"), // Optional test plan name for display
+  testSuiteStrategy: text("test_suite_strategy").default("user_story"), // "user_story", "test_type", "single"
+  createTestSuites: boolean("create_test_suites").default(true),
   openaiKey: text("openai_key").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

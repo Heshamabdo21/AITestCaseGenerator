@@ -23,6 +23,8 @@ const configSchema = z.object({
   iterationPath: z.string().optional(),
   testPlanId: z.string().optional(),
   testPlanName: z.string().optional(),
+  testSuiteStrategy: z.enum(["user_story", "test_type", "single"]).default("user_story"),
+  createTestSuites: z.boolean().default(true),
   openaiKey: z.string().min(1, "OpenAI API Key is required"),
 });
 
@@ -52,6 +54,8 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
       iterationPath: "",
       testPlanId: "",
       testPlanName: "",
+      testSuiteStrategy: "user_story" as const,
+      createTestSuites: true,
       openaiKey: "",
     },
   });
