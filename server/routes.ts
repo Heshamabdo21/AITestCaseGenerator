@@ -263,14 +263,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: "Draft",
           testType: "Functional",
           userStoryId: story.id,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          azureTestCaseId: null,
+          createdAt: new Date()
         };
 
         generatedTestCases.push(mockTestCase);
       }
 
-      // Skip OpenAI processing for now
+      // Skip OpenAI processing for now - using mock data instead
       /*
       for (const story of userStories) {
         const prompt = `Generate test cases for the following user story:
@@ -334,6 +334,7 @@ For each test case, provide the following in JSON format:
           }
         }
       }
+      */
 
       res.json(generatedTestCases);
     } catch (error: any) {
