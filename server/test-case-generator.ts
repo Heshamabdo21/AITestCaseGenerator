@@ -621,64 +621,101 @@ export function generateSeparateTestCases(
 ✓ System logs security violations appropriately`;
       
     } else if (testType.type === 'Edge Case') {
-      testSteps = [
-        "EDGE CASE TEST EXECUTION:",
-        "1. Set up test environment",
-        "2. Test with minimum boundary values",
-        "3. Test with maximum boundary values",
-        "4. Test with special characters and Unicode",
-        "5. Test with extremely long input strings",
-        "6. Test concurrent user scenarios",
-        "7. Test system behavior at capacity limits"
+      testStepsStructured = [
+        {
+          stepNumber: 1,
+          action: "Set up test environment with edge case test data",
+          expectedResult: "Test environment is configured with boundary and edge case test scenarios"
+        },
+        {
+          stepNumber: 2,
+          action: "Test with minimum boundary values for numeric fields",
+          expectedResult: "System accepts minimum values and processes them correctly without errors"
+        },
+        {
+          stepNumber: 3,
+          action: "Test with maximum boundary values for all input fields",
+          expectedResult: "System handles maximum values appropriately within defined limits"
+        },
+        {
+          stepNumber: 4,
+          action: "Test with special characters and Unicode text input",
+          expectedResult: "System processes special characters correctly and displays Unicode properly"
+        },
+        {
+          stepNumber: 5,
+          action: "Test with extremely long input strings at field limits",
+          expectedResult: "System enforces field length limits and handles long strings gracefully"
+        },
+        {
+          stepNumber: 6,
+          action: "Test concurrent user scenarios with multiple simultaneous actions",
+          expectedResult: "System maintains performance and data integrity under concurrent load"
+        },
+        {
+          stepNumber: 7,
+          action: "Test system behavior at capacity limits and resource constraints",
+          expectedResult: "System degrades gracefully and provides appropriate feedback at capacity limits"
+        }
       ];
+      testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       
       expectedResult = "EDGE CASE EXPECTED RESULTS:\n✓ System handles boundary conditions correctly\n✓ Performance remains acceptable under edge conditions\n✓ No unexpected crashes or errors\n✓ Data integrity is maintained\n✓ User experience remains functional";
       
     } else if (testType.type === 'Security') {
-      testSteps = [
-        "COMPREHENSIVE SECURITY TESTING:",
-        "",
-        "1. AUTHENTICATION SECURITY:",
-        "   - Test password complexity requirements",
-        "   - Verify account lockout mechanisms after failed attempts",
-        "   - Test session timeout functionality",
-        "   - Verify secure password reset procedures",
-        "   - Test multi-factor authentication if implemented",
-        "",
-        "2. AUTHORIZATION TESTING:",
-        "   - Verify role-based access controls (RBAC)",
-        "   - Test horizontal privilege escalation attempts",
-        "   - Test vertical privilege escalation attempts",
-        "   - Verify permission inheritance and delegation",
-        "   - Test access to sensitive data based on user roles",
-        "",
-        "3. INPUT VALIDATION SECURITY:",
-        "   - Test SQL injection in all input fields",
-        "   - Test NoSQL injection attempts",
-        "   - Verify XSS prevention (stored, reflected, DOM-based)",
-        "   - Test command injection vulnerabilities",
-        "   - Test file upload security (if applicable)",
-        "",
-        "4. SESSION MANAGEMENT:",
-        "   - Test session fixation vulnerabilities",
-        "   - Verify secure session token generation",
-        "   - Test concurrent session handling",
-        "   - Verify proper session invalidation on logout",
-        "   - Test session hijacking prevention",
-        "",
-        "5. DATA PROTECTION:",
-        "   - Verify sensitive data encryption at rest",
-        "   - Test data transmission encryption (HTTPS/TLS)",
-        "   - Verify PII (Personal Identifiable Information) protection",
-        "   - Test data masking for unauthorized users",
-        "   - Verify secure data deletion procedures",
-        "",
-        "6. CSRF AND SECURITY HEADERS:",
-        "   - Test Cross-Site Request Forgery protection",
-        "   - Verify security headers (CSP, HSTS, X-Frame-Options)",
-        "   - Test clickjacking protection",
-        "   - Verify referrer policy implementation"
+      testStepsStructured = [
+        {
+          stepNumber: 1,
+          action: "Test password complexity requirements and enforcement",
+          expectedResult: "System enforces strong password policies and rejects weak passwords"
+        },
+        {
+          stepNumber: 2,
+          action: "Verify account lockout mechanisms after failed login attempts",
+          expectedResult: "Account locks after specified failed attempts and unlocks after timeout"
+        },
+        {
+          stepNumber: 3,
+          action: "Test session timeout functionality for inactive users",
+          expectedResult: "Sessions expire appropriately and users are redirected to login"
+        },
+        {
+          stepNumber: 4,
+          action: "Verify role-based access controls (RBAC) implementation",
+          expectedResult: "Users can only access resources appropriate to their assigned roles"
+        },
+        {
+          stepNumber: 5,
+          action: "Test SQL injection vulnerabilities in all input fields",
+          expectedResult: "System prevents SQL injection attacks and sanitizes all inputs"
+        },
+        {
+          stepNumber: 6,
+          action: "Verify XSS prevention (stored, reflected, DOM-based)",
+          expectedResult: "System prevents cross-site scripting attacks and escapes user inputs"
+        },
+        {
+          stepNumber: 7,
+          action: "Test session management and secure token generation",
+          expectedResult: "Session tokens are securely generated and properly invalidated"
+        },
+        {
+          stepNumber: 8,
+          action: "Verify data transmission encryption (HTTPS/TLS)",
+          expectedResult: "All data transmission uses encrypted connections"
+        },
+        {
+          stepNumber: 9,
+          action: "Test Cross-Site Request Forgery (CSRF) protection",
+          expectedResult: "System prevents CSRF attacks with proper token validation"
+        },
+        {
+          stepNumber: 10,
+          action: "Verify security headers implementation (CSP, HSTS, X-Frame-Options)",
+          expectedResult: "Security headers are properly configured to prevent common attacks"
+        }
       ];
+      testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       
       expectedResult = `SECURITY TEST EXPECTED RESULTS:
 ✓ Strong authentication mechanisms prevent unauthorized access
@@ -695,42 +732,59 @@ export function generateSeparateTestCases(
 ✓ Password policies enforce strong authentication`;
       
     } else if (testType.type === 'Performance') {
-      testSteps = [
-        "COMPREHENSIVE PERFORMANCE TESTING:",
-        "",
-        "1. LOAD TIME MEASUREMENTS:",
-        "   - Measure initial page load time (< 3 seconds target)",
-        "   - Test time to interactive (TTI) metrics",
-        "   - Measure largest contentful paint (LCP)",
-        "   - Test cumulative layout shift (CLS)",
-        "   - Verify first input delay (FID) responsiveness",
-        "",
-        "2. STRESS TESTING:",
-        "   - Test with 10, 50, 100, 500 concurrent users",
-        "   - Monitor system behavior under peak load conditions",
-        "   - Test database connection pool limits",
-        "   - Verify graceful degradation under stress",
-        "   - Test recovery after load spikes",
-        "",
-        "3. RESOURCE UTILIZATION:",
-        "   - Monitor CPU usage during operations",
-        "   - Test memory consumption and garbage collection",
-        "   - Monitor database query execution times",
-        "   - Test network bandwidth utilization",
-        "   - Verify caching mechanisms effectiveness",
-        "",
-        "4. SCALABILITY TESTING:",
-        "   - Test horizontal scaling capabilities",
-        "   - Verify load balancer performance",
-        "   - Test auto-scaling triggers and responses",
-        "   - Monitor performance across different server instances",
-        "",
-        "5. MOBILE AND NETWORK TESTING:",
-        "   - Test performance on slow network connections (3G, 4G)",
-        "   - Verify mobile device performance",
-        "   - Test offline functionality if applicable",
-        "   - Monitor performance with network interruptions"
+      testStepsStructured = [
+        {
+          stepNumber: 1,
+          action: "Measure initial page load time with target under 3 seconds",
+          expectedResult: "Page loads completely within 3 seconds under normal conditions"
+        },
+        {
+          stepNumber: 2,
+          action: "Test time to interactive (TTI) and responsiveness metrics",
+          expectedResult: "Page becomes interactive within 5 seconds with responsive user interface"
+        },
+        {
+          stepNumber: 3,
+          action: "Test with 10, 50, 100, and 500 concurrent users progressively",
+          expectedResult: "System maintains acceptable performance under increasing concurrent load"
+        },
+        {
+          stepNumber: 4,
+          action: "Monitor system behavior under peak load conditions",
+          expectedResult: "System degrades gracefully without crashes at peak load"
+        },
+        {
+          stepNumber: 5,
+          action: "Monitor CPU usage during heavy operations",
+          expectedResult: "CPU utilization remains below 80% during normal operations"
+        },
+        {
+          stepNumber: 6,
+          action: "Test memory consumption and monitor for memory leaks",
+          expectedResult: "Memory usage remains stable without continuous growth over time"
+        },
+        {
+          stepNumber: 7,
+          action: "Monitor database query execution times under load",
+          expectedResult: "Database queries execute within 100ms average response time"
+        },
+        {
+          stepNumber: 8,
+          action: "Test performance on slow network connections (3G, 4G)",
+          expectedResult: "Application remains usable on slower network connections"
+        },
+        {
+          stepNumber: 9,
+          action: "Verify caching mechanisms effectiveness",
+          expectedResult: "Caching improves performance by 40%+ for repeat requests"
+        },
+        {
+          stepNumber: 10,
+          action: "Test recovery after load spikes and stress conditions",
+          expectedResult: "System recovers to normal performance within 2 minutes after load reduction"
+        }
       ];
+      testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       
       expectedResult = `PERFORMANCE TEST EXPECTED RESULTS:
 ✓ Page load times consistently under 3 seconds
@@ -746,37 +800,59 @@ export function generateSeparateTestCases(
 ✓ Caching improves performance by 40%+ for repeat requests
 ✓ Auto-scaling responds within 2 minutes of load changes`;
     } else if (testType.type === 'Usability') {
-      testSteps = [
-        "USABILITY AND USER EXPERIENCE TESTING:",
-        "",
-        "1. NAVIGATION AND LAYOUT:",
-        "   - Test intuitive menu navigation and structure",
-        "   - Verify consistent layout across all pages",
-        "   - Test breadcrumb navigation functionality",
-        "   - Verify responsive design on different screen sizes",
-        "   - Test accessibility features (WCAG compliance)",
-        "",
-        "2. FORM USABILITY:",
-        "   - Test form field labels and placeholders clarity",
-        "   - Verify helpful error messages and validation",
-        "   - Test tab order and keyboard navigation",
-        "   - Verify auto-complete and auto-save features",
-        "   - Test form submission confirmation messages",
-        "",
-        "3. CONTENT AND READABILITY:",
-        "   - Verify text readability and font sizes",
-        "   - Test color contrast for accessibility",
-        "   - Verify content organization and hierarchy",
-        "   - Test multi-language content display",
-        "   - Verify help text and tooltips effectiveness",
-        "",
-        "4. INTERACTION DESIGN:",
-        "   - Test button and link visual feedback",
-        "   - Verify loading indicators during operations",
-        "   - Test drag-and-drop functionality if applicable",
-        "   - Verify modal and popup behavior",
-        "   - Test keyboard shortcuts and hotkeys"
+      testStepsStructured = [
+        {
+          stepNumber: 1,
+          action: "Test intuitive menu navigation and structure",
+          expectedResult: "Users can easily find and navigate to required features through clear menu structure"
+        },
+        {
+          stepNumber: 2,
+          action: "Verify consistent layout across all pages",
+          expectedResult: "Layout elements maintain consistency and professional appearance across all pages"
+        },
+        {
+          stepNumber: 3,
+          action: "Test form field labels and placeholders clarity",
+          expectedResult: "Form labels are clear and placeholders provide helpful guidance to users"
+        },
+        {
+          stepNumber: 4,
+          action: "Verify helpful error messages and validation feedback",
+          expectedResult: "Error messages guide users toward correct actions with specific, actionable advice"
+        },
+        {
+          stepNumber: 5,
+          action: "Test accessibility features for WCAG compliance",
+          expectedResult: "Application meets accessibility standards and is usable by users with disabilities"
+        },
+        {
+          stepNumber: 6,
+          action: "Verify text readability and appropriate font sizes",
+          expectedResult: "Text is readable with appropriate font sizes and clear typography"
+        },
+        {
+          stepNumber: 7,
+          action: "Test color contrast for accessibility standards",
+          expectedResult: "Color contrast meets accessibility requirements for optimal readability"
+        },
+        {
+          stepNumber: 8,
+          action: "Test multi-language content display and formatting",
+          expectedResult: "Multi-language support displays content correctly with proper formatting"
+        },
+        {
+          stepNumber: 9,
+          action: "Verify button and link visual feedback on interaction",
+          expectedResult: "Interactive elements provide clear visual feedback when clicked or hovered"
+        },
+        {
+          stepNumber: 10,
+          action: "Test loading indicators during system operations",
+          expectedResult: "Loading states inform users of system processing with appropriate indicators"
+        }
       ];
+      testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       
       expectedResult = `USABILITY TEST EXPECTED RESULTS:
 ✓ Navigation is intuitive and users find features easily
@@ -793,37 +869,59 @@ export function generateSeparateTestCases(
 ✓ Users can complete tasks efficiently without confusion`;
       
     } else if (testType.type === 'UI') {
-      testSteps = [
-        "USER INTERFACE TESTING:",
-        "",
-        "1. VISUAL ELEMENTS TESTING:",
-        "   - Verify all buttons, links, and interactive elements are visible",
-        "   - Test button states (normal, hover, active, disabled)",
-        "   - Verify form field styling and alignment",
-        "   - Test image loading and display quality",
-        "   - Verify icon consistency and clarity",
-        "",
-        "2. LAYOUT AND RESPONSIVENESS:",
-        "   - Test responsive design on different screen sizes",
-        "   - Verify element positioning and alignment",
-        "   - Test scroll behavior and overflow handling",
-        "   - Verify header and footer consistency",
-        "   - Test sidebar and navigation menu behavior",
-        "",
-        "3. INTERACTIVE ELEMENTS:",
-        "   - Test dropdown menus and select boxes",
-        "   - Verify modal dialogs and popups",
-        "   - Test accordion and collapsible elements",
-        "   - Verify tooltip and help text display",
-        "   - Test tab navigation and content switching",
-        "",
-        "4. FORM UI VALIDATION:",
-        "   - Test field focus and blur states",
-        "   - Verify error message styling and positioning",
-        "   - Test form validation visual indicators",
-        "   - Verify submit button states during processing",
-        "   - Test progress indicators and loading states"
+      testStepsStructured = [
+        {
+          stepNumber: 1,
+          action: "Verify all buttons, links, and interactive elements are visible and properly styled",
+          expectedResult: "All UI elements display correctly with consistent styling and visual hierarchy"
+        },
+        {
+          stepNumber: 2,
+          action: "Test button states (normal, hover, active, disabled) for visual feedback",
+          expectedResult: "Button states provide clear visual feedback and enhance user interaction"
+        },
+        {
+          stepNumber: 3,
+          action: "Test responsive design on different screen sizes and devices",
+          expectedResult: "Layout adapts properly to different screen sizes maintaining usability"
+        },
+        {
+          stepNumber: 4,
+          action: "Verify form field styling, alignment, and visual consistency",
+          expectedResult: "Form fields are properly aligned with consistent styling and clear labels"
+        },
+        {
+          stepNumber: 5,
+          action: "Test dropdown menus and select boxes functionality",
+          expectedResult: "Dropdown menus open correctly and allow proper option selection"
+        },
+        {
+          stepNumber: 6,
+          action: "Verify modal dialogs and popup behavior",
+          expectedResult: "Modal dialogs display correctly and can be closed properly"
+        },
+        {
+          stepNumber: 7,
+          action: "Test form validation visual indicators and error states",
+          expectedResult: "Validation errors display clearly with appropriate visual indicators"
+        },
+        {
+          stepNumber: 8,
+          action: "Verify tooltip and help text display when needed",
+          expectedResult: "Help text appears when expected and provides useful guidance"
+        },
+        {
+          stepNumber: 9,
+          action: "Test image loading and display quality across the interface",
+          expectedResult: "Images load properly without distortion and display at appropriate quality"
+        },
+        {
+          stepNumber: 10,
+          action: "Verify progress indicators and loading states during operations",
+          expectedResult: "Loading states provide clear feedback during system processing"
+        }
       ];
+      testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       
       expectedResult = `UI TEST EXPECTED RESULTS:
 ✓ All visual elements render correctly and consistently
@@ -840,43 +938,59 @@ export function generateSeparateTestCases(
 ✓ UI components follow design system guidelines`;
       
     } else if (testType.type === 'API') {
-      testSteps = [
-        "API TESTING:",
-        "",
-        "1. ENDPOINT FUNCTIONALITY:",
-        "   - Test all CRUD operations (Create, Read, Update, Delete)",
-        "   - Verify API endpoint accessibility and response codes",
-        "   - Test request methods (GET, POST, PUT, DELETE, PATCH)",
-        "   - Verify request and response payload formats",
-        "   - Test API versioning and backward compatibility",
-        "",
-        "2. DATA VALIDATION:",
-        "   - Test input parameter validation",
-        "   - Verify required field enforcement",
-        "   - Test data type validation (string, number, boolean)",
-        "   - Verify response data structure and completeness",
-        "   - Test character encoding and special characters",
-        "",
-        "3. ERROR HANDLING:",
-        "   - Test invalid request formats (400 Bad Request)",
-        "   - Verify authentication failures (401 Unauthorized)",
-        "   - Test permission violations (403 Forbidden)",
-        "   - Verify resource not found scenarios (404 Not Found)",
-        "   - Test server error handling (500 Internal Server Error)",
-        "",
-        "4. PERFORMANCE AND SECURITY:",
-        "   - Test API response times under normal load",
-        "   - Verify rate limiting and throttling mechanisms",
-        "   - Test authentication token validation",
-        "   - Verify CORS policy implementation",
-        "   - Test API security headers and encryption",
-        "",
-        "5. INTEGRATION TESTING:",
-        "   - Test API calls from frontend application",
-        "   - Verify database integration and data persistence",
-        "   - Test third-party API integrations",
-        "   - Verify webhook and callback functionality"
+      testStepsStructured = [
+        {
+          stepNumber: 1,
+          action: "Test all CRUD operations (Create, Read, Update, Delete) for API endpoints",
+          expectedResult: "All CRUD operations execute successfully with appropriate HTTP status codes"
+        },
+        {
+          stepNumber: 2,
+          action: "Verify API endpoint accessibility and response codes",
+          expectedResult: "API endpoints are accessible and return correct HTTP status codes (200, 201, 404, etc.)"
+        },
+        {
+          stepNumber: 3,
+          action: "Test request methods (GET, POST, PUT, DELETE, PATCH) functionality",
+          expectedResult: "All HTTP methods work correctly and perform expected operations"
+        },
+        {
+          stepNumber: 4,
+          action: "Verify request and response payload formats match API documentation",
+          expectedResult: "Request and response payloads follow defined JSON schemas and data structures"
+        },
+        {
+          stepNumber: 5,
+          action: "Test input parameter validation and required field enforcement",
+          expectedResult: "API validates input parameters and enforces required fields with appropriate error messages"
+        },
+        {
+          stepNumber: 6,
+          action: "Test authentication failures and unauthorized access scenarios",
+          expectedResult: "API returns 401 Unauthorized for invalid credentials and 403 Forbidden for insufficient permissions"
+        },
+        {
+          stepNumber: 7,
+          action: "Verify resource not found scenarios return proper 404 responses",
+          expectedResult: "API returns 404 Not Found with helpful error messages for non-existent resources"
+        },
+        {
+          stepNumber: 8,
+          action: "Test API response times under normal load conditions",
+          expectedResult: "API responses are returned within acceptable time limits (under 500ms for standard operations)"
+        },
+        {
+          stepNumber: 9,
+          action: "Verify authentication token validation and security measures",
+          expectedResult: "API properly validates authentication tokens and implements security best practices"
+        },
+        {
+          stepNumber: 10,
+          action: "Test integration with frontend application and database persistence",
+          expectedResult: "API calls from frontend work correctly and data persists properly in database"
+        }
       ];
+      testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       
       expectedResult = `API TEST EXPECTED RESULTS:
 ✓ All API endpoints respond with correct HTTP status codes
