@@ -575,6 +575,14 @@ For each test case, provide the following in JSON format:
       }
 
       const updated = await storage.updateAiConfiguration(config.id, req.body);
+      if (!updated) {
+        // If no existing AI config, create a new one
+        const newConfig = await storage.createAiConfiguration({
+          ...req.body,
+          configId: config.id
+        });
+        return res.json(newConfig);
+      }
       res.json(updated);
     } catch (error: any) {
       res.status(400).json({ message: error.message });

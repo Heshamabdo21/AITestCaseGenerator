@@ -15,6 +15,20 @@ import type {
   InsertAiContext
 } from "@shared/schema";
 
+// Helper function to safely parse JSON responses
+const safeJsonParse = async (response: Response) => {
+  const text = await response.text();
+  if (!text || text.trim() === '') {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.warn('Failed to parse JSON response:', text);
+    return null;
+  }
+};
+
 export const api = {
   // Azure DevOps Configuration
   async createAzureConfig(config: InsertAzureConfig): Promise<AzureConfig> {
@@ -114,22 +128,23 @@ export const api = {
 
   async getAiConfiguration(): Promise<AiConfiguration | null> {
     const response = await apiRequest("GET", "/api/ai-configuration");
-    return response.json();
+    return safeJsonParse(response);
   },
 
   async updateAiConfiguration(config: Partial<InsertAiConfiguration>): Promise<AiConfiguration> {
     const response = await apiRequest("PATCH", "/api/ai-configuration", config);
-    return response.json();
+    const result = await safeJsonParse(response);
+    return result || config as AiConfiguration;
   },
 
   // AI Context
   async createOrUpdateAiContext(context: InsertAiContext): Promise<AiContext> {
     const response = await apiRequest("POST", "/api/ai-context", context);
-    return response.json();
+    return safeJsonParse(response);
   },
 
   async getAiContext(): Promise<AiContext | null> {
     const response = await apiRequest("GET", "/api/ai-context");
-    return response.json();
+    return safeJsonParse(response);
   },
 };
