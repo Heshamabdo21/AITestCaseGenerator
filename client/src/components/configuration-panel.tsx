@@ -357,16 +357,30 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
                   </p>
                 </div>
               )}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => fetchTestPlansMutation.mutate()}
-                disabled={fetchTestPlansMutation.isPending}
-              >
-                {fetchTestPlansMutation.isPending ? "Loading..." : "Load Test Plans"}
-              </Button>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchTestPlansMutation.mutate()}
+                  disabled={fetchTestPlansMutation.isPending}
+                >
+                  {fetchTestPlansMutation.isPending ? "Loading..." : "Load Test Plans"}
+                </Button>
+                {form.watch("testPlanId") && form.watch("testPlanId") !== "none" && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      form.setValue("testPlanId", "");
+                      form.setValue("testPlanName", "");
+                    }}
+                  >
+                    Clear Selection
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div>
