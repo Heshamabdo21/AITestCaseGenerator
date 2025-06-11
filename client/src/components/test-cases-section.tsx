@@ -385,16 +385,16 @@ export function TestCasesSection() {
         </div>
 
         {/* Approval Actions */}
-        {testCases.length > 0 && (
+        {typedTestCases.length > 0 && (
           <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
             <div className="flex items-center space-x-4">
               <Button variant="outline" onClick={handleSelectAll}>
-                <i className="fas fa-check-square mr-2"></i>
-                {selectedTestCases.length === testCases.length ? "Deselect All" : "Select All"}
+                <Check className="h-4 w-4 mr-2" />
+                {selectedTestCases.length === typedTestCases.length ? "Deselect All" : "Select All"}
               </Button>
               {selectedTestCases.length > 0 && (
                 <span className="text-sm text-gray-600">
-                  {selectedTestCases.length} of {testCases.length} selected
+                  {selectedTestCases.length} of {typedTestCases.length} selected
                 </span>
               )}
             </div>
