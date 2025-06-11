@@ -346,7 +346,7 @@ export function TestCasesSection() {
                             <Label htmlFor="testPassword">Test Password</Label>
                             <Input 
                               id="testPassword" 
-                              type="password" 
+                              type="text" 
                               defaultValue={testCase.testPassword || ''} 
                               placeholder="Enter test password for execution"
                             />
