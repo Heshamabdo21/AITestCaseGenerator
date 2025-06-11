@@ -8,6 +8,7 @@ export const azureConfigs = pgTable("azure_configs", {
   organizationUrl: text("organization_url").notNull(),
   patToken: text("pat_token").notNull(),
   project: text("project").notNull(),
+  iterationPath: text("iteration_path"), // Optional iteration path
   openaiKey: text("openai_key").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -35,9 +36,48 @@ export const testCases = pgTable("test_cases", {
   testSteps: json("test_steps").$type<string[]>().default([]),
   expectedResult: text("expected_result").notNull(),
   priority: text("priority").notNull(),
+  testType: text("test_type").notNull().default("web"), // web, api, mobile
   status: text("status").notNull().default("pending"), // pending, approved, rejected
   userStoryId: integer("user_story_id").references(() => userStories.id),
   azureTestCaseId: text("azure_test_case_id"), // Set when added to Azure DevOps
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Test Data Configuration
+export const testDataConfigs = pgTable("test_data_configs", {
+  id: serial("id").primaryKey(),
+  configId: integer("config_id").references(() => azureConfigs.id),
+  username: text("username"),
+  password: text("password"),
+  webPortalUrl: text("web_portal_url"),
+  permissions: json("permissions").$type<string[]>().default([]),
+  additionalData: json("additional_data").$type<Record<string, any>>().default({}),
+  uploadedFiles: json("uploaded_files").$type<string[]>().default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Environment Configuration
+export const environmentConfigs = pgTable("environment_configs", {
+  id: serial("id").primaryKey(),
+  configId: integer("config_id").references(() => azureConfigs.id),
+  operatingSystem: text("operating_system").notNull(), // windows, linux, mac
+  osVersion: text("os_version"),
+  webBrowser: text("web_browser"), // chrome, firefox, safari, edge
+  browserVersion: text("browser_version"),
+  mobileDevice: text("mobile_device"), // ios, android
+  mobileVersion: text("mobile_version"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// AI Configuration
+export const aiConfigurations = pgTable("ai_configurations", {
+  id: serial("id").primaryKey(),
+  configId: integer("config_id").references(() => azureConfigs.id),
+  includePositiveTests: boolean("include_positive_tests").default(true),
+  includeEdgeCases: boolean("include_edge_cases").default(true),
+  includeSecurityCases: boolean("include_security_cases").default(false),
+  testComplexity: text("test_complexity").default("medium"), // simple, medium, complex
+  additionalInstructions: text("additional_instructions"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -56,6 +96,21 @@ export const insertTestCaseSchema = createInsertSchema(testCases).omit({
   createdAt: true,
 });
 
+export const insertTestDataConfigSchema = createInsertSchema(testDataConfigs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertEnvironmentConfigSchema = createInsertSchema(environmentConfigs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiConfigurationSchema = createInsertSchema(aiConfigurations).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Type exports
 export type AzureConfig = typeof azureConfigs.$inferSelect;
 export type InsertAzureConfig = z.infer<typeof insertAzureConfigSchema>;
@@ -65,6 +120,15 @@ export type InsertUserStory = z.infer<typeof insertUserStorySchema>;
 
 export type TestCase = typeof testCases.$inferSelect;
 export type InsertTestCase = z.infer<typeof insertTestCaseSchema>;
+
+export type TestDataConfig = typeof testDataConfigs.$inferSelect;
+export type InsertTestDataConfig = z.infer<typeof insertTestDataConfigSchema>;
+
+export type EnvironmentConfig = typeof environmentConfigs.$inferSelect;
+export type InsertEnvironmentConfig = z.infer<typeof insertEnvironmentConfigSchema>;
+
+export type AiConfiguration = typeof aiConfigurations.$inferSelect;
+export type InsertAiConfiguration = z.infer<typeof insertAiConfigurationSchema>;
 
 // Azure DevOps Work Item structure
 export type AzureWorkItem = {
@@ -135,12 +199,16 @@ export const aiContext = pgTable("ai_context", {
 // Test case generation request with enhanced options
 export const generateTestCaseRequestSchema = z.object({
   userStoryIds: z.array(z.number()),
+  testType: z.enum(["web", "api", "mobile"]).default("web"),
   style: z.enum(["gherkin", "step-by-step", "scenario-based"]).default("step-by-step"),
   coverageLevel: z.enum(["comprehensive", "standard", "minimal"]).default("standard"),
+  includePositive: z.boolean().default(true),
   includeNegative: z.boolean().default(true),
+  includeEdgeCases: z.boolean().default(true),
+  includeSecurity: z.boolean().default(false),
   includePerformance: z.boolean().default(false),
   includeAccessibility: z.boolean().default(false),
-  includeSecurity: z.boolean().default(false),
+  testComplexity: z.enum(["simple", "medium", "complex"]).default("medium"),
   targetTestPlan: z.string().optional(),
   targetTestSuite: z.string().optional(),
   customContext: z.string().optional(),

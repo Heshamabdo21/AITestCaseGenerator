@@ -14,7 +14,13 @@ import {
   TestCaseFeedback,
   InsertTestCaseFeedback,
   AiContext,
-  InsertAiContext
+  InsertAiContext,
+  TestDataConfig,
+  InsertTestDataConfig,
+  EnvironmentConfig,
+  InsertEnvironmentConfig,
+  AiConfiguration,
+  InsertAiConfiguration
 } from "@shared/schema";
 
 export interface IStorage {
@@ -64,6 +70,21 @@ export interface IStorage {
   // AI Context methods
   createOrUpdateAiContext(context: InsertAiContext): Promise<AiContext>;
   getAiContext(configId: number): Promise<AiContext | undefined>;
+
+  // Test Data Config methods
+  createTestDataConfig(config: InsertTestDataConfig): Promise<TestDataConfig>;
+  getTestDataConfig(configId: number): Promise<TestDataConfig | undefined>;
+  updateTestDataConfig(configId: number, config: Partial<InsertTestDataConfig>): Promise<TestDataConfig | undefined>;
+
+  // Environment Config methods
+  createEnvironmentConfig(config: InsertEnvironmentConfig): Promise<EnvironmentConfig>;
+  getEnvironmentConfig(configId: number): Promise<EnvironmentConfig | undefined>;
+  updateEnvironmentConfig(configId: number, config: Partial<InsertEnvironmentConfig>): Promise<EnvironmentConfig | undefined>;
+
+  // AI Configuration methods
+  createAiConfiguration(config: InsertAiConfiguration): Promise<AiConfiguration>;
+  getAiConfiguration(configId: number): Promise<AiConfiguration | undefined>;
+  updateAiConfiguration(configId: number, config: Partial<InsertAiConfiguration>): Promise<AiConfiguration | undefined>;
 }
 
 import { db } from "./db";
@@ -76,7 +97,10 @@ import {
   testSuites, 
   testCaseLinks, 
   testCaseFeedback, 
-  aiContext 
+  aiContext,
+  testDataConfigs,
+  environmentConfigs,
+  aiConfigurations
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
