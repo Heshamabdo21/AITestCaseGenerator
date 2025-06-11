@@ -50,7 +50,7 @@ export function LiveTestGenerator() {
   const queryClient = useQueryClient();
 
   // Load user stories for test generation
-  const { data: userStories } = useQuery({
+  const { data: userStories = [] } = useQuery({
     queryKey: ['/api/user-stories/stored'],
     retry: false
   });
@@ -90,7 +90,7 @@ export function LiveTestGenerator() {
 
   const generateTestsMutation = useMutation({
     mutationFn: async () => {
-      if (!userStories?.length) {
+      if (!Array.isArray(userStories) || userStories.length === 0) {
         throw new Error("No user stories available for test generation");
       }
 
@@ -115,7 +115,7 @@ export function LiveTestGenerator() {
 
       // Generate actual test cases
       return api.generateTestCases({
-        userStoryIds: userStories.map(s => s.id),
+        userStoryIds: userStories.map((s: any) => s.id),
         testType: "web",
         style: "step-by-step", 
         coverageLevel: "standard",
@@ -179,7 +179,8 @@ export function LiveTestGenerator() {
   };
 
   const enabledCount = platforms.filter(p => p.enabled).length;
-  const estimatedTestCases = enabledCount * (userStories?.length || 0) * 3; // 3 test types per story per platform
+  const userStoriesArray = Array.isArray(userStories) ? userStories : [];
+  const estimatedTestCases = enabledCount * userStoriesArray.length * 3; // 3 test types per story per platform
 
   return (
     <Card className="border-2 border-primary/20">
@@ -235,7 +236,7 @@ export function LiveTestGenerator() {
               <div>
                 <p className="font-medium">Ready to Generate</p>
                 <p className="text-sm text-muted-foreground">
-                  {enabledCount} platform(s) selected • {userStories?.length || 0} user stories • ≈{estimatedTestCases} test cases
+                  {enabledCount} platform(s) selected • {userStoriesArray.length} user stories • ≈{estimatedTestCases} test cases
                 </p>
               </div>
               <Button 
@@ -274,7 +275,7 @@ export function LiveTestGenerator() {
                       {platform.icon}
                       <span className="font-medium">{platform.label}</span>
                       <Badge variant="outline">
-                        {(userStories?.length || 0) * 3} test cases
+                        {userStoriesArray.length * 3} test cases
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
