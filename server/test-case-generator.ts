@@ -1,4 +1,4 @@
-import type { UserStory, TestDataConfig, EnvironmentConfig } from "@shared/schema";
+import type { UserStory, TestDataConfig, EnvironmentConfig, AiConfiguration } from "@shared/schema";
 
 interface TestCaseStructure {
   type: string;
@@ -10,17 +10,49 @@ interface TestCaseStructure {
 export function generateSeparateTestCases(
   story: UserStory, 
   testDataConfig: TestDataConfig | null, 
-  environmentConfig: EnvironmentConfig | null
+  environmentConfig: EnvironmentConfig | null,
+  aiConfig: AiConfiguration | null = null
 ) {
-  const testCaseTypes: TestCaseStructure[] = [
+  // Define all possible test case types
+  const allTestCaseTypes: TestCaseStructure[] = [
     { type: 'Positive', priority: 'High', category: 'Functional', description: 'Valid scenarios with expected inputs' },
     { type: 'Negative', priority: 'High', category: 'Functional', description: 'Invalid inputs and error handling' },
     { type: 'Edge Case', priority: 'Medium', category: 'Functional', description: 'Boundary conditions and limits' },
     { type: 'Security', priority: 'High', category: 'Non-Functional', description: 'Authentication, authorization, and data protection' },
     { type: 'Performance', priority: 'Medium', category: 'Non-Functional', description: 'Load, response time, and scalability' },
-    { type: 'Usability', priority: 'Medium', category: 'Functional', description: 'User interface and experience validation' },
+    { type: 'UI', priority: 'Medium', category: 'Functional', description: 'User interface elements and interactions' },
+    { type: 'Usability', priority: 'Medium', category: 'Functional', description: 'User experience and ease of use validation' },
+    { type: 'API', priority: 'High', category: 'Functional', description: 'API endpoints, requests, and responses' },
     { type: 'Compatibility', priority: 'Low', category: 'Non-Functional', description: 'Cross-browser and device testing' }
   ];
+
+  // Filter test case types based on AI configuration
+  const testCaseTypes = allTestCaseTypes.filter(testType => {
+    if (!aiConfig) return ['Positive', 'Negative', 'Edge Case', 'Security'].includes(testType.type);
+    
+    switch (testType.type) {
+      case 'Positive':
+        return aiConfig.includePositiveTests;
+      case 'Negative':
+        return aiConfig.includeNegativeTests;
+      case 'Edge Case':
+        return aiConfig.includeEdgeCases;
+      case 'Security':
+        return aiConfig.includeSecurityCases;
+      case 'Performance':
+        return aiConfig.includePerformanceTests;
+      case 'UI':
+        return aiConfig.includeUiTests;
+      case 'Usability':
+        return aiConfig.includeUsabilityTests;
+      case 'API':
+        return aiConfig.includeApiTests;
+      case 'Compatibility':
+        return aiConfig.includeCompatibilityTests;
+      default:
+        return false;
+    }
+  });
 
   const testCases = [];
 

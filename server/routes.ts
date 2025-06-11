@@ -466,14 +466,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Temporarily bypass OpenAI to debug user story selection
       const generatedTestCases: TestCase[] = [];
 
-      // Get test data and environment configurations
+      // Get test data, environment, and AI configurations
       const azureConfig = await storage.getLatestAzureConfig();
       let testDataConfig = null;
       let environmentConfig = null;
+      let aiConfig = null;
       
       if (azureConfig) {
         testDataConfig = await storage.getTestDataConfig(azureConfig.id);
         environmentConfig = await storage.getEnvironmentConfig(azureConfig.id);
+        aiConfig = await storage.getAiConfiguration(azureConfig.id);
       }
 
       // Import the test case generator
@@ -485,7 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Acceptance Criteria: ${story.acceptanceCriteria || 'Not provided'}`);
         
         // Generate separate test cases for each type using the generator
-        const testCasesToCreate = generateSeparateTestCases(story, testDataConfig || null, environmentConfig || null);
+        const testCasesToCreate = generateSeparateTestCases(story, testDataConfig || null, environmentConfig || null, aiConfig || null);
         
         for (const testCaseData of testCasesToCreate) {
           const created = await storage.createTestCase(testCaseData);

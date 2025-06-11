@@ -16,6 +16,11 @@ const aiConfigurationSchema = z.object({
   includeNegativeTests: z.boolean().default(true),
   includeEdgeCases: z.boolean().default(true),
   includeSecurityCases: z.boolean().default(false),
+  includePerformanceTests: z.boolean().default(false),
+  includeUiTests: z.boolean().default(false),
+  includeUsabilityTests: z.boolean().default(false),
+  includeApiTests: z.boolean().default(false),
+  includeCompatibilityTests: z.boolean().default(false),
   testComplexity: z.enum(["simple", "medium", "complex"]).default("medium"),
   additionalInstructions: z.string().optional()
 });
