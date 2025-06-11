@@ -407,7 +407,7 @@ export function generateSeparateTestCases(
     }
 
     testCases.push({
-      title: testCaseTitle,
+      title: `${testType.type} Test Case: ${story.title}`,
       objective: `${testType.description} - ${objective}`,
       prerequisites: prerequisites.join('\n'),
       testSteps: testSteps.join('\n'),

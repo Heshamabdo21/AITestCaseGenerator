@@ -142,25 +142,21 @@ export function enhanceImportedTestCase(baseTestCase: InsertTestCase): InsertTes
     ...baseTestCase,
     title: baseTestCase.title.replace('Test:', 'Positive Test:'),
     objective: `Enhanced positive testing - ${baseTestCase.objective}`,
-    prerequisites: [
-      'ENHANCED PREREQUISITES:',
-      ...(Array.isArray(baseTestCase.prerequisites) ? baseTestCase.prerequisites : [baseTestCase.prerequisites]),
-      '',
-      'ADDITIONAL REQUIREMENTS:',
-      '- Verify test environment stability',
-      '- Confirm user permissions are properly configured',
-      '- Ensure all dependent services are operational'
-    ],
-    testSteps: [
-      'ENHANCED TEST EXECUTION:',
-      ...(Array.isArray(baseTestCase.testSteps) ? baseTestCase.testSteps : [baseTestCase.testSteps]),
-      '',
-      'ADDITIONAL VALIDATION STEPS:',
-      '- Verify UI responsiveness and loading indicators',
-      '- Test data persistence and accuracy',
-      '- Confirm proper error handling for edge cases',
-      '- Validate multi-language support if applicable'
-    ],
+    prerequisites: `ENHANCED PREREQUISITES:
+${baseTestCase.prerequisites}
+
+ADDITIONAL REQUIREMENTS:
+- Verify test environment stability
+- Confirm user permissions are properly configured
+- Ensure all dependent services are operational`,
+    testSteps: `ENHANCED TEST EXECUTION:
+${baseTestCase.testSteps}
+
+ADDITIONAL VALIDATION STEPS:
+- Verify UI responsiveness and loading indicators
+- Test data persistence and accuracy
+- Confirm proper error handling for edge cases
+- Validate multi-language support if applicable`,
     expectedResult: `COMPREHENSIVE EXPECTED RESULTS:
 ${baseTestCase.expectedResult}
 

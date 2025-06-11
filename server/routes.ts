@@ -14,6 +14,65 @@ import { parseCsvTestCases, convertCsvToTestCases, enhanceImportedTestCase } fro
 import multer from "multer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configure multer for file uploads
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  });
+
+  // CSV Import endpoint
+  app.post("/api/test-cases/import-csv", upload.single('csvFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No CSV file uploaded" });
+      }
+
+      const csvContent = req.file.buffer.toString('utf-8');
+      const csvTestCases = parseCsvTestCases(csvContent);
+      
+      if (csvTestCases.length === 0) {
+        return res.status(400).json({ message: "No valid test cases found in CSV" });
+      }
+
+      // Create a mock user story for imported test cases
+      const mockUserStory = await storage.createUserStory({
+        azureId: `imported-${Date.now()}`,
+        title: "Imported Test Cases from CSV",
+        description: "Test cases imported from CSV file",
+        acceptanceCriteria: "Test cases should be properly imported and enhanced",
+        state: "Active",
+        assignedTo: "QA Team",
+        priority: "Medium",
+        createdDate: new Date().toISOString(),
+        tags: ["imported", "csv"],
+        configId: 1
+      });
+
+      const convertedTestCases = convertCsvToTestCases(csvTestCases, mockUserStory.id);
+      const importedTestCases = [];
+
+      for (const testCase of convertedTestCases) {
+        const created = await storage.createTestCase(testCase);
+        importedTestCases.push(created);
+        
+        // Create enhanced versions
+        const enhancedCases = enhanceImportedTestCase(testCase);
+        for (const enhanced of enhancedCases) {
+          const enhancedCreated = await storage.createTestCase(enhanced);
+          importedTestCases.push(enhancedCreated);
+        }
+      }
+
+      res.json({
+        message: `Successfully imported ${importedTestCases.length} test cases`,
+        testCases: importedTestCases,
+        userStory: mockUserStory
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: `Import failed: ${error.message}` });
+    }
+  });
+
   // Azure DevOps Configuration
   app.post("/api/azure-config", async (req, res) => {
     try {
@@ -274,140 +333,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Acceptance Criteria: ${story.acceptanceCriteria || 'Not provided'}`);
         
         // Generate separate test cases for each type using the generator
-        const testCasesToCreate = generateSeparateTestCases(story, testDataConfig, environmentConfig);
+        const testCasesToCreate = generateSeparateTestCases(story, testDataConfig || null, environmentConfig || null);
         
         for (const testCaseData of testCasesToCreate) {
           const created = await storage.createTestCase(testCaseData);
           console.log(`Created ${testCaseData.title.split(':')[0]} test case with ID: ${created.id}`);
           generatedTestCases.push(created);
         }
-        
-        if (story.acceptanceCriteria) {
-          // Clean up HTML tags and special characters
-          const cleanCriteria = story.acceptanceCriteria
-            .replace(/<[^>]*>/g, '')
-            .replace(/&quot;/g, '"')
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&nbsp;/g, ' ')
-            .trim();
-          
-          const criteriaLines = cleanCriteria.split(/AC\d+:/).filter(line => line.trim());
-          
-          testSteps.push("SETUP PHASE:");
-          testSteps.push("1. Ensure test environment is accessible and stable");
-          testSteps.push("2. Open the specified web browser");
-          testSteps.push("3. Navigate to the application URL");
-          testSteps.push("4. Login using valid test credentials");
-          testSteps.push("5. Verify successful login and access to main dashboard");
-          testSteps.push("6. Navigate to the target page/module mentioned in the user story");
-          testSteps.push("");
-          
-          testSteps.push("EXECUTION PHASE:");
-          let stepNumber = 7;
-          criteriaLines.forEach((criteria) => {
-            if (criteria.trim()) {
-              const cleanStep = criteria.trim().replace(/\s+/g, ' ');
-              testSteps.push(`${stepNumber}. Execute: ${cleanStep}`);
-              testSteps.push(`${stepNumber + 1}. Verify the action completes successfully`);
-              stepNumber += 2;
-            }
-          });
-          testSteps.push("");
-          
-          testSteps.push("VERIFICATION PHASE:");
-          testSteps.push(`${stepNumber}. Validate all acceptance criteria are fully satisfied`);
-          testSteps.push(`${stepNumber + 1}. Check for any unexpected UI elements or behaviors`);
-          testSteps.push(`${stepNumber + 2}. Verify data integrity and consistency`);
-          testSteps.push(`${stepNumber + 3}. Confirm user experience meets requirements`);
-          
-          if (request.includeNegative) {
-            testSteps.push("");
-            testSteps.push("NEGATIVE TESTING PHASE:");
-            testSteps.push(`${stepNumber + 4}. Test with invalid or boundary inputs`);
-            testSteps.push(`${stepNumber + 5}. Verify appropriate error handling and messages`);
-            testSteps.push(`${stepNumber + 6}. Test unauthorized access scenarios`);
-            testSteps.push(`${stepNumber + 7}. Validate system stability under error conditions`);
-          }
-        } else {
-          testSteps.push("SETUP PHASE:");
-          testSteps.push("1. Prepare test environment and verify accessibility");
-          testSteps.push("2. Launch browser and navigate to application");
-          testSteps.push("3. Authenticate with valid test credentials");
-          testSteps.push("4. Access the feature module under test");
-          testSteps.push("");
-          testSteps.push("EXECUTION PHASE:");
-          testSteps.push("5. Execute the primary functionality described in user story");
-          testSteps.push("6. Perform all required user interactions");
-          testSteps.push("7. Test the complete user workflow");
-          testSteps.push("");
-          testSteps.push("VERIFICATION PHASE:");
-          testSteps.push("8. Verify expected behavior and outcomes");
-          testSteps.push("9. Test edge cases and boundary conditions");
-          testSteps.push("10. Validate error handling scenarios");
-        }
-
-        // Create detailed expected results
-        let expectedResult = "EXPECTED OUTCOMES:\n";
-        if (story.acceptanceCriteria) {
-          const cleanCriteria = story.acceptanceCriteria
-            .replace(/<[^>]*>/g, '')
-            .replace(/&quot;/g, '"')
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&nbsp;/g, ' ')
-            .trim();
-          
-          const criteriaLines = cleanCriteria.split(/AC\d+:/).filter(line => line.trim());
-          
-          expectedResult += "✓ Functional Requirements:\n";
-          criteriaLines.forEach((criteria, index) => {
-            if (criteria.trim()) {
-              expectedResult += `  ${index + 1}. ${criteria.trim().replace(/\s+/g, ' ')}\n`;
-            }
-          });
-          
-          expectedResult += "\n✓ Quality Assurance:\n";
-          expectedResult += "  - No errors or exceptions occur during execution\n";
-          expectedResult += "  - User interface responds appropriately to all interactions\n";
-          expectedResult += "  - Data is processed and displayed correctly\n";
-          expectedResult += "  - System performance remains within acceptable limits\n";
-          
-          if (request.includeNegative) {
-            expectedResult += "\n✓ Error Handling:\n";
-            expectedResult += "  - Invalid inputs display appropriate error messages\n";
-            expectedResult += "  - System gracefully handles edge cases\n";
-            expectedResult += "  - User is guided to correct any input errors\n";
-          }
-        } else {
-          expectedResult += "✓ Primary functionality works as described in user story\n";
-          expectedResult += "✓ All user interactions produce expected results\n";
-          expectedResult += "✓ System maintains stability and performance\n";
-          expectedResult += "✓ User experience meets quality standards";
-        }
-
-        const testCaseData = {
-          title: testCaseTitle,
-          objective: objective,
-          prerequisites: prerequisites,
-          testSteps: testSteps,
-          expectedResult: expectedResult,
-          priority: story.priority || "Medium",
-          status: "Draft",
-          testType: request.testType || "Functional",
-          userStoryId: story.id,
-          azureTestCaseId: null,
-        };
-
-        // Store the test case in storage
-        const createdTestCase = await storage.createTestCase(testCaseData);
-        generatedTestCases.push(createdTestCase);
-        console.log(`Created test case with ID: ${createdTestCase.id}`);
       }
 
-      // Skip OpenAI processing for now - using mock data instead
+      // Skip OpenAI processing for now - using enhanced generator instead
       /*
       for (const story of userStories) {
         const prompt = `Generate test cases for the following user story:
