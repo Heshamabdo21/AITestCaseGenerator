@@ -1,16 +1,25 @@
 import type { UserStory, TestDataConfig, EnvironmentConfig } from "@shared/schema";
 
+interface TestCaseStructure {
+  type: string;
+  priority: 'High' | 'Medium' | 'Low';
+  category: 'Functional' | 'Non-Functional';
+  description: string;
+}
+
 export function generateSeparateTestCases(
   story: UserStory, 
   testDataConfig: TestDataConfig | null, 
   environmentConfig: EnvironmentConfig | null
 ) {
-  const testCaseTypes = [
-    { type: 'Positive', priority: 'High' },
-    { type: 'Negative', priority: 'Medium' },
-    { type: 'Edge Case', priority: 'Medium' },
-    { type: 'Security', priority: 'High' },
-    { type: 'Performance', priority: 'Low' }
+  const testCaseTypes: TestCaseStructure[] = [
+    { type: 'Positive', priority: 'High', category: 'Functional', description: 'Valid scenarios with expected inputs' },
+    { type: 'Negative', priority: 'High', category: 'Functional', description: 'Invalid inputs and error handling' },
+    { type: 'Edge Case', priority: 'Medium', category: 'Functional', description: 'Boundary conditions and limits' },
+    { type: 'Security', priority: 'High', category: 'Non-Functional', description: 'Authentication, authorization, and data protection' },
+    { type: 'Performance', priority: 'Medium', category: 'Non-Functional', description: 'Load, response time, and scalability' },
+    { type: 'Usability', priority: 'Medium', category: 'Functional', description: 'User interface and experience validation' },
+    { type: 'Compatibility', priority: 'Low', category: 'Non-Functional', description: 'Cross-browser and device testing' }
   ];
 
   const testCases = [];
@@ -83,44 +92,103 @@ export function generateSeparateTestCases(
     prerequisites.push("- Access to all required test modules and features");
     prerequisites.push("- Ability to create, modify, and delete test data as needed");
 
-    // Generate type-specific test steps and expected results
+    // Generate comprehensive test steps and expected results based on CSV analysis
     let testSteps: string[] = [];
     let expectedResult = "";
 
     if (testType.type === 'Positive') {
       testSteps = [
-        "POSITIVE TEST EXECUTION:",
-        "1. Ensure test environment is accessible and stable",
-        "2. Open the specified web browser",
-        "3. Navigate to the application URL",
-        "4. Login using valid test credentials",
-        "5. Navigate to the target page/module"
+        "PRECONDITIONS:",
+        "1. Verify user has required permissions for the page/feature under test",
+        "2. Ensure test environment is accessible and stable",
+        "3. Confirm all required services and dependencies are running",
+        "",
+        "TEST EXECUTION STEPS:",
+        "4. Open the specified web browser in the configured environment",
+        "5. Navigate to the application login page",
+        "6. Login using valid test credentials with appropriate user role",
+        "7. Access the main navigation menu/sidebar",
+        "8. Navigate to the target page/module as specified in user story"
       ];
       
-      let stepNumber = 6;
-      criteriaLines.forEach((criteria) => {
-        if (criteria.trim()) {
-          testSteps.push(`${stepNumber}. Execute: ${criteria.trim().replace(/\s+/g, ' ')}`);
-          testSteps.push(`${stepNumber + 1}. Verify successful completion`);
-          stepNumber += 2;
-        }
-      });
+      let stepNumber = 9;
+      if (criteriaLines.length > 0) {
+        criteriaLines.forEach((criteria) => {
+          if (criteria.trim()) {
+            testSteps.push(`${stepNumber}. Execute action: ${criteria.trim().replace(/\s+/g, ' ')}`);
+            testSteps.push(`${stepNumber + 1}. Verify the action completes successfully and UI responds correctly`);
+            stepNumber += 2;
+          }
+        });
+      } else {
+        testSteps.push(`${stepNumber}. Perform the main functionality described in the user story`);
+        testSteps.push(`${stepNumber + 1}. Verify all page elements load correctly`);
+        testSteps.push(`${stepNumber + 2}. Confirm data is displayed in the expected format`);
+        testSteps.push(`${stepNumber + 3}. Test all interactive elements (buttons, links, forms)`);
+      }
       
-      expectedResult = "POSITIVE TEST EXPECTED RESULTS:\n✓ All acceptance criteria are met successfully\n✓ System responds correctly to valid inputs\n✓ User interface functions as expected\n✓ Data is processed and displayed correctly";
+      testSteps.push("", "VALIDATION STEPS:");
+      testSteps.push(`${stepNumber + 4}. Verify page title and headers are displayed correctly`);
+      testSteps.push(`${stepNumber + 5}. Confirm all required columns/fields are present`);
+      testSteps.push(`${stepNumber + 6}. Test search functionality if applicable`);
+      testSteps.push(`${stepNumber + 7}. Verify data filtering and sorting work correctly`);
+      testSteps.push(`${stepNumber + 8}. Test multi-language support if required`);
+      
+      expectedResult = `POSITIVE TEST EXPECTED RESULTS:
+✓ User successfully accesses the page with proper permissions
+✓ Page loads completely with correct title: "${story.title}"
+✓ All UI elements render correctly and are functional
+✓ Data is displayed in the correct format and structure
+✓ All interactive elements respond appropriately
+✓ Search and filtering functions work as expected
+✓ Multi-language support functions correctly (Arabic/English)
+✓ No errors or exceptions occur during normal operation
+✓ System performance meets acceptable standards`;
       
     } else if (testType.type === 'Negative') {
       testSteps = [
-        "NEGATIVE TEST EXECUTION:",
-        "1. Prepare test environment",
-        "2. Navigate to the application",
-        "3. Attempt login with invalid credentials",
-        "4. Test with empty or null input fields",
-        "5. Try unauthorized access scenarios",
-        "6. Input invalid data formats",
-        "7. Test boundary value violations"
+        "NEGATIVE TEST SCENARIOS:",
+        "1. AUTHENTICATION FAILURES:",
+        "   - Attempt login with invalid/expired credentials",
+        "   - Test with locked/suspended user accounts",
+        "   - Try accessing pages without proper authentication",
+        "",
+        "2. AUTHORIZATION VIOLATIONS:",
+        "   - Access restricted pages without required permissions",
+        "   - Attempt actions beyond user role capabilities",
+        "   - Test cross-user data access attempts",
+        "",
+        "3. INPUT VALIDATION TESTS:",
+        "   - Submit forms with empty required fields",
+        "   - Input invalid characters in text fields",
+        "   - Test with SQL injection attempts",
+        "   - Input excessively long strings",
+        "   - Use special characters and script tags",
+        "",
+        "4. UI INTERACTION FAILURES:",
+        "   - Double-click submit buttons rapidly",
+        "   - Navigate using browser back/forward during operations",
+        "   - Test with disabled JavaScript",
+        "   - Attempt operations during network interruptions",
+        "",
+        "5. DATA INTEGRITY TESTS:",
+        "   - Modify form data using browser developer tools",
+        "   - Submit requests with missing CSRF tokens",
+        "   - Test concurrent user modifications",
+        "   - Attempt to access deleted/non-existent records"
       ];
       
-      expectedResult = "NEGATIVE TEST EXPECTED RESULTS:\n✓ System handles invalid inputs gracefully\n✓ Appropriate error messages are displayed\n✓ Unauthorized access is prevented\n✓ System remains stable under error conditions\n✓ No data corruption occurs";
+      expectedResult = `NEGATIVE TEST EXPECTED RESULTS:
+✓ Invalid login attempts are rejected with clear error messages
+✓ Unauthorized access attempts are blocked and logged
+✓ Form validation prevents submission of invalid data
+✓ Appropriate error messages guide user correction
+✓ System remains stable and functional under error conditions
+✓ No sensitive information is exposed in error messages
+✓ Security measures prevent injection and XSS attacks
+✓ Data integrity is maintained during error scenarios
+✓ User sessions are handled securely during failures
+✓ System logs security violations appropriately`;
       
     } else if (testType.type === 'Edge Case') {
       testSteps = [
@@ -138,38 +206,211 @@ export function generateSeparateTestCases(
       
     } else if (testType.type === 'Security') {
       testSteps = [
-        "SECURITY TEST EXECUTION:",
-        "1. Verify authentication mechanisms",
-        "2. Test authorization and access controls",
-        "3. Check for SQL injection vulnerabilities",
-        "4. Test XSS (Cross-Site Scripting) prevention",
-        "5. Verify CSRF protection",
-        "6. Test session management security",
-        "7. Check data encryption and transmission"
+        "COMPREHENSIVE SECURITY TESTING:",
+        "",
+        "1. AUTHENTICATION SECURITY:",
+        "   - Test password complexity requirements",
+        "   - Verify account lockout mechanisms after failed attempts",
+        "   - Test session timeout functionality",
+        "   - Verify secure password reset procedures",
+        "   - Test multi-factor authentication if implemented",
+        "",
+        "2. AUTHORIZATION TESTING:",
+        "   - Verify role-based access controls (RBAC)",
+        "   - Test horizontal privilege escalation attempts",
+        "   - Test vertical privilege escalation attempts",
+        "   - Verify permission inheritance and delegation",
+        "   - Test access to sensitive data based on user roles",
+        "",
+        "3. INPUT VALIDATION SECURITY:",
+        "   - Test SQL injection in all input fields",
+        "   - Test NoSQL injection attempts",
+        "   - Verify XSS prevention (stored, reflected, DOM-based)",
+        "   - Test command injection vulnerabilities",
+        "   - Test file upload security (if applicable)",
+        "",
+        "4. SESSION MANAGEMENT:",
+        "   - Test session fixation vulnerabilities",
+        "   - Verify secure session token generation",
+        "   - Test concurrent session handling",
+        "   - Verify proper session invalidation on logout",
+        "   - Test session hijacking prevention",
+        "",
+        "5. DATA PROTECTION:",
+        "   - Verify sensitive data encryption at rest",
+        "   - Test data transmission encryption (HTTPS/TLS)",
+        "   - Verify PII (Personal Identifiable Information) protection",
+        "   - Test data masking for unauthorized users",
+        "   - Verify secure data deletion procedures",
+        "",
+        "6. CSRF AND SECURITY HEADERS:",
+        "   - Test Cross-Site Request Forgery protection",
+        "   - Verify security headers (CSP, HSTS, X-Frame-Options)",
+        "   - Test clickjacking protection",
+        "   - Verify referrer policy implementation"
       ];
       
-      expectedResult = "SECURITY TEST EXPECTED RESULTS:\n✓ Authentication is secure and robust\n✓ Authorization controls function properly\n✓ No injection vulnerabilities exist\n✓ User data is protected\n✓ Sessions are managed securely\n✓ Data transmission is encrypted";
+      expectedResult = `SECURITY TEST EXPECTED RESULTS:
+✓ Strong authentication mechanisms prevent unauthorized access
+✓ Role-based access controls enforce proper authorization
+✓ All input validation prevents injection attacks successfully
+✓ Session management is secure and tamper-resistant
+✓ Sensitive data is properly encrypted and protected
+✓ CSRF tokens prevent cross-site request forgery
+✓ Security headers provide additional protection layers
+✓ No privilege escalation vulnerabilities exist
+✓ Data privacy regulations are met (GDPR, local laws)
+✓ Security logging captures all relevant events
+✓ System maintains security under concurrent user load
+✓ Password policies enforce strong authentication`;
       
     } else if (testType.type === 'Performance') {
       testSteps = [
-        "PERFORMANCE TEST EXECUTION:",
-        "1. Establish baseline performance metrics",
-        "2. Measure page load times",
-        "3. Test response times under normal load",
-        "4. Monitor resource utilization",
-        "5. Test with multiple concurrent users",
-        "6. Measure database query performance",
-        "7. Verify system scalability"
+        "COMPREHENSIVE PERFORMANCE TESTING:",
+        "",
+        "1. LOAD TIME MEASUREMENTS:",
+        "   - Measure initial page load time (< 3 seconds target)",
+        "   - Test time to interactive (TTI) metrics",
+        "   - Measure largest contentful paint (LCP)",
+        "   - Test cumulative layout shift (CLS)",
+        "   - Verify first input delay (FID) responsiveness",
+        "",
+        "2. STRESS TESTING:",
+        "   - Test with 10, 50, 100, 500 concurrent users",
+        "   - Monitor system behavior under peak load conditions",
+        "   - Test database connection pool limits",
+        "   - Verify graceful degradation under stress",
+        "   - Test recovery after load spikes",
+        "",
+        "3. RESOURCE UTILIZATION:",
+        "   - Monitor CPU usage during operations",
+        "   - Test memory consumption and garbage collection",
+        "   - Monitor database query execution times",
+        "   - Test network bandwidth utilization",
+        "   - Verify caching mechanisms effectiveness",
+        "",
+        "4. SCALABILITY TESTING:",
+        "   - Test horizontal scaling capabilities",
+        "   - Verify load balancer performance",
+        "   - Test auto-scaling triggers and responses",
+        "   - Monitor performance across different server instances",
+        "",
+        "5. MOBILE AND NETWORK TESTING:",
+        "   - Test performance on slow network connections (3G, 4G)",
+        "   - Verify mobile device performance",
+        "   - Test offline functionality if applicable",
+        "   - Monitor performance with network interruptions"
       ];
       
-      expectedResult = "PERFORMANCE TEST EXPECTED RESULTS:\n✓ Page loads within acceptable time limits\n✓ Response times meet performance criteria\n✓ System handles concurrent users efficiently\n✓ Resource utilization remains optimal\n✓ Database queries perform within thresholds\n✓ System scales appropriately under load";
+      expectedResult = `PERFORMANCE TEST EXPECTED RESULTS:
+✓ Page load times consistently under 3 seconds
+✓ API response times under 500ms for standard operations
+✓ System maintains 99.9% uptime under normal load
+✓ Database queries execute within 100ms average
+✓ Memory usage remains stable without leaks
+✓ CPU utilization stays below 80% under peak load
+✓ System handles 500+ concurrent users efficiently
+✓ Graceful degradation occurs under extreme load
+✓ Mobile performance meets responsive design standards
+✓ Network optimization reduces bandwidth usage
+✓ Caching improves performance by 40%+ for repeat requests
+✓ Auto-scaling responds within 2 minutes of load changes`;
+    } else if (testType.type === 'Usability') {
+      testSteps = [
+        "USABILITY AND USER EXPERIENCE TESTING:",
+        "",
+        "1. NAVIGATION AND LAYOUT:",
+        "   - Test intuitive menu navigation and structure",
+        "   - Verify consistent layout across all pages",
+        "   - Test breadcrumb navigation functionality",
+        "   - Verify responsive design on different screen sizes",
+        "   - Test accessibility features (WCAG compliance)",
+        "",
+        "2. FORM USABILITY:",
+        "   - Test form field labels and placeholders clarity",
+        "   - Verify helpful error messages and validation",
+        "   - Test tab order and keyboard navigation",
+        "   - Verify auto-complete and auto-save features",
+        "   - Test form submission confirmation messages",
+        "",
+        "3. CONTENT AND READABILITY:",
+        "   - Verify text readability and font sizes",
+        "   - Test color contrast for accessibility",
+        "   - Verify content organization and hierarchy",
+        "   - Test multi-language content display",
+        "   - Verify help text and tooltips effectiveness",
+        "",
+        "4. INTERACTION DESIGN:",
+        "   - Test button and link visual feedback",
+        "   - Verify loading indicators during operations",
+        "   - Test drag-and-drop functionality if applicable",
+        "   - Verify modal and popup behavior",
+        "   - Test keyboard shortcuts and hotkeys"
+      ];
+      
+      expectedResult = `USABILITY TEST EXPECTED RESULTS:
+✓ Navigation is intuitive and users find features easily
+✓ Layout is consistent and professional across all pages
+✓ Forms are easy to complete with clear validation
+✓ Error messages guide users toward correct actions
+✓ Accessibility standards are met for all users
+✓ Content is readable with proper contrast and typography
+✓ Multi-language support enhances user experience
+✓ Interactive elements provide clear visual feedback
+✓ Loading states inform users of system processing
+✓ Help documentation is accessible and useful
+✓ Mobile experience is optimized for touch interaction
+✓ Users can complete tasks efficiently without confusion`;
+    } else if (testType.type === 'Compatibility') {
+      testSteps = [
+        "CROSS-PLATFORM COMPATIBILITY TESTING:",
+        "",
+        "1. BROWSER COMPATIBILITY:",
+        "   - Test on Chrome (latest 2 versions)",
+        "   - Test on Firefox (latest 2 versions)",
+        "   - Test on Safari (latest 2 versions)",
+        "   - Test on Edge (latest 2 versions)",
+        "   - Verify functionality on older browser versions",
+        "",
+        "2. OPERATING SYSTEM TESTING:",
+        "   - Test on Windows 10/11",
+        "   - Test on macOS (latest 2 versions)",
+        "   - Test on Linux distributions (Ubuntu, CentOS)",
+        "   - Verify mobile OS compatibility (iOS, Android)",
+        "",
+        "3. DEVICE TESTING:",
+        "   - Test on desktop computers (various resolutions)",
+        "   - Test on tablets (iPad, Android tablets)",
+        "   - Test on smartphones (various screen sizes)",
+        "   - Verify touch interface functionality",
+        "",
+        "4. INTEGRATION COMPATIBILITY:",
+        "   - Test with third-party integrations",
+        "   - Verify API compatibility with external systems",
+        "   - Test plugin and extension compatibility",
+        "   - Verify database compatibility across versions"
+      ];
+      
+      expectedResult = `COMPATIBILITY TEST EXPECTED RESULTS:
+✓ Application functions consistently across all major browsers
+✓ Features work properly on different operating systems
+✓ Mobile and tablet interfaces are fully functional
+✓ Touch gestures work correctly on mobile devices
+✓ Responsive design adapts to all screen sizes
+✓ Third-party integrations function without conflicts
+✓ API calls work correctly across different environments
+✓ Database operations are consistent across platforms
+✓ Print functionality works on all supported browsers
+✓ File downloads work correctly on all platforms
+✓ Keyboard shortcuts function across operating systems
+✓ No browser-specific bugs or rendering issues exist`;
     }
 
     testCases.push({
       title: testCaseTitle,
-      objective,
-      prerequisites,
-      testSteps,
+      objective: `${testType.description} - ${objective}`,
+      prerequisites: prerequisites.join('\n'),
+      testSteps: testSteps.join('\n'),
       expectedResult,
       priority: testType.priority,
       status: "pending" as const,

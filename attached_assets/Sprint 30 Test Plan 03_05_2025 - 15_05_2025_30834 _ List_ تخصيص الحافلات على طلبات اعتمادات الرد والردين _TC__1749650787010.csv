@@ -1,0 +1,22 @@
+﻿ID,Work Item Type,Title,Test Step,Step Action,Step Expected,Area Path,Assigned To,State
+,Test Case,"[اخفاء رقم الاعتماد لشركات النقل في شاشة اعتمادات الرد والردين الصادرة] User can View ""اعتمادات الرد والردين الصادرة""  page content",,,,Naqaba_TIC\ERP,,Design
+,,,1,"Precondition: 
+1- The user has a permissions for the page :
+View
+2- In Arabic Login to Neqaba  (https://portal-qa.np.transporticonline.com) 
+  using as a Transportation Company user like (khooj or 2309800106 or 1004913933 or 1010831608 / Abcd@123)","
+",,,
+,,,2,"User open side menu then click on  ""ضيف المشاعر"" , then subsection ""اعتمادات الرد والردين الصادرة""","The page displayed""اعتمادات الرد والردين الصادرة""  in side menu",,,
+,,,3,"User click Page name""اعتمادات الرد والردين الصادرة""","*The page display with title ""اعتمادات الرد والردين الصادرة""
+***Page view 
+**Table content with the following columns:- 
+(With Smart search in the column header)
+المؤسسة
+مكتب الخدمة
+المسار
+رقم الاعتماد
+عدد الحجاج
+حالة الاعتماد
+حالة التنفيذ
+**Hide the confirmation number until the status = منفذ , then it should appear.",,,
+,,,4,Repeat the previous steps in English,Expect same result in English,,,
