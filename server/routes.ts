@@ -262,67 +262,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         environmentConfig = await storage.getEnvironmentConfig(azureConfig.id);
       }
 
+      // Import the test case generator
+      const { generateSeparateTestCases } = await import('./test-case-generator');
+
       // Create and store test cases based on user stories
       for (const story of userStories) {
         console.log(`Processing story: ${story.id} - ${story.title}`);
         console.log(`Acceptance Criteria: ${story.acceptanceCriteria || 'Not provided'}`);
         
-        // Create test case using acceptance criteria
-        const testCaseTitle = `Test Case: ${story.title}`;
-        const objective = story.acceptanceCriteria 
-          ? `Verify that the feature meets the following acceptance criteria: ${story.acceptanceCriteria}`
-          : "Test the functionality described in the user story";
+        // Generate separate test cases for each type using the generator
+        const testCasesToCreate = generateSeparateTestCases(story, testDataConfig, environmentConfig);
         
-        // Build comprehensive prerequisites including test data and environment
-        const prerequisites = [
-          "SYSTEM PREREQUISITES:",
-          "- Application is deployed and accessible in test environment",
-          "- All required services and dependencies are running",
-          "- Network connectivity is stable and verified"
-        ];
-
-        if (testDataConfig) {
-          prerequisites.push("");
-          prerequisites.push("TEST DATA CONFIGURATION:");
-          if (testDataConfig.username) prerequisites.push(`- Test Username: ${testDataConfig.username}`);
-          if (testDataConfig.password) prerequisites.push(`- Test Password: Configured in secure test environment`);
-          if (testDataConfig.webPortalUrl) prerequisites.push(`- Web Portal URL: ${testDataConfig.webPortalUrl}`);
-          if (testDataConfig.additionalData) {
-            prerequisites.push(`- Additional Test Data:`);
-            try {
-              const dataObj = typeof testDataConfig.additionalData === 'string' 
-                ? JSON.parse(testDataConfig.additionalData) 
-                : testDataConfig.additionalData;
-              if (typeof dataObj === 'object' && dataObj !== null) {
-                Object.entries(dataObj).forEach(([key, value]) => {
-                  prerequisites.push(`  • ${key}: ${value}`);
-                });
-              } else {
-                prerequisites.push(`  • ${testDataConfig.additionalData}`);
-              }
-            } catch (e) {
-              prerequisites.push(`  • ${testDataConfig.additionalData}`);
-            }
-          }
+        for (const testCaseData of testCasesToCreate) {
+          const created = await storage.createTestCase(testCaseData);
+          console.log(`Created ${testCaseData.title.split(':')[0]} test case with ID: ${created.id}`);
+          generatedTestCases.push(created);
         }
-
-        if (environmentConfig) {
-          prerequisites.push("");
-          prerequisites.push("ENVIRONMENT CONFIGURATION:");
-          if (environmentConfig.operatingSystem) prerequisites.push(`- Operating System: ${environmentConfig.operatingSystem}`);
-          if (environmentConfig.osVersion) prerequisites.push(`- OS Version: ${environmentConfig.osVersion}`);
-          if (environmentConfig.webBrowser) prerequisites.push(`- Web Browser: ${environmentConfig.webBrowser}`);
-          if (environmentConfig.browserVersion) prerequisites.push(`- Browser Version: ${environmentConfig.browserVersion}`);
-        }
-
-        prerequisites.push("");
-        prerequisites.push("ACCESS REQUIREMENTS:");
-        prerequisites.push("- Valid user account with appropriate test permissions");
-        prerequisites.push("- Access to all required test modules and features");
-        prerequisites.push("- Ability to create, modify, and delete test data as needed");
-
-        // Generate detailed test steps based on acceptance criteria
-        const testSteps = [];
         
         if (story.acceptanceCriteria) {
           // Clean up HTML tags and special characters
