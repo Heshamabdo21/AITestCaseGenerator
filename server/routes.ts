@@ -595,9 +595,10 @@ For each test case, provide the following in JSON format:
           ];
 
           // Add test steps if available, including configuration setup steps
-          if (testSteps.length > 0) {
-            // Enhance test steps with configuration information
-            const enhancedSteps = [...testSteps];
+          if (testCase.testSteps && typeof testCase.testSteps === 'string') {
+            // Parse test steps from string format
+            const testStepsArray = testCase.testSteps.split('\n').filter(step => step.trim());
+            const enhancedSteps = testStepsArray.slice();
             
             // Add configuration verification steps at the beginning
             if (testDataConfig || environmentConfig) {
