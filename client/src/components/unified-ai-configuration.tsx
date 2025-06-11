@@ -18,6 +18,7 @@ import type { InsertAiConfiguration, InsertAiContext } from "@shared/schema";
 const unifiedAiSchema = z.object({
   // AI Configuration fields
   includePositiveTests: z.boolean().default(true),
+  includeNegativeTests: z.boolean().default(true),
   includeEdgeCases: z.boolean().default(true),
   includeSecurityCases: z.boolean().default(false),
   testComplexity: z.enum(["simple", "medium", "complex"]).default("medium"),
@@ -43,6 +44,7 @@ export function UnifiedAiConfiguration() {
     resolver: zodResolver(unifiedAiSchema),
     defaultValues: {
       includePositiveTests: true,
+      includeNegativeTests: true,
       includeEdgeCases: true,
       includeSecurityCases: false,
       testComplexity: "medium",
