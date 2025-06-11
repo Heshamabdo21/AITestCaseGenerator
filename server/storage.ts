@@ -421,6 +421,10 @@ export class MemoryStorage implements IStorage {
       patToken: config.patToken,
       project: config.project,
       iterationPath: config.iterationPath || null,
+      testPlanId: config.testPlanId || null,
+      testPlanName: config.testPlanName || null,
+      testSuiteStrategy: config.testSuiteStrategy || null,
+      createTestSuites: config.createTestSuites || null,
       openaiKey: config.openaiKey,
       createdAt: new Date()
     };
@@ -745,6 +749,11 @@ export class MemoryStorage implements IStorage {
       includeNegativeTests: config.includeNegativeTests || null,
       includeEdgeCases: config.includeEdgeCases || null,
       includeSecurityCases: config.includeSecurityCases || null,
+      includePerformanceTests: config.includePerformanceTests || null,
+      includeUiTests: config.includeUiTests || null,
+      includeUsabilityTests: config.includeUsabilityTests || null,
+      includeApiTests: config.includeApiTests || null,
+      includeCompatibilityTests: config.includeCompatibilityTests || null,
       testComplexity: config.testComplexity || null,
       additionalInstructions: config.additionalInstructions || null,
       createdAt: new Date()

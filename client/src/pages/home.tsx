@@ -9,7 +9,9 @@ import { UnifiedAiConfiguration } from "@/components/unified-ai-configuration";
 import { CsvImportPanel } from "@/components/csv-import-panel";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bot, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Bot, User, TestTube } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -42,6 +44,12 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <Link href="/demo">
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <TestTube size={16} />
+                  Test Demo
+                </Button>
+              </Link>
               <ModeToggle />
               <span className="text-sm text-muted-foreground">test-user@company.com</span>
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
