@@ -178,9 +178,23 @@ export function TestCasesSection() {
             </Badge>
           </div>
           <div className="flex items-center space-x-3">
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => exportToExcelMutation.mutate()}
+              disabled={testCases.length === 0 || exportToExcelMutation.isPending}
+            >
+              {exportToExcelMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </>
+              )}
             </Button>
             <Button
               onClick={handleApproveSelected}
