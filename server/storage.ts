@@ -104,34 +104,46 @@ import {
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
+  private checkDatabase() {
+    if (!db) {
+      throw new Error("Database connection not available. Please configure a valid DATABASE_URL.");
+    }
+  }
+
   // Azure Config methods
   async createAzureConfig(config: InsertAzureConfig): Promise<AzureConfig> {
+    this.checkDatabase();
     const [result] = await db.insert(azureConfigs).values(config).returning();
     return result;
   }
 
   async getAzureConfig(id: number): Promise<AzureConfig | undefined> {
+    this.checkDatabase();
     const [result] = await db.select().from(azureConfigs).where(eq(azureConfigs.id, id));
     return result || undefined;
   }
 
   async getLatestAzureConfig(): Promise<AzureConfig | undefined> {
+    this.checkDatabase();
     const [result] = await db.select().from(azureConfigs).orderBy(desc(azureConfigs.id)).limit(1);
     return result || undefined;
   }
 
   async updateAzureConfig(id: number, config: Partial<InsertAzureConfig>): Promise<AzureConfig | undefined> {
+    this.checkDatabase();
     const [result] = await db.update(azureConfigs).set(config).where(eq(azureConfigs.id, id)).returning();
     return result || undefined;
   }
 
   // User Stories methods
   async createUserStory(story: InsertUserStory): Promise<UserStory> {
+    this.checkDatabase();
     const [result] = await db.insert(userStories).values(story).returning();
     return result;
   }
 
   async getUserStories(configId?: number): Promise<UserStory[]> {
+    this.checkDatabase();
     if (configId) {
       return await db.select().from(userStories).where(eq(userStories.configId, configId));
     }
@@ -139,26 +151,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserStory(id: number): Promise<UserStory | undefined> {
+    this.checkDatabase();
     const [result] = await db.select().from(userStories).where(eq(userStories.id, id));
     return result || undefined;
   }
 
   async getUserStoriesByIds(ids: number[]): Promise<UserStory[]> {
+    this.checkDatabase();
     if (ids.length === 0) return [];
     return await db.select().from(userStories).where(inArray(userStories.id, ids));
   }
 
   async clearUserStories(configId: number): Promise<void> {
+    this.checkDatabase();
     await db.delete(userStories).where(eq(userStories.configId, configId));
   }
 
   // Test Cases methods
   async createTestCase(testCase: InsertTestCase): Promise<TestCase> {
+    this.checkDatabase();
     const [result] = await db.insert(testCases).values(testCase).returning();
     return result;
   }
 
   async getTestCases(userStoryId?: number): Promise<TestCase[]> {
+    this.checkDatabase();
     if (userStoryId) {
       return await db.select().from(testCases).where(eq(testCases.userStoryId, userStoryId));
     }
@@ -166,32 +183,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTestCase(id: number): Promise<TestCase | undefined> {
+    this.checkDatabase();
     const [result] = await db.select().from(testCases).where(eq(testCases.id, id));
     return result || undefined;
   }
 
   async updateTestCase(id: number, testCase: Partial<InsertTestCase>): Promise<TestCase | undefined> {
+    this.checkDatabase();
     const [result] = await db.update(testCases).set(testCase).where(eq(testCases.id, id)).returning();
     return result || undefined;
   }
 
   async deleteTestCase(id: number): Promise<boolean> {
+    this.checkDatabase();
     const result = await db.delete(testCases).where(eq(testCases.id, id));
-    return (result as any).rowCount > 0;
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   async getTestCasesByIds(ids: number[]): Promise<TestCase[]> {
+    this.checkDatabase();
     if (ids.length === 0) return [];
     return await db.select().from(testCases).where(inArray(testCases.id, ids));
   }
 
   // Test Plans methods
   async createTestPlan(testPlan: InsertTestPlan): Promise<TestPlan> {
+    this.checkDatabase();
     const [result] = await db.insert(testPlans).values(testPlan).returning();
     return result;
   }
 
   async getTestPlans(configId?: number): Promise<TestPlan[]> {
+    this.checkDatabase();
     if (configId) {
       return await db.select().from(testPlans).where(eq(testPlans.configId, configId));
     }
@@ -199,21 +222,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTestPlan(id: number): Promise<TestPlan | undefined> {
+    this.checkDatabase();
     const [result] = await db.select().from(testPlans).where(eq(testPlans.id, id));
     return result || undefined;
   }
 
   async clearTestPlans(configId: number): Promise<void> {
+    this.checkDatabase();
     await db.delete(testPlans).where(eq(testPlans.configId, configId));
   }
 
   // Test Suites methods
   async createTestSuite(testSuite: InsertTestSuite): Promise<TestSuite> {
+    this.checkDatabase();
     const [result] = await db.insert(testSuites).values(testSuite).returning();
     return result;
   }
 
   async getTestSuites(testPlanId?: number): Promise<TestSuite[]> {
+    this.checkDatabase();
     if (testPlanId) {
       return await db.select().from(testSuites).where(eq(testSuites.testPlanId, testPlanId));
     }
@@ -221,49 +248,61 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTestSuite(id: number): Promise<TestSuite | undefined> {
+    this.checkDatabase();
     const [result] = await db.select().from(testSuites).where(eq(testSuites.id, id));
     return result || undefined;
   }
 
   async clearTestSuites(configId: number): Promise<void> {
+    this.checkDatabase();
     await db.delete(testSuites).where(eq(testSuites.configId, configId));
   }
 
   // Test Case Links methods
   async createTestCaseLink(link: InsertTestCaseLink): Promise<TestCaseLink> {
+    this.checkDatabase();
     const [result] = await db.insert(testCaseLinks).values(link).returning();
     return result;
   }
 
   async getTestCaseLinks(testCaseId: number): Promise<TestCaseLink[]> {
+    this.checkDatabase();
     return await db.select().from(testCaseLinks).where(eq(testCaseLinks.testCaseId, testCaseId));
   }
 
   async deleteTestCaseLink(id: number): Promise<boolean> {
+    this.checkDatabase();
     const result = await db.delete(testCaseLinks).where(eq(testCaseLinks.id, id));
-    return (result as any).rowCount > 0;
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Test Case Feedback methods
   async createTestCaseFeedback(feedback: InsertTestCaseFeedback): Promise<TestCaseFeedback> {
+    this.checkDatabase();
     const [result] = await db.insert(testCaseFeedback).values(feedback).returning();
     return result;
   }
 
   async getTestCaseFeedback(testCaseId: number): Promise<TestCaseFeedback[]> {
+    this.checkDatabase();
     return await db.select().from(testCaseFeedback).where(eq(testCaseFeedback.testCaseId, testCaseId));
   }
 
   async getAllFeedback(): Promise<TestCaseFeedback[]> {
+    this.checkDatabase();
     return await db.select().from(testCaseFeedback);
   }
 
   // AI Context methods
   async createOrUpdateAiContext(context: InsertAiContext): Promise<AiContext> {
-    const existing = await db.select().from(aiContext).where(eq(aiContext.configId, context.configId!)).limit(1);
+    this.checkDatabase();
+    const existing = await db.select().from(aiContext).where(eq(aiContext.configId, context.configId)).limit(1);
     
     if (existing.length > 0) {
-      const [result] = await db.update(aiContext).set(context).where(eq(aiContext.configId, context.configId!)).returning();
+      const [result] = await db.update(aiContext)
+        .set(context)
+        .where(eq(aiContext.configId, context.configId))
+        .returning();
       return result;
     } else {
       const [result] = await db.insert(aiContext).values(context).returning();
@@ -272,54 +311,64 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAiContext(configId: number): Promise<AiContext | undefined> {
+    this.checkDatabase();
     const [result] = await db.select().from(aiContext).where(eq(aiContext.configId, configId));
     return result || undefined;
   }
 
   // Test Data Config methods
   async createTestDataConfig(config: InsertTestDataConfig): Promise<TestDataConfig> {
+    this.checkDatabase();
     const [result] = await db.insert(testDataConfigs).values(config).returning();
     return result;
   }
 
   async getTestDataConfig(configId: number): Promise<TestDataConfig | undefined> {
+    this.checkDatabase();
     const [result] = await db.select().from(testDataConfigs).where(eq(testDataConfigs.configId, configId));
     return result || undefined;
   }
 
   async updateTestDataConfig(configId: number, config: Partial<InsertTestDataConfig>): Promise<TestDataConfig | undefined> {
+    this.checkDatabase();
     const [result] = await db.update(testDataConfigs).set(config).where(eq(testDataConfigs.configId, configId)).returning();
     return result || undefined;
   }
 
   // Environment Config methods
   async createEnvironmentConfig(config: InsertEnvironmentConfig): Promise<EnvironmentConfig> {
+    this.checkDatabase();
     const [result] = await db.insert(environmentConfigs).values(config).returning();
     return result;
   }
 
   async getEnvironmentConfig(configId: number): Promise<EnvironmentConfig | undefined> {
+    this.checkDatabase();
     const [result] = await db.select().from(environmentConfigs).where(eq(environmentConfigs.configId, configId));
     return result || undefined;
   }
 
   async updateEnvironmentConfig(configId: number, config: Partial<InsertEnvironmentConfig>): Promise<EnvironmentConfig | undefined> {
+    this.checkDatabase();
     const [result] = await db.update(environmentConfigs).set(config).where(eq(environmentConfigs.configId, configId)).returning();
     return result || undefined;
   }
 
   // AI Configuration methods
   async createAiConfiguration(config: InsertAiConfiguration): Promise<AiConfiguration> {
+    this.checkDatabase();
     const [result] = await db.insert(aiConfigurations).values(config).returning();
     return result;
   }
 
   async getAiConfiguration(configId: number): Promise<AiConfiguration | undefined> {
+    this.checkDatabase();
     const [result] = await db.select().from(aiConfigurations).where(eq(aiConfigurations.configId, configId));
     return result || undefined;
   }
 
   async updateAiConfiguration(configId: number, config: Partial<InsertAiConfiguration>): Promise<AiConfiguration | undefined> {
+    this.checkDatabase();
     const [result] = await db.update(aiConfigurations).set(config).where(eq(aiConfigurations.configId, configId)).returning();
     return result || undefined;
   }
