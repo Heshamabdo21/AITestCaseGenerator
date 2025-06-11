@@ -8,6 +8,8 @@ import { EnvironmentPanel } from "@/components/environment-panel";
 import { UnifiedAiConfiguration } from "@/components/unified-ai-configuration";
 import { CsvImportPanel } from "@/components/csv-import-panel";
 import { DemoBanner } from "@/components/demo-banner";
+import { PlatformTestShowcase } from "@/components/platform-test-showcase";
+import { PlatformTutorial } from "@/components/platform-tutorial";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -93,6 +95,7 @@ export default function Home() {
 
           {/* Main Work Area */}
           <div className="lg:col-span-2 space-y-8">
+            <PlatformTutorial />
             <EnhancedUserStories onTestCasesGenerated={handleTestCasesGenerated} />
             <TestCasesSection />
           </div>
