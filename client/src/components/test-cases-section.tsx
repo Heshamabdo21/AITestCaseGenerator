@@ -323,14 +323,18 @@ export function TestCasesSection() {
                           <div>
                             <Label>Prerequisites</Label>
                             <Textarea 
-                              defaultValue={testCase.prerequisites?.join('\n') || ''} 
+                              defaultValue={Array.isArray(testCase.prerequisites) 
+                                ? testCase.prerequisites.join('\n') 
+                                : testCase.prerequisites || ''} 
                               placeholder="Enter each prerequisite on a new line"
                             />
                           </div>
                           <div>
                             <Label>Test Steps</Label>
                             <Textarea 
-                              defaultValue={testCase.testSteps?.join('\n') || ''} 
+                              defaultValue={Array.isArray(testCase.testSteps) 
+                                ? testCase.testSteps.join('\n') 
+                                : testCase.testSteps || ''} 
                               placeholder="Enter each step on a new line"
                             />
                           </div>
@@ -351,25 +355,25 @@ export function TestCasesSection() {
                       <p className="text-sm text-gray-700 mt-1">{testCase.objective}</p>
                     </div>
 
-                    {testCase.prerequisites && testCase.prerequisites.length > 0 && (
+                    {testCase.prerequisites && (
                       <div>
                         <span className="text-sm font-medium text-gray-900">Prerequisites:</span>
-                        <ul className="text-sm text-gray-700 mt-1 ml-4 list-disc">
-                          {testCase.prerequisites.map((prereq, index) => (
-                            <li key={index}>{prereq}</li>
-                          ))}
-                        </ul>
+                        <div className="text-sm text-gray-700 mt-1 whitespace-pre-line">
+                          {Array.isArray(testCase.prerequisites) 
+                            ? testCase.prerequisites.join('\n')
+                            : testCase.prerequisites}
+                        </div>
                       </div>
                     )}
 
-                    {testCase.testSteps && testCase.testSteps.length > 0 && (
+                    {testCase.testSteps && (
                       <div>
                         <span className="text-sm font-medium text-gray-900">Test Steps:</span>
-                        <ol className="text-sm text-gray-700 mt-1 ml-4 list-decimal space-y-1">
-                          {testCase.testSteps.map((step, index) => (
-                            <li key={index}>{step}</li>
-                          ))}
-                        </ol>
+                        <div className="text-sm text-gray-700 mt-1 whitespace-pre-line">
+                          {Array.isArray(testCase.testSteps) 
+                            ? testCase.testSteps.join('\n')
+                            : testCase.testSteps}
+                        </div>
                       </div>
                     )}
 

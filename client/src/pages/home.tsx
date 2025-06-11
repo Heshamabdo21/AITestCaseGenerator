@@ -6,6 +6,7 @@ import { TestCasesSection } from "@/components/test-cases-section";
 import { TestDataPanel } from "@/components/test-data-panel";
 import { EnvironmentPanel } from "@/components/environment-panel";
 import { UnifiedAiConfiguration } from "@/components/unified-ai-configuration";
+import { CsvImportPanel } from "@/components/csv-import-panel";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bot, User } from "lucide-react";
@@ -58,9 +59,10 @@ export default function Home() {
           {/* Configuration Panel */}
           <div className="lg:col-span-1">
             <Tabs defaultValue="azure" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="azure">Azure & AI</TabsTrigger>
                 <TabsTrigger value="test">Test Setup</TabsTrigger>
+                <TabsTrigger value="import">CSV Import</TabsTrigger>
               </TabsList>
               
               <TabsContent value="azure" className="space-y-4">
@@ -71,6 +73,10 @@ export default function Home() {
               <TabsContent value="test" className="space-y-4">
                 <TestDataPanel />
                 <EnvironmentPanel />
+              </TabsContent>
+              
+              <TabsContent value="import" className="space-y-4">
+                <CsvImportPanel />
               </TabsContent>
             </Tabs>
           </div>
