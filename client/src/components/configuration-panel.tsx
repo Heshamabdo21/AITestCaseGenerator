@@ -13,6 +13,7 @@ import { EyeIcon, EyeOffIcon, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import type { InsertAzureConfig } from "@shared/schema";
 
 const configSchema = z.object({
@@ -181,6 +182,8 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
         title: "Configuration Saved",
         description: "Azure DevOps configuration saved successfully",
       });
+      // Invalidate and refetch the configuration query to enable the Load Test Plans button
+      queryClient.invalidateQueries({ queryKey: ['/api/azure-config/latest'] });
       onConfigurationSaved();
     },
     onError: (error: any) => {
