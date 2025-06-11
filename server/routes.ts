@@ -296,42 +296,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const testSteps = [];
         
         if (story.acceptanceCriteria) {
-          const cleanCriteria = story.acceptanceCriteria.replace(/<[^>]*>/g, '').trim();
+          // Clean up HTML tags and special characters
+          const cleanCriteria = story.acceptanceCriteria
+            .replace(/<[^>]*>/g, '')
+            .replace(/&quot;/g, '"')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&nbsp;/g, ' ')
+            .trim();
+          
           const criteriaLines = cleanCriteria.split(/AC\d+:/).filter(line => line.trim());
           
-          testSteps.push("Setup:");
-          testSteps.push("1. Open browser and navigate to the application URL");
-          testSteps.push("2. Login with valid test credentials");
-          testSteps.push("3. Navigate to the relevant page/module");
+          testSteps.push("SETUP PHASE:");
+          testSteps.push("1. Ensure test environment is accessible and stable");
+          testSteps.push("2. Open the specified web browser");
+          testSteps.push("3. Navigate to the application URL");
+          testSteps.push("4. Login using valid test credentials");
+          testSteps.push("5. Verify successful login and access to main dashboard");
+          testSteps.push("6. Navigate to the target page/module mentioned in the user story");
+          testSteps.push("");
           
-          testSteps.push("Test Execution:");
+          testSteps.push("EXECUTION PHASE:");
+          let stepNumber = 7;
+          criteriaLines.forEach((criteria) => {
+            if (criteria.trim()) {
+              const cleanStep = criteria.trim().replace(/\s+/g, ' ');
+              testSteps.push(`${stepNumber}. Execute: ${cleanStep}`);
+              testSteps.push(`${stepNumber + 1}. Verify the action completes successfully`);
+              stepNumber += 2;
+            }
+          });
+          testSteps.push("");
+          
+          testSteps.push("VERIFICATION PHASE:");
+          testSteps.push(`${stepNumber}. Validate all acceptance criteria are fully satisfied`);
+          testSteps.push(`${stepNumber + 1}. Check for any unexpected UI elements or behaviors`);
+          testSteps.push(`${stepNumber + 2}. Verify data integrity and consistency`);
+          testSteps.push(`${stepNumber + 3}. Confirm user experience meets requirements`);
+          
+          if (request.includeNegative) {
+            testSteps.push("");
+            testSteps.push("NEGATIVE TESTING PHASE:");
+            testSteps.push(`${stepNumber + 4}. Test with invalid or boundary inputs`);
+            testSteps.push(`${stepNumber + 5}. Verify appropriate error handling and messages`);
+            testSteps.push(`${stepNumber + 6}. Test unauthorized access scenarios`);
+            testSteps.push(`${stepNumber + 7}. Validate system stability under error conditions`);
+          }
+        } else {
+          testSteps.push("SETUP PHASE:");
+          testSteps.push("1. Prepare test environment and verify accessibility");
+          testSteps.push("2. Launch browser and navigate to application");
+          testSteps.push("3. Authenticate with valid test credentials");
+          testSteps.push("4. Access the feature module under test");
+          testSteps.push("");
+          testSteps.push("EXECUTION PHASE:");
+          testSteps.push("5. Execute the primary functionality described in user story");
+          testSteps.push("6. Perform all required user interactions");
+          testSteps.push("7. Test the complete user workflow");
+          testSteps.push("");
+          testSteps.push("VERIFICATION PHASE:");
+          testSteps.push("8. Verify expected behavior and outcomes");
+          testSteps.push("9. Test edge cases and boundary conditions");
+          testSteps.push("10. Validate error handling scenarios");
+        }
+
+        // Create detailed expected results
+        let expectedResult = "EXPECTED OUTCOMES:\n";
+        if (story.acceptanceCriteria) {
+          const cleanCriteria = story.acceptanceCriteria
+            .replace(/<[^>]*>/g, '')
+            .replace(/&quot;/g, '"')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&nbsp;/g, ' ')
+            .trim();
+          
+          const criteriaLines = cleanCriteria.split(/AC\d+:/).filter(line => line.trim());
+          
+          expectedResult += "✓ Functional Requirements:\n";
           criteriaLines.forEach((criteria, index) => {
             if (criteria.trim()) {
-              testSteps.push(`${index + 4}. Test: ${criteria.trim()}`);
+              expectedResult += `  ${index + 1}. ${criteria.trim().replace(/\s+/g, ' ')}\n`;
             }
           });
           
-          testSteps.push("Verification:");
-          testSteps.push(`${testSteps.length + 1}. Verify all acceptance criteria are met`);
-          testSteps.push(`${testSteps.length + 1}. Verify no unexpected errors or behaviors occur`);
+          expectedResult += "\n✓ Quality Assurance:\n";
+          expectedResult += "  - No errors or exceptions occur during execution\n";
+          expectedResult += "  - User interface responds appropriately to all interactions\n";
+          expectedResult += "  - Data is processed and displayed correctly\n";
+          expectedResult += "  - System performance remains within acceptable limits\n";
           
           if (request.includeNegative) {
-            testSteps.push("Negative Testing:");
-            testSteps.push(`${testSteps.length + 1}. Test with invalid inputs (if applicable)`);
-            testSteps.push(`${testSteps.length + 1}. Verify appropriate error messages are displayed`);
+            expectedResult += "\n✓ Error Handling:\n";
+            expectedResult += "  - Invalid inputs display appropriate error messages\n";
+            expectedResult += "  - System gracefully handles edge cases\n";
+            expectedResult += "  - User is guided to correct any input errors\n";
           }
         } else {
-          testSteps.push("1. Navigate to the application");
-          testSteps.push("2. Login with test credentials");
-          testSteps.push("3. Access the feature under test");
-          testSteps.push("4. Perform the required functionality");
-          testSteps.push("5. Verify the expected behavior");
-          testSteps.push("6. Test edge cases and error scenarios");
+          expectedResult += "✓ Primary functionality works as described in user story\n";
+          expectedResult += "✓ All user interactions produce expected results\n";
+          expectedResult += "✓ System maintains stability and performance\n";
+          expectedResult += "✓ User experience meets quality standards";
         }
-
-        const expectedResult = story.acceptanceCriteria 
-          ? `All acceptance criteria are satisfied: ${story.acceptanceCriteria.replace(/<[^>]*>/g, '').trim()}`
-          : "Feature functions correctly according to requirements";
 
         const testCaseData = {
           title: testCaseTitle,
@@ -548,24 +616,48 @@ For each test case, provide the following in JSON format:
       
       for (const testCase of approvedTests) {
         try {
-          // Create test case in Azure DevOps
+          // Get the linked user story for this test case
+          let userStory = null;
+          if (testCase.userStoryId && typeof testCase.userStoryId === 'number') {
+            userStory = await storage.getUserStory(testCase.userStoryId);
+          }
+          
+          // Create test case in Azure DevOps with proper linking
           const testSteps = testCase.testSteps || [];
-          const workItem = {
-            fields: {
-              "System.WorkItemType": "Test Case",
-              "System.Title": testCase.title,
-              "Microsoft.VSTS.TCM.Steps": testSteps.map((step, index) => ({
-                id: index + 1,
-                action: step,
-                expectedResult: index === testSteps.length - 1 ? testCase.expectedResult : ""
-              })),
-              "System.Description": testCase.objective,
-              "Microsoft.VSTS.Common.Priority": testCase.priority === "High" ? 1 : testCase.priority === "Medium" ? 2 : 3,
-            }
-          };
-
           const apiUrl = `${config.organizationUrl}/${config.project}/_apis/wit/workitems/$Test Case?api-version=7.0`;
           const authHeader = `Basic ${Buffer.from(`:${config.patToken}`).toString('base64')}`;
+
+          // Build the patch operations for creating the test case
+          const patchOperations = [
+            {
+              op: "add",
+              path: "/fields/System.Title",
+              value: testCase.title
+            },
+            {
+              op: "add", 
+              path: "/fields/System.Description",
+              value: testCase.objective
+            },
+            {
+              op: "add",
+              path: "/fields/Microsoft.VSTS.Common.Priority", 
+              value: testCase.priority === "High" ? 1 : testCase.priority === "Medium" ? 2 : 3
+            }
+          ];
+
+          // Add test steps if available
+          if (testSteps.length > 0) {
+            const formattedSteps = testSteps.map((step, index) => {
+              return `<step id="${index + 1}" type="ActionStep"><parameterizedString isformatted="true">&lt;DIV&gt;&lt;P&gt;${step}&lt;/P&gt;&lt;/DIV&gt;</parameterizedString><parameterizedString isformatted="true">&lt;DIV&gt;&lt;P&gt;${index === testSteps.length - 1 ? testCase.expectedResult : 'Step completed successfully'}&lt;/P&gt;&lt;/DIV&gt;</parameterizedString><description/></step>`;
+            }).join("");
+            
+            patchOperations.push({
+              op: "add",
+              path: "/fields/Microsoft.VSTS.TCM.Steps",
+              value: `<steps id="0" last="${testSteps.length}">${formattedSteps}</steps>`
+            });
+          }
 
           const response = await fetch(apiUrl, {
             method: 'POST',
@@ -573,31 +665,53 @@ For each test case, provide the following in JSON format:
               'Authorization': authHeader,
               'Content-Type': 'application/json-patch+json'
             },
-            body: JSON.stringify([
-              {
-                op: "add",
-                path: "/fields/System.Title",
-                value: testCase.title
-              },
-              {
-                op: "add", 
-                path: "/fields/System.Description",
-                value: testCase.objective
-              },
-              {
-                op: "add",
-                path: "/fields/Microsoft.VSTS.Common.Priority", 
-                value: testCase.priority === "High" ? 1 : testCase.priority === "Medium" ? 2 : 3
-              }
-            ])
+            body: JSON.stringify(patchOperations)
           });
 
           if (response.ok) {
             const azureTestCase = await response.json();
+            
+            // Link the test case to the user story if both exist in Azure
+            if (userStory && userStory.azureId) {
+              try {
+                const linkApiUrl = `${config.organizationUrl}/${config.project}/_apis/wit/workitems/${azureTestCase.id}?api-version=7.0`;
+                
+                const linkOperation = [{
+                  op: "add",
+                  path: "/relations/-",
+                  value: {
+                    rel: "Microsoft.VSTS.Common.TestedBy-Reverse",
+                    url: `${config.organizationUrl}/${config.project}/_apis/wit/workItems/${userStory.azureId}`,
+                    attributes: {
+                      comment: `Test case created for user story: ${userStory.title}`
+                    }
+                  }
+                }];
+
+                const linkResponse = await fetch(linkApiUrl, {
+                  method: 'PATCH',
+                  headers: {
+                    'Authorization': authHeader,
+                    'Content-Type': 'application/json-patch+json'
+                  },
+                  body: JSON.stringify(linkOperation)
+                });
+
+                if (linkResponse.ok) {
+                  console.log(`Successfully linked test case ${azureTestCase.id} to user story ${userStory.azureId}`);
+                } else {
+                  console.log(`Warning: Could not link test case to user story. Status: ${linkResponse.status}`);
+                }
+              } catch (linkError) {
+                console.log("Warning: Could not create link to user story:", linkError);
+              }
+            }
+            
             await storage.updateTestCase(testCase.id, { azureTestCaseId: azureTestCase.id.toString() });
-            results.push({ testCaseId: testCase.id, azureId: azureTestCase.id, success: true });
+            results.push({ testCaseId: testCase.id, azureId: azureTestCase.id, success: true, userStoryLink: userStory?.azureId || null });
           } else {
-            results.push({ testCaseId: testCase.id, success: false, error: `Azure API error: ${response.status}` });
+            const errorText = await response.text();
+            results.push({ testCaseId: testCase.id, success: false, error: `Azure API error: ${response.status} - ${errorText}` });
           }
         } catch (error: any) {
           results.push({ testCaseId: testCase.id, success: false, error: error.message });
