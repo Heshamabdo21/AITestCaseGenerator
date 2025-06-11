@@ -271,26 +271,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Build comprehensive prerequisites including test data and environment
         const prerequisites = [
-          "System Prerequisites:",
-          "- Application is deployed and accessible",
-          "- User has valid login credentials with appropriate permissions"
+          "SYSTEM PREREQUISITES:",
+          "- Application is deployed and accessible in test environment",
+          "- All required services and dependencies are running",
+          "- Network connectivity is stable and verified"
         ];
 
         if (testDataConfig) {
-          prerequisites.push("Test Data Requirements:");
+          prerequisites.push("");
+          prerequisites.push("TEST DATA CONFIGURATION:");
           if (testDataConfig.username) prerequisites.push(`- Test Username: ${testDataConfig.username}`);
-          if (testDataConfig.password) prerequisites.push(`- Test Password: Available in test environment`);
+          if (testDataConfig.password) prerequisites.push(`- Test Password: Configured in secure test environment`);
           if (testDataConfig.webPortalUrl) prerequisites.push(`- Web Portal URL: ${testDataConfig.webPortalUrl}`);
-          if (testDataConfig.additionalData) prerequisites.push(`- Additional Data: ${JSON.stringify(testDataConfig.additionalData)}`);
+          if (testDataConfig.additionalData) {
+            prerequisites.push(`- Additional Test Data:`);
+            try {
+              const dataObj = typeof testDataConfig.additionalData === 'string' 
+                ? JSON.parse(testDataConfig.additionalData) 
+                : testDataConfig.additionalData;
+              if (typeof dataObj === 'object' && dataObj !== null) {
+                Object.entries(dataObj).forEach(([key, value]) => {
+                  prerequisites.push(`  • ${key}: ${value}`);
+                });
+              } else {
+                prerequisites.push(`  • ${testDataConfig.additionalData}`);
+              }
+            } catch (e) {
+              prerequisites.push(`  • ${testDataConfig.additionalData}`);
+            }
+          }
         }
 
         if (environmentConfig) {
-          prerequisites.push("Environment Configuration:");
-          if (environmentConfig.operatingSystem) prerequisites.push(`- OS: ${environmentConfig.operatingSystem}`);
-          if (environmentConfig.webBrowser) prerequisites.push(`- Browser: ${environmentConfig.webBrowser}`);
-          if (environmentConfig.browserVersion) prerequisites.push(`- Browser Version: ${environmentConfig.browserVersion}`);
+          prerequisites.push("");
+          prerequisites.push("ENVIRONMENT CONFIGURATION:");
+          if (environmentConfig.operatingSystem) prerequisites.push(`- Operating System: ${environmentConfig.operatingSystem}`);
           if (environmentConfig.osVersion) prerequisites.push(`- OS Version: ${environmentConfig.osVersion}`);
+          if (environmentConfig.webBrowser) prerequisites.push(`- Web Browser: ${environmentConfig.webBrowser}`);
+          if (environmentConfig.browserVersion) prerequisites.push(`- Browser Version: ${environmentConfig.browserVersion}`);
         }
+
+        prerequisites.push("");
+        prerequisites.push("ACCESS REQUIREMENTS:");
+        prerequisites.push("- Valid user account with appropriate test permissions");
+        prerequisites.push("- Access to all required test modules and features");
+        prerequisites.push("- Ability to create, modify, and delete test data as needed");
 
         // Generate detailed test steps based on acceptance criteria
         const testSteps = [];
@@ -622,10 +647,36 @@ For each test case, provide the following in JSON format:
             userStory = await storage.getUserStory(testCase.userStoryId);
           }
           
+          // Get test data and environment configurations
+          const testDataConfig = await storage.getTestDataConfig(config.id);
+          const environmentConfig = await storage.getEnvironmentConfig(config.id);
+          
           // Create test case in Azure DevOps with proper linking
           const testSteps = testCase.testSteps || [];
           const apiUrl = `${config.organizationUrl}/${config.project}/_apis/wit/workitems/$Test Case?api-version=7.0`;
           const authHeader = `Basic ${Buffer.from(`:${config.patToken}`).toString('base64')}`;
+
+          // Build enhanced description with test data and environment info
+          let enhancedDescription = testCase.objective;
+          
+          if (testDataConfig || environmentConfig) {
+            enhancedDescription += "\n\n--- Configuration Details ---\n";
+            
+            if (testDataConfig) {
+              enhancedDescription += "\nTest Data Configuration:\n";
+              if (testDataConfig.username) enhancedDescription += `• Username: ${testDataConfig.username}\n`;
+              if (testDataConfig.webPortalUrl) enhancedDescription += `• Portal URL: ${testDataConfig.webPortalUrl}\n`;
+              if (testDataConfig.additionalData) enhancedDescription += `• Additional Data: ${JSON.stringify(testDataConfig.additionalData)}\n`;
+            }
+            
+            if (environmentConfig) {
+              enhancedDescription += "\nEnvironment Configuration:\n";
+              if (environmentConfig.operatingSystem) enhancedDescription += `• Operating System: ${environmentConfig.operatingSystem}\n`;
+              if (environmentConfig.webBrowser) enhancedDescription += `• Browser: ${environmentConfig.webBrowser}\n`;
+              if (environmentConfig.browserVersion) enhancedDescription += `• Browser Version: ${environmentConfig.browserVersion}\n`;
+              if (environmentConfig.osVersion) enhancedDescription += `• OS Version: ${environmentConfig.osVersion}\n`;
+            }
+          }
 
           // Build the patch operations for creating the test case
           const patchOperations = [
@@ -637,7 +688,7 @@ For each test case, provide the following in JSON format:
             {
               op: "add", 
               path: "/fields/System.Description",
-              value: testCase.objective
+              value: enhancedDescription
             },
             {
               op: "add",
@@ -646,16 +697,45 @@ For each test case, provide the following in JSON format:
             }
           ];
 
-          // Add test steps if available
+          // Add test steps if available, including configuration setup steps
           if (testSteps.length > 0) {
-            const formattedSteps = testSteps.map((step, index) => {
-              return `<step id="${index + 1}" type="ActionStep"><parameterizedString isformatted="true">&lt;DIV&gt;&lt;P&gt;${step}&lt;/P&gt;&lt;/DIV&gt;</parameterizedString><parameterizedString isformatted="true">&lt;DIV&gt;&lt;P&gt;${index === testSteps.length - 1 ? testCase.expectedResult : 'Step completed successfully'}&lt;/P&gt;&lt;/DIV&gt;</parameterizedString><description/></step>`;
+            // Enhance test steps with configuration information
+            const enhancedSteps = [...testSteps];
+            
+            // Add configuration verification steps at the beginning
+            if (testDataConfig || environmentConfig) {
+              enhancedSteps.unshift("CONFIGURATION VERIFICATION:");
+              
+              if (environmentConfig) {
+                if (environmentConfig.webBrowser) {
+                  enhancedSteps.splice(1, 0, `Verify browser is ${environmentConfig.webBrowser}${environmentConfig.browserVersion ? ' ' + environmentConfig.browserVersion : ''}`);
+                }
+                if (environmentConfig.operatingSystem) {
+                  enhancedSteps.splice(1, 0, `Confirm operating system is ${environmentConfig.operatingSystem}${environmentConfig.osVersion ? ' ' + environmentConfig.osVersion : ''}`);
+                }
+              }
+              
+              if (testDataConfig) {
+                if (testDataConfig.webPortalUrl) {
+                  enhancedSteps.splice(1, 0, `Navigate to test portal: ${testDataConfig.webPortalUrl}`);
+                }
+                if (testDataConfig.username) {
+                  enhancedSteps.splice(1, 0, `Prepare test credentials for user: ${testDataConfig.username}`);
+                }
+              }
+              
+              enhancedSteps.splice(1, 0, "");
+            }
+            
+            const formattedSteps = enhancedSteps.map((step, index) => {
+              const escapedStep = step.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              return `<step id="${index + 1}" type="ActionStep"><parameterizedString isformatted="true">&lt;DIV&gt;&lt;P&gt;${escapedStep}&lt;/P&gt;&lt;/DIV&gt;</parameterizedString><parameterizedString isformatted="true">&lt;DIV&gt;&lt;P&gt;${index === enhancedSteps.length - 1 ? testCase.expectedResult : 'Step completed successfully'}&lt;/P&gt;&lt;/DIV&gt;</parameterizedString><description/></step>`;
             }).join("");
             
             patchOperations.push({
               op: "add",
               path: "/fields/Microsoft.VSTS.TCM.Steps",
-              value: `<steps id="0" last="${testSteps.length}">${formattedSteps}</steps>`
+              value: `<steps id="0" last="${enhancedSteps.length}">${formattedSteps}</steps>`
             });
           }
 
