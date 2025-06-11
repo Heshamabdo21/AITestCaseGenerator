@@ -8,7 +8,9 @@ export const azureConfigs = pgTable("azure_configs", {
   organizationUrl: text("organization_url").notNull(),
   patToken: text("pat_token").notNull(),
   project: text("project").notNull(),
-  iterationPath: text("iteration_path"), // Optional iteration path
+  iterationPath: text("iteration_path"), // Optional iteration path for filtering user stories
+  testPlanId: text("test_plan_id"), // Optional test plan ID for test case creation
+  testPlanName: text("test_plan_name"), // Optional test plan name for display
   openaiKey: text("openai_key").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

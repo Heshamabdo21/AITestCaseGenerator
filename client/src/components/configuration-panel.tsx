@@ -20,6 +20,8 @@ const configSchema = z.object({
   patToken: z.string().min(1, "Personal Access Token is required"),
   project: z.string().min(1, "Project selection is required"),
   iterationPath: z.string().optional(),
+  testPlanId: z.string().optional(),
+  testPlanName: z.string().optional(),
   openaiKey: z.string().min(1, "OpenAI API Key is required"),
 });
 
@@ -34,6 +36,7 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
   const [showOpenAiKey, setShowOpenAiKey] = useState(false);
   const [projects, setProjects] = useState<Array<{ name: string; id: string }>>([]);
   const [iterations, setIterations] = useState<Array<{ name: string; path: string }>>([]);
+  const [testPlans, setTestPlans] = useState<Array<{ id: string; name: string; description: string }>>([]);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [connectionMessage, setConnectionMessage] = useState('');
   

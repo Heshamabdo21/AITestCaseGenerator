@@ -194,10 +194,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      // First, get work item IDs using a query
+      // First, get work item IDs using a query with optional iteration path filter
       const queryUrl = `${config.organizationUrl}/${config.project}/_apis/wit/wiql?api-version=7.0`;
+      
+      let query = "SELECT [System.Id] FROM WorkItems WHERE [System.WorkItemType] = 'User Story'";
+      if (config.iterationPath) {
+        query += ` AND [System.IterationPath] UNDER '${config.iterationPath}'`;
+      }
+      query += " ORDER BY [System.CreatedDate] DESC";
+      
       const queryPayload = {
-        query: "SELECT [System.Id] FROM WorkItems WHERE [System.WorkItemType] = 'User Story' ORDER BY [System.CreatedDate] DESC"
+        query: query
       };
 
       const authHeader = `Basic ${Buffer.from(`:${config.patToken}`).toString('base64')}`;
@@ -684,6 +691,47 @@ For each test case, provide the following in JSON format:
                 console.log("Warning: Could not create link to user story:", linkError);
               }
             }
+
+            // Add test case to test plan if configured
+            if (config.testPlanId) {
+              try {
+                const testPlanApiUrl = `${config.organizationUrl}/${config.project}/_apis/testplan/Plans/${config.testPlanId}/suites?api-version=7.0`;
+                
+                // First, get the root test suite
+                const suitesResponse = await fetch(testPlanApiUrl, {
+                  headers: {
+                    'Authorization': authHeader,
+                    'Content-Type': 'application/json'
+                  }
+                });
+
+                if (suitesResponse.ok) {
+                  const suitesData = await suitesResponse.json();
+                  const rootSuite = suitesData.value?.find((suite: any) => suite.suiteType === 'StaticTestSuite' && suite.name === 'Root Suite') || suitesData.value?.[0];
+                  
+                  if (rootSuite) {
+                    // Add test case to the root suite
+                    const addTestCaseUrl = `${config.organizationUrl}/${config.project}/_apis/testplan/Plans/${config.testPlanId}/Suites/${rootSuite.id}/TestCase/${azureTestCase.id}?api-version=7.0`;
+                    
+                    const addTestCaseResponse = await fetch(addTestCaseUrl, {
+                      method: 'POST',
+                      headers: {
+                        'Authorization': authHeader,
+                        'Content-Type': 'application/json'
+                      }
+                    });
+
+                    if (addTestCaseResponse.ok) {
+                      console.log(`Successfully added test case ${azureTestCase.id} to test plan ${config.testPlanId}`);
+                    } else {
+                      console.log(`Warning: Could not add test case to test plan. Status: ${addTestCaseResponse.status}`);
+                    }
+                  }
+                }
+              } catch (testPlanError) {
+                console.log("Warning: Could not add test case to test plan:", testPlanError);
+              }
+            }
             
             await storage.updateTestCase(testCase.id, { azureTestCaseId: azureTestCase.id.toString() });
             results.push({ testCaseId: testCase.id, azureId: azureTestCase.id, success: true, userStoryLink: userStory?.azureId || null });
@@ -898,6 +946,94 @@ For each test case, provide the following in JSON format:
       res.json(aiContext || {});
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get Azure DevOps test plans
+  app.get("/api/azure/test-plans", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const apiUrl = `${config.organizationUrl}/${config.project}/_apis/testplan/plans?api-version=7.0`;
+      const authHeader = `Basic ${Buffer.from(`:${config.patToken}`).toString('base64')}`;
+
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Azure DevOps Test Plans API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const testPlans = data.value || [];
+
+      res.json(testPlans.map((plan: any) => ({
+        id: plan.id,
+        name: plan.name,
+        description: plan.description || '',
+        state: plan.state,
+        startDate: plan.startDate,
+        endDate: plan.endDate
+      })));
+    } catch (error: any) {
+      res.status(500).json({ message: `Failed to fetch test plans: ${error.message}` });
+    }
+  });
+
+  // Get Azure DevOps iteration paths
+  app.get("/api/azure/iterations", async (req, res) => {
+    try {
+      const config = await storage.getLatestAzureConfig();
+      if (!config) {
+        return res.status(404).json({ message: "No Azure DevOps configuration found" });
+      }
+
+      const apiUrl = `${config.organizationUrl}/${config.project}/_apis/wit/classificationnodes/iterations?$depth=3&api-version=7.0`;
+      const authHeader = `Basic ${Buffer.from(`:${config.patToken}`).toString('base64')}`;
+
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Azure DevOps Iterations API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Flatten the iteration tree structure
+      const flattenIterations = (node: any, parentPath = ''): any[] => {
+        const currentPath = parentPath ? `${parentPath}\\${node.name}` : node.name;
+        let iterations = [{
+          id: node.id,
+          name: node.name,
+          path: currentPath,
+          hasChildren: node.hasChildren
+        }];
+
+        if (node.children) {
+          node.children.forEach((child: any) => {
+            iterations = iterations.concat(flattenIterations(child, currentPath));
+          });
+        }
+
+        return iterations;
+      };
+
+      const iterations = flattenIterations(data);
+      res.json(iterations);
+    } catch (error: any) {
+      res.status(500).json({ message: `Failed to fetch iterations: ${error.message}` });
     }
   });
 
