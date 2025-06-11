@@ -6,7 +6,9 @@ import { TestCasesSection } from "@/components/test-cases-section";
 import { TestDataPanel } from "@/components/test-data-panel";
 import { EnvironmentPanel } from "@/components/environment-panel";
 import { UnifiedAiConfiguration } from "@/components/unified-ai-configuration";
+import { ModeToggle } from "@/components/mode-toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bot, User } from "lucide-react";
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(1);

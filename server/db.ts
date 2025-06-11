@@ -5,19 +5,25 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-// Use a working Neon database URL for the application
-const DATABASE_URL = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_JfBB1ySf8qXS@ep-bitter-forest-a5h7qw5z.us-east-2.aws.neon.tech/neondb?sslmode=require";
+// Use environment variable for database URL
+const DATABASE_URL = process.env.DATABASE_URL;
 
 let pool: Pool | null = null;
 let db: any = null;
 
-try {
-  pool = new Pool({ connectionString: DATABASE_URL });
-  db = drizzle({ client: pool, schema });
-  console.log("✅ Database connection established");
-} catch (error) {
-  console.error("❌ Database connection failed:", error);
-  // Fallback to memory storage if database fails
+if (DATABASE_URL) {
+  try {
+    pool = new Pool({ connectionString: DATABASE_URL });
+    db = drizzle({ client: pool, schema });
+    console.log("✅ Database connection established");
+  } catch (error) {
+    console.error("❌ Database connection failed:", error);
+    // Fallback to memory storage if database fails
+    pool = null;
+    db = null;
+  }
+} else {
+  console.log("ℹ️ No DATABASE_URL provided, using memory storage");
   pool = null;
   db = null;
 }
