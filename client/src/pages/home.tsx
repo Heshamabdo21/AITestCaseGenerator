@@ -11,6 +11,7 @@ import { DemoBanner } from "@/components/demo-banner";
 import { PlatformTestShowcase } from "@/components/platform-test-showcase";
 import { PlatformTutorial } from "@/components/platform-tutorial";
 import { LiveTestGenerator } from "@/components/live-test-generator";
+import { QuickTestGenerator } from "@/components/quick-test-generator";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,7 @@ export default function Home() {
 
           {/* Main Work Area */}
           <div className="lg:col-span-2 space-y-8">
+            <QuickTestGenerator />
             <LiveTestGenerator />
             <EnhancedUserStories onTestCasesGenerated={handleTestCasesGenerated} />
             <TestCasesSection />
