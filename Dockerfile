@@ -54,9 +54,12 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=5000
 
-# Health check
+# Optional: AI features (set during deployment)
+# ENV OPENAI_API_KEY=your_openai_api_key
+
+# Health check - updated to check AI assistant endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:5000/api/azure-config/latest', (res) => { process.exit(res.statusCode < 500 ? 0 : 1) })"
+  CMD node -e "require('http').get('http://localhost:5000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
 # Start the application
 CMD ["npm", "start"]

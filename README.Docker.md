@@ -52,7 +52,7 @@ The Dockerfile uses a multi-stage build optimized for the latest project structu
 |----------|-------------|----------|---------|
 | `NODE_ENV` | Environment mode | No | `production` |
 | `DATABASE_URL` | PostgreSQL connection string | No | Memory storage |
-| `OPENAI_API_KEY` | OpenAI API key for AI features | No | AI features disabled |
+| `OPENAI_API_KEY` | OpenAI API key for AI assistant features | No | AI features disabled |
 | `PORT` | Application port | No | `5000` |
 | `HOST` | Bind address | No | `0.0.0.0` |
 
@@ -81,11 +81,16 @@ The application container waits for the database to be ready before starting whe
 ## Health Monitoring
 
 ### Application Health Check
-- **Endpoint**: Checks `/api/azure-config/latest`
+- **Endpoint**: Checks `/api/health`
 - **Interval**: Every 30 seconds
 - **Timeout**: 10 seconds
 - **Start Period**: 30 seconds (allows for initialization)
 - **Retries**: 3 attempts before marking unhealthy
+
+### AI Features Status
+- **Without API Key**: AI assistant displays helpful error messages
+- **With API Key**: Full AI functionality including code suggestions and test analysis
+- **Graceful Degradation**: Application remains fully functional without AI features
 
 ### Database Health
 PostgreSQL includes built-in health checks and automatic restart policies.
@@ -129,13 +134,21 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 ### Production Deployment
 ```bash
-# Production with external database
+# Production with external database and AI features
 docker run -d \
   --name test-case-manager \
   -p 5000:5000 \
   -e NODE_ENV=production \
   -e DATABASE_URL=postgresql://user:pass@prod-db:5432/testcases \
-  -e OPENAI_API_KEY=prod_key \
+  -e OPENAI_API_KEY=sk-your-openai-api-key-here \
+  --restart unless-stopped \
+  test-case-manager
+
+# Production without AI features (memory storage)
+docker run -d \
+  --name test-case-manager \
+  -p 5000:5000 \
+  -e NODE_ENV=production \
   --restart unless-stopped \
   test-case-manager
 ```
