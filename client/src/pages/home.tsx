@@ -6,6 +6,7 @@ import { TestCasesSection } from "@/components/test-cases-section";
 import { TestDataPanel } from "@/components/test-data-panel";
 import { EnvironmentPanel } from "@/components/environment-panel";
 import { UnifiedAiConfiguration } from "@/components/unified-ai-configuration";
+import { TestCoverageConfiguration } from "@/components/test-coverage-configuration";
 import { CsvImportPanel } from "@/components/csv-import-panel";
 import { DemoBanner } from "@/components/demo-banner";
 import { PlatformTestShowcase } from "@/components/platform-test-showcase";
@@ -76,8 +77,9 @@ export default function Home() {
           {/* Configuration Panel */}
           <div className="lg:col-span-1">
             <Tabs defaultValue="azure" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="azure">Azure & AI</TabsTrigger>
+                <TabsTrigger value="coverage">Test Coverage</TabsTrigger>
                 <TabsTrigger value="test">Test Setup</TabsTrigger>
                 <TabsTrigger value="import">CSV Import</TabsTrigger>
               </TabsList>
@@ -85,6 +87,10 @@ export default function Home() {
               <TabsContent value="azure" className="space-y-4">
                 <ConfigurationPanel onConfigurationSaved={handleConfigurationSaved} />
                 <UnifiedAiConfiguration />
+              </TabsContent>
+              
+              <TabsContent value="coverage" className="space-y-4">
+                <TestCoverageConfiguration />
               </TabsContent>
               
               <TabsContent value="test" className="space-y-4">
