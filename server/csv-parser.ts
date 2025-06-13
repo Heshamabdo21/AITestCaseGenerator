@@ -387,74 +387,230 @@ function determineTestType(analysis: TestCaseAnalysis): string {
 export function enhanceImportedTestCase(baseTestCase: InsertTestCase): InsertTestCase[] {
   const enhancedCases: InsertTestCase[] = [];
   
-  // Create enhanced positive test case
+  // Create enhanced positive test case with comprehensive validation
   const positiveCase: InsertTestCase = {
     ...baseTestCase,
-    title: baseTestCase.title.replace('Test:', 'Positive Test:'),
-    objective: `Enhanced positive testing - ${baseTestCase.objective}`,
-    prerequisites: `ENHANCED PREREQUISITES:
-${baseTestCase.prerequisites}
-
-ADDITIONAL REQUIREMENTS:
-- Verify test environment stability
-- Confirm user permissions are properly configured
-- Ensure all dependent services are operational`,
-    testSteps: `ENHANCED TEST EXECUTION:
-${baseTestCase.testSteps}
-
-ADDITIONAL VALIDATION STEPS:
-- Verify UI responsiveness and loading indicators
-- Test data persistence and accuracy
-- Confirm proper error handling for edge cases
-- Validate multi-language support if applicable`,
-    expectedResult: `COMPREHENSIVE EXPECTED RESULTS:
-${baseTestCase.expectedResult}
-
-ADDITIONAL VALIDATIONS:
-✓ All UI elements function correctly
-✓ Data integrity is maintained
-✓ Performance meets acceptable standards
-✓ Security measures are enforced
-✓ User experience is optimized`,
-    testPassword: baseTestCase.testPassword, // Inherit from base test case
-    requiredPermissions: baseTestCase.requiredPermissions // Inherit permissions
+    title: baseTestCase.title.replace('Test:', 'Enhanced Positive Test:'),
+    objective: `Comprehensive positive testing - ${baseTestCase.objective}`,
+    prerequisites: generateEnhancedPrerequisites(baseTestCase.prerequisites || '', 'positive'),
+    testSteps: generateEnhancedTestSteps(baseTestCase.testSteps || '', 'positive'),
+    expectedResult: generateEnhancedExpectedResults(baseTestCase.expectedResult || '', 'positive'),
+    testPassword: baseTestCase.testPassword,
+    requiredPermissions: baseTestCase.requiredPermissions,
+    priority: 'High'
   };
   
   // Create comprehensive negative test case
   const negativeCase: InsertTestCase = {
     ...baseTestCase,
-    title: baseTestCase.title.replace('Test:', 'Negative Test:'),
-    objective: `Negative testing to ensure error handling - ${baseTestCase.objective}`,
-    prerequisites: `NEGATIVE TEST PREREQUISITES:
-${baseTestCase.prerequisites}
-
-ADDITIONAL SETUP:
-- Prepare invalid test data scenarios
-- Configure error monitoring tools
-- Set up boundary condition test cases`,
-    testSteps: `NEGATIVE TEST SCENARIOS:
-1. Test with invalid user credentials
-2. Attempt unauthorized access to restricted features
-3. Submit forms with missing required fields
-4. Input invalid data formats and special characters
-5. Test with network interruptions
-6. Attempt concurrent operations that may conflict
-7. Test system behavior under resource constraints
-
-BASED ON ORIGINAL FLOW:
-${baseTestCase.testSteps}`,
-    expectedResult: `NEGATIVE TEST EXPECTED RESULTS:
-✓ Invalid inputs are rejected with clear error messages
-✓ Unauthorized access attempts are blocked
-✓ System remains stable under error conditions
-✓ Appropriate user guidance is provided
-✓ Security measures prevent malicious activities
-✓ Data integrity is maintained during failures
-✓ Graceful degradation occurs when needed`,
-    testPassword: baseTestCase.testPassword, // Inherit from base test case
-    requiredPermissions: baseTestCase.requiredPermissions // Inherit permissions
+    title: baseTestCase.title.replace('Test:', 'Comprehensive Negative Test:'),
+    objective: `Negative testing and error handling validation - ${baseTestCase.objective}`,
+    prerequisites: generateEnhancedPrerequisites(baseTestCase.prerequisites || '', 'negative'),
+    testSteps: generateEnhancedTestSteps(baseTestCase.testSteps || '', 'negative'),
+    expectedResult: generateEnhancedExpectedResults(baseTestCase.expectedResult || '', 'negative'),
+    testPassword: baseTestCase.testPassword,
+    requiredPermissions: baseTestCase.requiredPermissions,
+    priority: 'Medium',
+    testType: 'security'
   };
+  
+  // Create edge case test if the base test case is complex enough
+  if (baseTestCase.testStepsStructured && baseTestCase.testStepsStructured.length > 3) {
+    const edgeCaseTest: InsertTestCase = {
+      ...baseTestCase,
+      title: baseTestCase.title.replace('Test:', 'Edge Case Test:'),
+      objective: `Edge case and boundary testing - ${baseTestCase.objective}`,
+      prerequisites: generateEnhancedPrerequisites(baseTestCase.prerequisites || '', 'edge'),
+      testSteps: generateEnhancedTestSteps(baseTestCase.testSteps || '', 'edge'),
+      expectedResult: generateEnhancedExpectedResults(baseTestCase.expectedResult || '', 'edge'),
+      testPassword: baseTestCase.testPassword,
+      requiredPermissions: baseTestCase.requiredPermissions,
+      priority: 'Low'
+    };
+    enhancedCases.push(edgeCaseTest);
+  }
   
   enhancedCases.push(positiveCase, negativeCase);
   return enhancedCases;
+}
+
+function generateEnhancedPrerequisites(originalPrereqs: string, testType: 'positive' | 'negative' | 'edge'): string {
+  const basePrereqs = originalPrereqs || 'Basic test environment setup required';
+  
+  switch (testType) {
+    case 'positive':
+      return `ENHANCED POSITIVE TEST PREREQUISITES:
+${basePrereqs}
+
+ADDITIONAL REQUIREMENTS:
+- Test environment is fully operational and stable
+- All user permissions are properly configured and verified
+- Test data is validated and complete
+- All dependent services and APIs are accessible
+- Browser compatibility testing tools are available
+- Performance monitoring tools are configured`;
+
+    case 'negative':
+      return `NEGATIVE TEST PREREQUISITES:
+${basePrereqs}
+
+ADDITIONAL SETUP FOR ERROR TESTING:
+- Invalid test data sets are prepared
+- Error monitoring and logging tools are active
+- Network simulation tools for connectivity testing
+- Security testing tools for unauthorized access scenarios
+- Backup and recovery procedures are verified
+- Error response validation tools are ready`;
+
+    case 'edge':
+      return `EDGE CASE TEST PREREQUISITES:
+${basePrereqs}
+
+BOUNDARY TESTING SETUP:
+- Extreme data sets (minimum/maximum values) are prepared
+- Stress testing tools are configured
+- Load testing environment is available
+- Resource constraint simulation tools
+- Concurrent user testing capabilities
+- Performance degradation monitoring tools`;
+
+    default:
+      return basePrereqs;
+  }
+}
+
+function generateEnhancedTestSteps(originalSteps: string, testType: 'positive' | 'negative' | 'edge'): string {
+  const baseSteps = originalSteps || 'Execute the test scenario';
+  
+  switch (testType) {
+    case 'positive':
+      return `ENHANCED POSITIVE TEST EXECUTION:
+${baseSteps}
+
+ADDITIONAL VALIDATION STEPS:
+1. Verify UI responsiveness and visual consistency
+2. Validate data persistence and accuracy across sessions
+3. Test cross-browser compatibility
+4. Confirm proper loading indicators and user feedback
+5. Validate accessibility features (keyboard navigation, screen readers)
+6. Test responsive design on different screen sizes
+7. Verify proper handling of special characters and internationalization
+8. Confirm performance meets acceptable standards
+9. Test integration with external services
+10. Validate security measures and data protection`;
+
+    case 'negative':
+      return `COMPREHENSIVE NEGATIVE TEST SCENARIOS:
+1. Authentication and Authorization Tests:
+   - Test with invalid credentials
+   - Attempt unauthorized access to restricted features
+   - Test session timeout handling
+
+2. Input Validation Tests:
+   - Submit forms with missing required fields
+   - Input invalid data formats and special characters
+   - Test SQL injection and XSS prevention
+   - Exceed maximum input lengths
+
+3. System Reliability Tests:
+   - Test with network interruptions
+   - Simulate server errors and timeouts
+   - Test concurrent operations that may conflict
+   - Test system behavior under resource constraints
+
+4. Error Handling Validation:
+   - Verify appropriate error messages are displayed
+   - Test error recovery mechanisms
+   - Validate logging of error conditions
+
+ORIGINAL TEST FLOW (for comparison):
+${baseSteps}`;
+
+    case 'edge':
+      return `EDGE CASE AND BOUNDARY TESTING:
+1. Data Boundary Tests:
+   - Test with minimum and maximum allowed values
+   - Test with empty and null data
+   - Test with extremely large data sets
+
+2. Performance Boundary Tests:
+   - Test with maximum number of concurrent users
+   - Test with minimal system resources
+   - Test with slow network connections
+
+3. Timing and Sequence Tests:
+   - Test rapid sequential operations
+   - Test operations with varying delays
+   - Test interrupt and resume scenarios
+
+4. Configuration Edge Cases:
+   - Test with unusual system configurations
+   - Test with different locale and timezone settings
+   - Test with various browser configurations
+
+ORIGINAL TEST FLOW (baseline):
+${baseSteps}`;
+
+    default:
+      return baseSteps;
+  }
+}
+
+function generateEnhancedExpectedResults(originalResults: string, testType: 'positive' | 'negative' | 'edge'): string {
+  const baseResults = originalResults || 'Test completes successfully';
+  
+  switch (testType) {
+    case 'positive':
+      return `COMPREHENSIVE POSITIVE TEST RESULTS:
+${baseResults}
+
+ENHANCED VALIDATION CRITERIA:
+• All UI elements function correctly and consistently
+• Data integrity is maintained throughout the process
+• Performance meets or exceeds acceptable standards
+• Security measures are properly enforced
+• User experience is intuitive and accessible
+• Cross-browser compatibility is confirmed
+• Responsive design works across all device types
+• Integration with external services is seamless
+• Error handling gracefully manages unexpected situations
+• Accessibility standards are met for inclusive design`;
+
+    case 'negative':
+      return `NEGATIVE TEST EXPECTED OUTCOMES:
+ERROR HANDLING VALIDATION:
+• Invalid inputs are rejected with clear, helpful error messages
+• Unauthorized access attempts are blocked and logged
+• System remains stable and secure under error conditions
+• User is provided with appropriate guidance for error resolution
+• Security vulnerabilities are not exposed during failures
+• Data integrity is maintained even during error scenarios
+• System gracefully degrades when services are unavailable
+• Recovery mechanisms function properly after errors
+• All error conditions are properly logged for analysis
+• User sessions are handled securely during error states
+
+COMPARISON WITH NORMAL FLOW:
+${baseResults}`;
+
+    case 'edge':
+      return `EDGE CASE TEST OUTCOMES:
+BOUNDARY CONDITION VALIDATION:
+• System handles extreme data values without failure
+• Performance remains acceptable under stress conditions
+• Concurrent operations are managed without data corruption
+• Resource constraints are handled gracefully
+• System maintains functionality across various configurations
+• Error boundaries prevent system crashes
+• Recovery mechanisms work under extreme conditions
+• Data consistency is maintained at system limits
+• User experience remains functional under edge conditions
+• System logging captures boundary condition events
+
+BASELINE COMPARISON:
+${baseResults}`;
+
+    default:
+      return baseResults;
+  }
 }

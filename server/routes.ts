@@ -291,7 +291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const analysis = {
         totalRows: csvTestCases.length,
-        uniqueTitles: new Set(csvTestCases.map(tc => tc.title)).size,
+        uniqueTitles: Array.from(new Set(csvTestCases.map(tc => tc.title))).length,
         workItemTypes: Array.from(new Set(csvTestCases.map(tc => tc.workItemType))),
         hasTestSteps: csvTestCases.filter(tc => tc.stepAction).length,
         hasExpectedResults: csvTestCases.filter(tc => tc.stepExpected).length
