@@ -14,7 +14,7 @@ RUN npm ci
 COPY . .
 
 # Build the application (backend and frontend)
-RUN npm run build
+RUN node scripts/build-production.js
 
 # Production stage
 FROM node:20-alpine AS production
