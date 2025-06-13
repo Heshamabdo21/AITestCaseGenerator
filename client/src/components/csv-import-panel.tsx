@@ -52,13 +52,17 @@ export function CsvImportPanel() {
   const queryClient = useQueryClient();
 
   const previewMutation = useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async (file: File): Promise<CsvPreview> => {
       const formData = new FormData();
       formData.append('csvFile', file);
-      return apiRequest('/api/test-cases/preview-csv', {
+      const response = await fetch('/api/test-cases/preview-csv', {
         method: 'POST',
         body: formData,
       });
+      if (!response.ok) {
+        throw new Error(`Preview failed: ${response.statusText}`);
+      }
+      return response.json();
     },
     onSuccess: (data: CsvPreview) => {
       setPreview(data);
@@ -77,14 +81,18 @@ export function CsvImportPanel() {
   });
 
   const importMutation = useMutation({
-    mutationFn: async ({ file, enhance }: { file: File; enhance: boolean }) => {
+    mutationFn: async ({ file, enhance }: { file: File; enhance: boolean }): Promise<ImportResult> => {
       const formData = new FormData();
       formData.append('csvFile', file);
       formData.append('enhanceTestCases', enhance.toString());
-      return apiRequest('/api/test-cases/import-csv', {
+      const response = await fetch('/api/test-cases/import-csv', {
         method: 'POST',
         body: formData,
       });
+      if (!response.ok) {
+        throw new Error(`Import failed: ${response.statusText}`);
+      }
+      return response.json();
     },
     onSuccess: (data: ImportResult) => {
       setImportResult(data);
@@ -187,7 +195,7 @@ export function CsvImportPanel() {
           <Checkbox
             id="enhance"
             checked={enhanceTestCases}
-            onCheckedChange={setEnhanceTestCases}
+            onCheckedChange={(checked) => setEnhanceTestCases(checked === true)}
           />
           <Label htmlFor="enhance" className="text-sm">
             Generate enhanced test cases (positive, negative, edge cases)

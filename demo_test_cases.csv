@@ -1,0 +1,12 @@
+ID,WorkItemType,Title,TestStep,StepAction,StepExpected,AreaPath,AssignedTo,State
+1,Test Case,User Login Functionality,1,Navigate to login page,Login page displays with username and password fields,MyProject\UI,tester@company.com,Active
+1,Test Case,User Login Functionality,2,Enter valid username and password,Credentials are accepted without errors,MyProject\UI,tester@company.com,Active
+1,Test Case,User Login Functionality,3,Click login button,User is successfully authenticated and redirected to dashboard,MyProject\UI,tester@company.com,Active
+2,Test Case,Password Reset Flow,1,Navigate to login page,Login page displays correctly,MyProject\Security,security-tester@company.com,Design
+2,Test Case,Password Reset Flow,2,Click forgot password link,Password reset form is displayed,MyProject\Security,security-tester@company.com,Design
+2,Test Case,Password Reset Flow,3,Enter valid email address,Password reset email is sent to user,MyProject\Security,security-tester@company.com,Design
+3,Test Case,Search Performance Test,1,Precondition: Load testing environment ready,System prepared for performance testing,MyProject\Performance,perf-tester@company.com,Active
+3,Test Case,Search Performance Test,2,Execute search with 500 concurrent users,Search results return within 2 seconds,MyProject\Performance,perf-tester@company.com,Active
+4,Test Case,Data Export Feature,1,Navigate to data export section,Export options are visible,MyProject\Integration,qa-lead@company.com,Active
+4,Test Case,Data Export Feature,2,Select CSV export format,Export format is selected successfully,MyProject\Integration,qa-lead@company.com,Active
+4,Test Case,Data Export Feature,3,Click export button,CSV file is generated and downloaded,MyProject\Integration,qa-lead@company.com,Active
