@@ -28,6 +28,36 @@ export function TestCasesSection() {
   const queryClient = useQueryClient();
   const { trigger: confettiAnimation, fire: fireConfetti } = useConfetti();
 
+  // Enhanced confetti system for different celebration types
+  const celebrateSuccess = (type: 'single' | 'batch' | 'export' | 'azure', count?: number) => {
+    switch (type) {
+      case 'single':
+        setTimeout(() => fireConfetti(), 200);
+        break;
+      case 'batch':
+        if (count && count >= 5) {
+          // Triple burst for large batches
+          setTimeout(() => fireConfetti(), 200);
+          setTimeout(() => fireConfetti(), 600);
+          setTimeout(() => fireConfetti(), 1000);
+        } else if (count && count >= 3) {
+          // Double burst for medium batches
+          setTimeout(() => fireConfetti(), 200);
+          setTimeout(() => fireConfetti(), 600);
+        } else {
+          setTimeout(() => fireConfetti(), 200);
+        }
+        break;
+      case 'export':
+        setTimeout(() => fireConfetti(), 300);
+        break;
+      case 'azure':
+        setTimeout(() => fireConfetti(), 400);
+        setTimeout(() => fireConfetti(), 800);
+        break;
+    }
+  };
+
   // Query for test cases
   const { data: testCases = [], isLoading } = useQuery<TestCase[]>({
     queryKey: ['/api/test-cases'],
@@ -46,9 +76,9 @@ export function TestCasesSection() {
       api.updateTestCaseStatus(id, status),
     onSuccess: (_, { status }) => {
       if (status === "approved") {
-        fireConfetti();
+        celebrateSuccess('single');
         toast({
-          title: "🎉 Test Case Approved",
+          title: "Test Case Approved",
           description: "Test case approved successfully",
         });
       } else {
@@ -111,10 +141,11 @@ export function TestCasesSection() {
   const addToAzureMutation = useMutation({
     mutationFn: (testCaseIds: number[]) => api.addTestCasesToAzure(testCaseIds),
     onSuccess: () => {
+      const count = selectedTestCases.length;
       setSelectedTestCases([]);
-      fireConfetti();
+      celebrateSuccess('azure', count);
       toast({
-        title: "🎉 Test Cases Added to Azure DevOps",
+        title: "Test Cases Added to Azure DevOps",
         description: "Selected test cases have been added to Azure DevOps successfully",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
@@ -153,6 +184,7 @@ export function TestCasesSection() {
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
+      celebrateSuccess('export');
       toast({
         title: "Export Successful",
         description: "Test cases exported to Excel successfully",
@@ -184,10 +216,21 @@ export function TestCasesSection() {
   };
 
   const handleApproveSelected = () => {
+    const count = selectedTestCases.length;
     selectedTestCases.forEach(id => {
       updateStatusMutation.mutate({ id, status: "approved" });
     });
     setSelectedTestCases([]);
+    
+    // Fire confetti for batch approvals with enhanced timing
+    if (count > 1) {
+      setTimeout(() => fireConfetti(), 300);
+      setTimeout(() => fireConfetti(), 800);
+      toast({
+        title: `${count} Test Cases Approved`,
+        description: `Successfully approved ${count} test cases`,
+      });
+    }
   };
 
   const getPriorityColor = (priority: string) => {
