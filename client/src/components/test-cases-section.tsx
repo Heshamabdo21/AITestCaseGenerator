@@ -374,6 +374,7 @@ export function TestCasesSection() {
   const getUserStoryDisplay = (userStoryId: number | string) => {
     if (userStoryId === 'unassigned') return 'Unassigned Test Cases';
     const story = userStories.find((s: any) => s.id === userStoryId);
+    console.log('getUserStoryDisplay - userStoryId:', userStoryId, 'found story:', story, 'all userStories:', userStories);
     if (story) {
       // Use Azure DevOps ID and title from the actual Azure DevOps data
       return `${story.azureId}: ${story.title}`;
