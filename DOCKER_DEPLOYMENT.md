@@ -1,0 +1,97 @@
+# Docker Deployment Guide
+
+This guide explains how to deploy the Azure DevOps Test Case Management application using Docker.
+
+## Quick Start
+
+1. **Build and run with Docker Compose:**
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Access the application:**
+   - Open your browser to `http://localhost:5000`
+   - The application will be running with memory storage
+
+3. **Check container status:**
+   ```bash
+   docker-compose ps
+   docker-compose logs app
+   ```
+
+## Manual Docker Commands
+
+If you prefer to use Docker directly instead of Docker Compose:
+
+1. **Build the image:**
+   ```bash
+   docker build -t azure-testcase-manager .
+   ```
+
+2. **Run the container:**
+   ```bash
+   docker run -d \
+     --name azure-testcase-app \
+     -p 5000:5000 \
+     -v $(pwd)/uploads:/app/uploads \
+     azure-testcase-manager
+   ```
+
+## Adding Database Persistence (Optional)
+
+To enable PostgreSQL database persistence, uncomment the database section in `docker-compose.yml`:
+
+1. Uncomment the postgres service and volumes section
+2. Set your database password in the environment variables
+3. Add this environment variable to the app service:
+   ```yaml
+   environment:
+     - DATABASE_URL=postgresql://postgres:your_password_here@postgres:5432/testcase_db
+   ```
+
+## Environment Variables
+
+The application supports these environment variables:
+
+- `NODE_ENV`: Set to "production" for production deployment
+- `PORT`: Port number (default: 5000)
+- `DATABASE_URL`: PostgreSQL connection string (optional, uses memory storage if not provided)
+- `OPENAI_API_KEY`: Required for AI features
+
+## Health Check
+
+The application includes a health check endpoint at `/api/health` that Docker uses to monitor container health.
+
+## Troubleshooting
+
+1. **Container won't start:**
+   ```bash
+   docker-compose logs app
+   ```
+
+2. **Port already in use:**
+   ```bash
+   # Change the port mapping in docker-compose.yml
+   ports:
+     - "3000:5000"  # Maps host port 3000 to container port 5000
+   ```
+
+3. **Rebuild after code changes:**
+   ```bash
+   docker-compose down
+   docker-compose build --no-cache
+   docker-compose up -d
+   ```
+
+## Production Considerations
+
+1. **Use environment files for secrets:**
+   ```bash
+   # Create .env file
+   echo "OPENAI_API_KEY=your_key_here" > .env
+   ```
+
+2. **Enable SSL/HTTPS in production**
+3. **Use a reverse proxy (nginx) for production deployments**
+4. **Set up proper logging and monitoring**
+5. **Configure database backups if using PostgreSQL**

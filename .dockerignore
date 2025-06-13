@@ -6,11 +6,12 @@ README.md
 .env
 .nyc_output
 coverage
+.nyc_output
+.coverage
 .vscode
-.idea
-*.log
 .DS_Store
 dist
-client/dist
-.replit
+*.log
 .local
+.replit*
+replit.nix

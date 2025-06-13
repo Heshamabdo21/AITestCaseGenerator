@@ -185,6 +185,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return recommendations;
   }
 
+  // Health check endpoint for Docker
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // Enhanced CSV Import endpoint with validation and preview
   app.post("/api/test-cases/import-csv", upload.single('csvFile'), async (req, res) => {
     try {
