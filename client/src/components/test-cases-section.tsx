@@ -704,6 +704,7 @@ export function TestCasesSection() {
                   size="sm"
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
+                  className="transition-all duration-200 hover:scale-105"
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
