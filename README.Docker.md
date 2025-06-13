@@ -160,6 +160,8 @@ docker run -d \
 2. **Database connection**: Verify `DATABASE_URL` format and network connectivity
 3. **Port conflicts**: Ensure port 5000 is available or change mapping
 4. **Permission issues**: Verify volume permissions for non-root user
+5. **AI features not working**: Ensure `OPENAI_API_KEY` is properly set
+6. **Theme transitions not smooth**: Clear browser cache and restart container
 
 ### Debugging Commands
 ```bash
