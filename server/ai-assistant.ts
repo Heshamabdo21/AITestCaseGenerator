@@ -80,9 +80,30 @@ export async function generateCodeSuggestion(
       suggestions: result.suggestions || []
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('OpenAI API error:', error);
-    throw new Error("Failed to generate code suggestion");
+    
+    if (error.status === 429) {
+      return {
+        response: "I'm currently unavailable due to API quota limits. Please check your OpenAI billing and usage limits at https://platform.openai.com/usage",
+        codeBlocks: [],
+        suggestions: ["Check your OpenAI account billing", "Verify API usage limits", "Try again later"]
+      };
+    }
+    
+    if (error.status === 401) {
+      return {
+        response: "Invalid API key. Please verify your OpenAI API key is correct.",
+        codeBlocks: [],
+        suggestions: ["Check API key configuration", "Generate new API key if needed"]
+      };
+    }
+    
+    return {
+      response: "I'm temporarily unavailable. Please try again in a moment.",
+      codeBlocks: [],
+      suggestions: ["Try again later", "Check your internet connection"]
+    };
   }
 }
 
@@ -130,8 +151,29 @@ export async function analyzeTestCase(testCaseContent: string): Promise<AiRespon
       suggestions: result.suggestions || []
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('OpenAI API error:', error);
-    throw new Error("Failed to analyze test case");
+    
+    if (error.status === 429) {
+      return {
+        response: "Analysis unavailable due to API quota limits. Please check your OpenAI billing and usage limits at https://platform.openai.com/usage",
+        codeBlocks: [],
+        suggestions: ["Check your OpenAI account billing", "Verify API usage limits", "Try again later"]
+      };
+    }
+    
+    if (error.status === 401) {
+      return {
+        response: "Invalid API key. Please verify your OpenAI API key is correct.",
+        codeBlocks: [],
+        suggestions: ["Check API key configuration", "Generate new API key if needed"]
+      };
+    }
+    
+    return {
+      response: "Analysis temporarily unavailable. Please try again in a moment.",
+      codeBlocks: [],
+      suggestions: ["Try again later", "Check your internet connection"]
+    };
   }
 }

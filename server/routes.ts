@@ -1361,7 +1361,12 @@ For each test case, provide the following in JSON format:
       res.json(response);
     } catch (error: any) {
       console.error('AI Assistant error:', error);
-      res.status(500).json({ message: error.message });
+      // Return a graceful fallback response instead of error
+      res.json({
+        response: "AI assistant is currently unavailable. Please try again later.",
+        codeBlocks: [],
+        suggestions: ["Check your OpenAI configuration", "Try again in a moment"]
+      });
     }
   });
 
@@ -1377,7 +1382,12 @@ For each test case, provide the following in JSON format:
       res.json(response);
     } catch (error: any) {
       console.error('AI Analysis error:', error);
-      res.status(500).json({ message: error.message });
+      // Return a graceful fallback response instead of error
+      res.json({
+        response: "Test case analysis is currently unavailable. Please try again later.",
+        codeBlocks: [],
+        suggestions: ["Check your OpenAI configuration", "Try again in a moment"]
+      });
     }
   });
 
