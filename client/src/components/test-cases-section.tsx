@@ -15,6 +15,7 @@ import { FlaskRound, Check, X, Edit3, Download, CloudUpload, Eye, Trash2, Chevro
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { LoadingSpinner, TestCaseLoading, BouncingDots } from "@/components/ui/loading-spinner";
+import { Confetti, useConfetti } from "@/components/ui/confetti";
 import type { TestCase } from "@shared/schema";
 
 export function TestCasesSection() {
@@ -25,6 +26,7 @@ export function TestCasesSection() {
   const [itemsPerPage] = useState(10);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { trigger: confettiAnimation, fire: fireConfetti } = useConfetti();
 
   // Query for test cases
   const { data: testCases = [], isLoading } = useQuery<TestCase[]>({
@@ -43,10 +45,18 @@ export function TestCasesSection() {
     mutationFn: ({ id, status }: { id: number; status: string }) => 
       api.updateTestCaseStatus(id, status),
     onSuccess: (_, { status }) => {
-      toast({
-        title: status === "approved" ? "Test Case Approved" : "Test Case Rejected",
-        description: `Test case ${status} successfully`,
-      });
+      if (status === "approved") {
+        fireConfetti();
+        toast({
+          title: "🎉 Test Case Approved",
+          description: "Test case approved successfully",
+        });
+      } else {
+        toast({
+          title: "Test Case Rejected",
+          description: "Test case rejected successfully",
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
     },
     onError: (error: any) => {
@@ -119,8 +129,21 @@ export function TestCasesSection() {
 
   // Mutation to export test cases
   const exportToExcelMutation = useMutation({
-    mutationFn: () => api.exportTestCases(),
-    onSuccess: (blob) => {
+    mutationFn: async () => {
+      const response = await fetch("/api/test-cases/export", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+      
+      return response.blob();
+    },
+    onSuccess: (blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';

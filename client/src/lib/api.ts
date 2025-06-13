@@ -200,4 +200,20 @@ export const api = {
     const response = await apiRequest("GET", "/api/ai-context");
     return safeJsonParse(response);
   },
+
+  // Export functionality
+  async exportTestCases(): Promise<Blob> {
+    const response = await fetch("/api/test-cases/export", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.statusText}`);
+    }
+    
+    return response.blob();
+  },
 };
