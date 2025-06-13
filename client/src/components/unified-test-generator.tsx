@@ -220,7 +220,7 @@ export function UnifiedTestGenerator() {
 
   const handleGenerate = () => {
     if (generationMode === "quick") {
-      const selectedCount = [includePositive, includeNegative, includeEdgeCases, includeSecurity, includePerformance, includeUI, includeUsability, includeCompatibility].filter(Boolean).length;
+      const selectedCount = [includePositive, includeNegative, includeEdgeCases, includeSecurity, includePerformance, includeUI, includeUsability, includeApi, includeCompatibility].filter(Boolean).length;
       if (selectedCount === 0) {
         toast({
           title: "No Test Types Selected",
@@ -244,7 +244,7 @@ export function UnifiedTestGenerator() {
     }
   };
 
-  const selectedTestCount = [includePositive, includeNegative, includeEdgeCases, includeSecurity, includePerformance, includeUI, includeUsability, includeCompatibility].filter(Boolean).length;
+  const selectedTestCount = [includePositive, includeNegative, includeEdgeCases, includeSecurity, includePerformance, includeUI, includeUsability, includeApi, includeCompatibility].filter(Boolean).length;
   const enabledPlatformCount = platforms.filter(p => p.enabled).length;
   const userStoriesArray = Array.isArray(userStories) ? userStories : [];
   const isGenerating = quickGenerateMutation.isPending || multiPlatformGenerateMutation.isPending;
