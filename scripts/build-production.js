@@ -18,7 +18,7 @@ await build({
     '@vitejs/plugin-react',
     '@replit/vite-plugin-cartographer',
     '@replit/vite-plugin-runtime-error-modal',
-    './vite.js'
+    './dev-server.js'
   ],
   packages: 'external',
   define: {
