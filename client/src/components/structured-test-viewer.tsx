@@ -154,32 +154,32 @@ export function StructuredTestViewer() {
                     {selectedTestCase.testStepsStructured && selectedTestCase.testStepsStructured.length > 0 ? (
                       <div className="space-y-4">
                         {selectedTestCase.testStepsStructured.map((step, index) => (
-                          <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white">
+                          <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800">
                             <div className="flex items-center justify-between mb-3">
                               <Badge variant="secondary" className="bg-primary/10 text-primary">
                                 Step {step.stepNumber}
                               </Badge>
                               <div className="flex items-center space-x-1">
-                                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
                                 <span className="text-xs text-muted-foreground">Ready</span>
                               </div>
                             </div>
                             
                             <div className="space-y-3">
                               <div>
-                                <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+                                <span className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
                                   Action to Perform
                                 </span>
-                                <p className="text-sm text-gray-800 mt-1 p-3 bg-blue-50 rounded border-l-4 border-blue-400">
+                                <p className="text-sm text-gray-800 dark:text-gray-200 mt-1 p-3 bg-blue-50 dark:bg-blue-950 rounded border-l-4 border-blue-400 dark:border-blue-600">
                                   {step.action}
                                 </p>
                               </div>
                               
                               <div>
-                                <span className="text-xs font-medium text-green-600 uppercase tracking-wide">
+                                <span className="text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wide">
                                   Expected Result
                                 </span>
-                                <p className="text-sm text-green-700 mt-1 p-3 bg-green-50 rounded border-l-4 border-green-400">
+                                <p className="text-sm text-green-700 dark:text-green-300 mt-1 p-3 bg-green-50 dark:bg-green-950 rounded border-l-4 border-green-400 dark:border-green-600">
                                   {step.expectedResult}
                                 </p>
                               </div>
@@ -188,11 +188,11 @@ export function StructuredTestViewer() {
                         ))}
                       </div>
                     ) : (
-                      <div className="bg-yellow-50 p-4 rounded-lg">
-                        <p className="text-sm text-yellow-800">
+                      <div className="bg-yellow-50 dark:bg-yellow-950 p-4 rounded-lg">
+                        <p className="text-sm text-yellow-800 dark:text-yellow-200">
                           This test case uses legacy format. Structured steps not available.
                         </p>
-                        <div className="mt-2 text-sm text-gray-700 whitespace-pre-line">
+                        <div className="mt-2 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
                           {selectedTestCase.testSteps}
                         </div>
                       </div>
@@ -203,7 +203,7 @@ export function StructuredTestViewer() {
                   
                   <div>
                     <h4 className="font-semibold text-sm mb-2">Overall Expected Result</h4>
-                    <div className="bg-green-50 p-3 rounded-lg text-sm">
+                    <div className="bg-green-50 dark:bg-green-950 p-3 rounded-lg text-sm text-green-800 dark:text-green-200">
                       {selectedTestCase.expectedResult}
                     </div>
                   </div>

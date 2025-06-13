@@ -482,7 +482,7 @@ export function TestCasesSection() {
                                                 </div>
                                                 <div>
                                                   <span className="text-xs font-medium">Expected Result:</span>
-                                                  <p className="text-sm text-green-700">{step.expectedResult}</p>
+                                                  <p className="text-sm text-green-700 dark:text-green-300">{step.expectedResult}</p>
                                                 </div>
                                               </div>
                                             </div>
@@ -501,8 +501,8 @@ export function TestCasesSection() {
 
                                 <div>
                                   <Label className="text-sm font-semibold">Expected Result</Label>
-                                  <div className="mt-1 p-3 bg-green-50 border-l-4 border-green-400 rounded-md">
-                                    <p className="text-sm">{testCase.expectedResult}</p>
+                                  <div className="mt-1 p-3 bg-green-50 dark:bg-green-950 border-l-4 border-green-400 dark:border-green-600 rounded-md">
+                                    <p className="text-sm text-green-800 dark:text-green-200">{testCase.expectedResult}</p>
                                   </div>
                                 </div>
 
@@ -518,8 +518,8 @@ export function TestCasesSection() {
                                 {testCase.requiredPermissions && (
                                   <div>
                                     <Label className="text-sm font-semibold">Required Permissions</Label>
-                                    <div className="mt-1 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-md">
-                                      <pre className="text-sm whitespace-pre-wrap">{testCase.requiredPermissions}</pre>
+                                    <div className="mt-1 p-3 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-400 dark:border-blue-600 rounded-md">
+                                      <pre className="text-sm whitespace-pre-wrap text-blue-800 dark:text-blue-200">{testCase.requiredPermissions}</pre>
                                     </div>
                                   </div>
                                 )}
