@@ -28,7 +28,7 @@ interface TourStep {
 }
 
 interface OnboardingTourProps {
-  steps: TourStep[];
+  steps?: TourStep[];
   isOpen?: boolean;
   onClose?: () => void;
   onComplete?: () => void;

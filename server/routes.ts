@@ -12,6 +12,7 @@ import {
 } from "@shared/schema";
 import OpenAI from "openai";
 import { parseCsvTestCases, convertCsvToTestCases, enhanceImportedTestCase } from "./csv-parser";
+import { generateCodeSuggestion, analyzeTestCase } from "./ai-assistant";
 import multer from "multer";
 
 // Helper function to get or create a test suite in Azure DevOps
@@ -1345,6 +1346,39 @@ For each test case, provide the following in JSON format:
   // Health check endpoint for Docker
   app.get("/api/health", (req, res) => {
     res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
+  });
+
+  // AI Assistant API routes
+  app.post("/api/ai-assistant/suggest", async (req, res) => {
+    try {
+      const { message, context, previousMessages } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+
+      const response = await generateCodeSuggestion(message, context, previousMessages);
+      res.json(response);
+    } catch (error: any) {
+      console.error('AI Assistant error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/ai-assistant/analyze", async (req, res) => {
+    try {
+      const { testCaseContent } = req.body;
+      
+      if (!testCaseContent) {
+        return res.status(400).json({ message: "Test case content is required" });
+      }
+
+      const response = await analyzeTestCase(testCaseContent);
+      res.json(response);
+    } catch (error: any) {
+      console.error('AI Analysis error:', error);
+      res.status(500).json({ message: error.message });
+    }
   });
 
   const httpServer = createServer(app);

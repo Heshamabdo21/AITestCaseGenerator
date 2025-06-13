@@ -17,7 +17,7 @@ interface CopyFeedbackProps {
 export function CopyFeedback({ 
   text, 
   variant = "button", 
-  size = "md",
+  size = "default",
   className,
   children,
   onCopy
@@ -208,7 +208,7 @@ export function CopyFeedback({
     >
       <Button
         variant={copied ? "default" : "outline"}
-        size={size === "md" ? "default" : size}
+        size={size}
         onClick={handleCopy}
         className={cn(
           "transition-all duration-300 relative overflow-hidden",
