@@ -21,7 +21,8 @@ import {
   AlertCircle,
   Target,
   Shield,
-  Gauge
+  Gauge,
+  RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
@@ -80,9 +81,15 @@ export function UnifiedTestGenerator() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Get current Azure config for iteration path tracking
+  const { data: azureConfig } = useQuery({
+    queryKey: ['/api/azure-config/latest'],
+    retry: false,
+  });
+
   // Load user stories for test generation
-  const { data: userStories = [] } = useQuery({
-    queryKey: ['/api/user-stories/stored'],
+  const { data: userStories = [], isLoading: userStoriesLoading } = useQuery({
+    queryKey: ['/api/user-stories/stored', (azureConfig as any)?.iterationPath],
     retry: false
   });
 
@@ -90,6 +97,74 @@ export function UnifiedTestGenerator() {
   const { data: aiConfig } = useQuery({
     queryKey: ['/api/ai-configuration'],
     retry: false
+  });
+
+  // Mutation to fetch fresh user stories from Azure DevOps
+  const fetchStoriesMutation = useMutation({
+    mutationFn: () => api.fetchUserStories(),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['/api/user-stories/stored', (azureConfig as any)?.iterationPath], data);
+      const iterationText = (azureConfig as any)?.iterationPath && (azureConfig as any)?.iterationPath !== 'all' 
+        ? ` (filtered by ${(azureConfig as any)?.iterationPath})` 
+        : '';
+      toast({
+        title: "User Stories Fetched",
+        description: `Found ${data.length} user stories from Azure DevOps${iterationText}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Fetch User Stories",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Individual story test generation mutation
+  const generateIndividualMutation = useMutation({
+    mutationFn: async (userStoryId: number) => {
+      const response = await fetch('/api/test-cases/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userStoryIds: [userStoryId],
+          testType,
+          style: "step-by-step",
+          coverageLevel: "standard",
+          includePositive,
+          includeNegative,
+          includeEdgeCases,
+          includeSecurity,
+          includePerformance,
+          includeAccessibility: includeUI,
+          testComplexity: "medium"
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate test cases');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data: any, userStoryId) => {
+      const userStory = Array.isArray(userStories) ? userStories.find((s: any) => s.id === userStoryId) : null;
+      toast({
+        title: "Test Cases Generated",
+        description: `Generated ${data.length} test cases for "${userStory?.title || 'Selected story'}"`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Generation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   // Quick generation mutation (single platform)
@@ -288,6 +363,62 @@ export function UnifiedTestGenerator() {
                 Quick generation creates structured test cases with numbered steps for immediate testing
               </AlertDescription>
             </Alert>
+
+            {/* User Stories Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium">User Stories ({userStoriesArray.length})</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchStoriesMutation.mutate()}
+                  disabled={fetchStoriesMutation.isPending}
+                  className="flex items-center space-x-2"
+                >
+                  {fetchStoriesMutation.isPending ? (
+                    <Clock className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Settings className="h-4 w-4" />
+                  )}
+                  <span>Fetch User Stories</span>
+                </Button>
+              </div>
+              
+              {userStoriesLoading ? (
+                <div className="text-sm text-muted-foreground">Loading user stories...</div>
+              ) : userStoriesArray.length > 0 ? (
+                <div className="max-h-40 overflow-y-auto space-y-2 border rounded-lg p-3 bg-muted/30">
+                  {userStoriesArray.map((story: any) => (
+                    <div key={story.id} className="flex items-center justify-between p-2 bg-background rounded border">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{story.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {story.state} • {story.priority}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => generateIndividualMutation.mutate(story.id)}
+                        disabled={generateIndividualMutation.isPending}
+                        className="ml-2 shrink-0"
+                      >
+                        {generateIndividualMutation.isPending ? (
+                          <Clock className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Play className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground border rounded-lg bg-muted/30">
+                  <p className="text-sm">No user stories available</p>
+                  <p className="text-xs">Click "Fetch User Stories" to load from Azure DevOps</p>
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
