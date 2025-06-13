@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { EnhancedThemeProvider } from "@/components/enhanced-theme-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { AiAssistant } from "@/components/ai-assistant";
+
 import { OnboardingTour } from "@/components/onboarding-tour";
 import Home from "@/pages/home";
 import Demo from "@/pages/demo";
@@ -29,7 +29,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
-            <AiAssistant data-tour="ai-assistant" />
+
             <OnboardingTour autoStart={true} />
           </TooltipProvider>
         </QueryClientProvider>

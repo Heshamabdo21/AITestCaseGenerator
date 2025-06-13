@@ -12,7 +12,7 @@ import {
 } from "@shared/schema";
 import OpenAI from "openai";
 import { parseCsvTestCases, convertCsvToTestCases, enhanceImportedTestCase } from "./csv-parser";
-import { generateCodeSuggestion, analyzeTestCase } from "./ai-assistant";
+
 import multer from "multer";
 
 // Helper function to get or create a test suite in Azure DevOps
@@ -1353,48 +1353,7 @@ For each test case, provide the following in JSON format:
     res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
   });
 
-  // AI Assistant API routes
-  app.post("/api/ai-assistant/suggest", async (req, res) => {
-    try {
-      const { message, context, previousMessages } = req.body;
-      
-      if (!message) {
-        return res.status(400).json({ message: "Message is required" });
-      }
 
-      const response = await generateCodeSuggestion(message, context, previousMessages);
-      res.json(response);
-    } catch (error: any) {
-      console.error('AI Assistant error:', error);
-      // Return a graceful fallback response instead of error
-      res.json({
-        response: "AI assistant is currently unavailable. Please try again later.",
-        codeBlocks: [],
-        suggestions: ["Check your OpenAI configuration", "Try again in a moment"]
-      });
-    }
-  });
-
-  app.post("/api/ai-assistant/analyze", async (req, res) => {
-    try {
-      const { testCaseContent } = req.body;
-      
-      if (!testCaseContent) {
-        return res.status(400).json({ message: "Test case content is required" });
-      }
-
-      const response = await analyzeTestCase(testCaseContent);
-      res.json(response);
-    } catch (error: any) {
-      console.error('AI Analysis error:', error);
-      // Return a graceful fallback response instead of error
-      res.json({
-        response: "Test case analysis is currently unavailable. Please try again later.",
-        codeBlocks: [],
-        suggestions: ["Check your OpenAI configuration", "Try again in a moment"]
-      });
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;
