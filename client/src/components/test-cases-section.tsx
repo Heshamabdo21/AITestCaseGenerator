@@ -32,6 +32,12 @@ export function TestCasesSection() {
     retry: false,
   });
 
+  // Query for user stories to enable grouping
+  const { data: userStories = [] } = useQuery<any[]>({
+    queryKey: ['/api/user-stories/stored'],
+    retry: false,
+  });
+
   // Mutation to update test case status
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) => 
@@ -203,6 +209,23 @@ export function TestCasesSection() {
 
   const typedTestCases = testCases as TestCase[];
   
+  // Group test cases by user story
+  const groupedTestCases = typedTestCases.reduce((groups, testCase) => {
+    const userStoryId = testCase.userStoryId || 'unassigned';
+    if (!groups[userStoryId]) {
+      groups[userStoryId] = [];
+    }
+    groups[userStoryId].push(testCase);
+    return groups;
+  }, {} as Record<string, TestCase[]>);
+
+  // Get user story title by ID
+  const getUserStoryTitle = (userStoryId: number | string) => {
+    if (userStoryId === 'unassigned') return 'Unassigned Test Cases';
+    const story = userStories.find((s: any) => s.id === userStoryId);
+    return story?.title || `User Story ${userStoryId}`;
+  };
+  
   // Pagination logic
   const totalPages = Math.ceil(typedTestCases.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -295,28 +318,325 @@ export function TestCasesSection() {
         </div>
       </CardHeader>
       <CardContent>
-        {/* Test Cases Table */}
-        <div className="space-y-4">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedTestCases.length === paginatedTestCases.length && paginatedTestCases.length > 0}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
+        {/* Test Cases Grouped by User Story */}
+        <div className="space-y-6">
+          {Object.entries(groupedTestCases).map(([userStoryId, groupTestCases]) => (
+            <div key={userStoryId} className="border rounded-lg">
+              <div className="px-4 py-3 bg-muted/50 border-b">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-sm">{getUserStoryTitle(userStoryId)}</h3>
+                  <Badge variant="outline" className="text-xs">
+                    {groupTestCases.length} test{groupTestCases.length !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
+              </div>
+              <div className="rounded-md border-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={selectedTestCases.length === groupTestCases.length && groupTestCases.length > 0}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedTestCases(prev => [...prev, ...groupTestCases.map(tc => tc.id)]);
+                            } else {
+                              setSelectedTestCases(prev => prev.filter(id => !groupTestCases.map(tc => tc.id).includes(id)));
+                            }
+                          }}
+                        />
+                      </TableHead>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Priority</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {groupTestCases.map((testCase) => (
+                      <TableRow 
+                        key={testCase.id}
+                        className={
+                          testCase.status === "approved" ? "bg-green-50/50 dark:bg-green-950/20" : 
+                          testCase.status === "rejected" ? "bg-red-50/50 dark:bg-red-950/20" : ""
+                        }
+                      >
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedTestCases.includes(testCase.id)}
+                            onCheckedChange={() => handleTestCaseSelect(testCase.id)}
+                          />
+                        </TableCell>
+                        <TableCell className="font-mono">
+                          TC-{testCase.id.toString().padStart(3, '0')}
+                        </TableCell>
+                        <TableCell className="max-w-xs">
+                          <div className="truncate" title={testCase.title}>
+                            {testCase.title}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getPriorityColor(testCase.priority)}>
+                            {testCase.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              testCase.status === "approved" ? "bg-green-500" :
+                              testCase.status === "rejected" ? "bg-red-500" :
+                              "bg-yellow-500"
+                            }`}></div>
+                            <Badge className={getStatusColor(testCase.status)}>
+                              {testCase.status}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {testCase.title.includes('Positive') ? 'Positive' : 
+                             testCase.title.includes('Negative') ? 'Negative' :
+                             testCase.title.includes('Edge') ? 'Edge Case' :
+                             testCase.title.includes('Security') ? 'Security' :
+                             testCase.title.includes('Performance') ? 'Performance' : 'Standard'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end space-x-1">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  title="View Details"
+                                  className="h-8 w-8"
+                                  onClick={() => setViewingTestCase(testCase)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle>Test Case Details - TC-{testCase.id.toString().padStart(3, '0')}</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-6">
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                      <Label className="text-xs font-semibold text-muted-foreground">PRIORITY</Label>
+                                      <Badge className={getPriorityColor(testCase.priority)}>
+                                        {testCase.priority}
+                                      </Badge>
+                                    </div>
+                                    <div>
+                                      <Label className="text-xs font-semibold text-muted-foreground">STATUS</Label>
+                                      <Badge className={getStatusColor(testCase.status)}>
+                                        {testCase.status}
+                                      </Badge>
+                                    </div>
+                                    <div>
+                                      <Label className="text-xs font-semibold text-muted-foreground">TYPE</Label>
+                                      <Badge variant="outline">
+                                        {testCase.title.includes('Positive') ? 'Positive' : 
+                                         testCase.title.includes('Negative') ? 'Negative' :
+                                         testCase.title.includes('Edge') ? 'Edge Case' :
+                                         testCase.title.includes('Security') ? 'Security' :
+                                         testCase.title.includes('Performance') ? 'Performance' : 'Standard'}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <Label className="text-sm font-semibold">Title</Label>
+                                    <p className="mt-1 text-sm">{testCase.title}</p>
+                                  </div>
+
+                                  {testCase.prerequisites && (
+                                    <div>
+                                      <Label className="text-sm font-semibold">Prerequisites</Label>
+                                      <div className="mt-1 p-3 bg-muted rounded-md">
+                                        <pre className="text-sm whitespace-pre-wrap">
+                                          {Array.isArray(testCase.prerequisites) 
+                                            ? testCase.prerequisites.join('\n')
+                                            : testCase.prerequisites}
+                                        </pre>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {testCase.testSteps && (
+                                    <div>
+                                      <Label className="text-sm font-semibold">Test Steps</Label>
+                                      <div className="mt-1 p-3 bg-muted rounded-md">
+                                        {testCase.testStepsStructured && testCase.testStepsStructured.length > 0 ? (
+                                          <div className="space-y-3">
+                                            {testCase.testStepsStructured.map((step, index) => (
+                                              <div key={index} className="border rounded-md p-3 bg-background">
+                                                <div className="mb-2">
+                                                  <Badge variant="secondary" className="text-xs">
+                                                    Step {step.stepNumber}
+                                                  </Badge>
+                                                </div>
+                                                <div className="space-y-2">
+                                                  <div>
+                                                    <span className="text-xs font-medium">Action:</span>
+                                                    <p className="text-sm">{step.action}</p>
+                                                  </div>
+                                                  <div>
+                                                    <span className="text-xs font-medium">Expected Result:</span>
+                                                    <p className="text-sm text-green-700 dark:text-green-300">{step.expectedResult}</p>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <pre className="text-sm whitespace-pre-wrap">
+                                            {Array.isArray(testCase.testSteps) 
+                                              ? testCase.testSteps.join('\n')
+                                              : testCase.testSteps}
+                                          </pre>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <div>
+                                    <Label className="text-sm font-semibold">Expected Result</Label>
+                                    <div className="mt-1 p-3 bg-green-50 dark:bg-green-950 border-l-4 border-green-400 dark:border-green-600 rounded-md">
+                                      <p className="text-sm text-green-800 dark:text-green-200">{testCase.expectedResult}</p>
+                                    </div>
+                                  </div>
+
+                                  {testCase.testPassword && (
+                                    <div>
+                                      <Label className="text-sm font-semibold">Test Password</Label>
+                                      <div className="font-mono bg-muted px-3 py-2 rounded-md mt-1">
+                                        {testCase.testPassword}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {testCase.requiredPermissions && (
+                                    <div>
+                                      <Label className="text-sm font-semibold">Required Permissions</Label>
+                                      <div className="mt-1 p-3 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-400 dark:border-blue-600 rounded-md">
+                                        <pre className="text-sm whitespace-pre-wrap text-blue-800 dark:text-blue-200">{testCase.requiredPermissions}</pre>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center space-x-2 mt-6">
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="transition-all duration-200 hover:scale-105"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <div className="flex space-x-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handlePageChange(page)}
+                    className="h-8 w-8 p-0 transition-all duration-200 hover:scale-110"
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="transition-all duration-200 hover:scale-105"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Actions */}
+        {typedTestCases.length > 0 && (
+          <div className="flex items-center justify-between pt-4 border-t">
+            <div className="flex items-center space-x-4">
+              <Button variant="outline" onClick={handleSelectAll}>
+                <Check className="h-4 w-4 mr-2" />
+                {selectedTestCases.length === typedTestCases.length ? "Deselect All" : "Select All"}
+              </Button>
+              {selectedTestCases.length > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {selectedTestCases.length} of {typedTestCases.length} selected
+                </span>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105"
+                    disabled={deleteAllTestCasesMutation.isPending}
+                  >
+                    {deleteAllTestCasesMutation.isPending ? (
+                      <>
+                        <LoadingSpinner size="sm" className="mr-2 border-red-600" />
+                        Deleting All
+                        <BouncingDots className="ml-2" />
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete All
+                      </>
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete All Test Cases</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete all test cases? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteAllTestCases}>Delete All</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
                   Array.from({ length: itemsPerPage }).map((_, i) => (
                     <TableRow key={i} className="animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}>
                       <TableCell>
