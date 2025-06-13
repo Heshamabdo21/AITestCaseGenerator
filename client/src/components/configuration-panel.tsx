@@ -190,6 +190,8 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
       });
       // Invalidate and refetch the configuration query to enable the Load Test Plans button
       queryClient.invalidateQueries({ queryKey: ['/api/azure-config/latest'] });
+      // Invalidate user stories cache so iteration path filtering takes effect on next fetch
+      queryClient.invalidateQueries({ queryKey: ['/api/user-stories/stored'] });
       onConfigurationSaved();
     },
     onError: (error: any) => {

@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ListChecks, RefreshCw, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import type { UserStory, GenerateTestCaseRequest } from "@shared/schema";
+import type { UserStory, GenerateTestCaseRequest, AzureConfig } from "@shared/schema";
 
 interface UserStoriesSectionProps {
   onTestCasesGenerated: () => void;
@@ -23,9 +23,15 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Query for stored user stories first
+  // Query for current Azure configuration to track iteration path changes
+  const { data: azureConfig } = useQuery({
+    queryKey: ['/api/azure-config/latest'],
+    retry: false,
+  });
+
+  // Query for stored user stories that depends on current config
   const { data: userStories = [], isLoading, error } = useQuery<UserStory[]>({
-    queryKey: ['/api/user-stories/stored'],
+    queryKey: ['/api/user-stories/stored', azureConfig?.iterationPath],
     retry: false,
   });
 
@@ -33,10 +39,11 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
   const fetchStoriesMutation = useMutation({
     mutationFn: () => api.fetchUserStories(),
     onSuccess: (data) => {
-      queryClient.setQueryData(['/api/user-stories/stored'], data);
+      // Update cache with new data based on current iteration path
+      queryClient.setQueryData(['/api/user-stories/stored', azureConfig?.iterationPath], data);
       toast({
         title: "User Stories Fetched",
-        description: `Found ${data.length} user stories from Azure DevOps`,
+        description: `Found ${data.length} user stories from Azure DevOps${azureConfig?.iterationPath && azureConfig.iterationPath !== 'all' ? ` (filtered by ${azureConfig.iterationPath})` : ''}`,
       });
     },
     onError: (error: any) => {
