@@ -85,26 +85,40 @@ export function generateSeparateTestCases(
                            platform === 'mobile' ? 'Mobile App' : 'API';
       const testCaseTitle = `${testType.type} Test Case (${platformLabel}): ${story.title}`;
       
-      // Parse and integrate acceptance criteria into the objective
-      let objective = `${testType.type} testing for ${platformLabel} functionality`;
-      if (story.acceptanceCriteria) {
-        // Clean and format acceptance criteria
-        const cleanCriteria = story.acceptanceCriteria.replace(/<[^>]*>/g, ' ').replace(/&quot;/g, '"').trim();
+      // Focus strictly on the user story's specific requirements
+      let objective = `${testType.type} testing to verify: ${story.title}`;
+      
+      if (story.description && story.description.trim()) {
+        objective += `\n\nDescription: ${story.description.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, '').trim()}`;
+      }
+      
+      if (story.acceptanceCriteria && story.acceptanceCriteria.trim()) {
+        const cleanCriteria = story.acceptanceCriteria
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/&quot;/g, '"')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&nbsp;/g, ' ')
+          .trim();
+        
         const criteriaLines = cleanCriteria.split(/AC\d+:/).filter(line => line.trim());
         
         if (criteriaLines.length > 0) {
-          objective = `${testType.type} testing for ${platformLabel} to verify the following acceptance criteria:\n${criteriaLines.map((criteria, index) => `AC${index + 1}: ${criteria.trim()}`).join('\n')}`;
+          objective += `\n\nAcceptance Criteria to verify:`;
+          criteriaLines.forEach((criteria, index) => {
+            objective += `\nAC${index + 1}: ${criteria.trim()}`;
+          });
         } else {
-          objective = `${testType.type} testing for ${platformLabel} to verify: ${cleanCriteria}`;
+          objective += `\n\nAcceptance Criteria: ${cleanCriteria}`;
         }
       }
 
-    // Build comprehensive prerequisites
+    // Build focused prerequisites based on the user story
     const prerequisites = [
-      "SYSTEM PREREQUISITES:",
-      "- Application is deployed and accessible in test environment",
-      "- All required services and dependencies are running",
-      "- Network connectivity is stable and verified"
+      "PREREQUISITES FOR THIS USER STORY:",
+      "- User has required permissions to access the functionality described in this story",
+      "- System environment is configured for testing the specific feature"
     ];
 
     if (testDataConfig) {
@@ -154,81 +168,41 @@ export function generateSeparateTestCases(
 
     if (testType.type === 'Positive') {
       if (platform === 'web') {
-        // Create test steps based on acceptance criteria if available
+        // Create test steps focused specifically on this user story
         if (story.acceptanceCriteria && criteriaLines.length > 0) {
           testStepsStructured = [
             {
               stepNumber: 1,
-              action: "Verify user has required permissions for the web page/feature under test",
-              expectedResult: "User account has appropriate permissions and access rights confirmed"
-            },
-            {
-              stepNumber: 2,
-              action: "Open the specified web browser and navigate to the application",
-              expectedResult: "Web application loads correctly with all required elements visible"
-            },
-            {
-              stepNumber: 3,
-              action: "Login using valid test credentials (Username: " + (testDataConfig?.username || 'test user') + ", Password: configured)",
-              expectedResult: "User successfully authenticates and gains access to the application"
+              action: "Access the system with appropriate user permissions",
+              expectedResult: "User successfully gains access to test the specific functionality"
             }
           ];
           
-          // Add specific test steps based on acceptance criteria
+          // Add specific test steps based on acceptance criteria only
           criteriaLines.forEach((criteria: string, index: number) => {
             const cleanCriteria = criteria.trim();
             testStepsStructured.push({
-              stepNumber: 4 + index,
-              action: `Test acceptance criteria AC${index + 1}: ${cleanCriteria}`,
-              expectedResult: `The system successfully meets the requirement: ${cleanCriteria}`
+              stepNumber: 2 + index,
+              action: `Verify acceptance criteria: ${cleanCriteria}`,
+              expectedResult: `The requirement is met: ${cleanCriteria}`
             });
           });
           
-          // Add final verification step
-          testStepsStructured.push({
-            stepNumber: 4 + criteriaLines.length,
-            action: "Verify that all acceptance criteria have been met and the feature works as expected",
-            expectedResult: "All acceptance criteria are satisfied and the feature functions correctly"
-          });
         } else {
-          // Default test steps when no acceptance criteria available
+          // Generate test steps based on user story title and description only
           testStepsStructured = [
             {
               stepNumber: 1,
-              action: "Verify user has required permissions for the web page/feature under test",
-              expectedResult: "User account has appropriate permissions and access rights confirmed"
+              action: "Access the system to test the functionality described in the user story",
+              expectedResult: "User can access the relevant feature or page"
             },
             {
               stepNumber: 2,
-              action: "Ensure test environment is accessible and stable via web browser",
-              expectedResult: "Test environment loads successfully without errors"
-            },
-            {
-              stepNumber: 3,
-              action: "Open the specified web browser in the configured environment",
-              expectedResult: "Web browser launches and displays properly"
-            },
-            {
-              stepNumber: 4,
-              action: "Navigate to the web application login page",
-              expectedResult: "Login page loads correctly with all required elements visible"
-            },
-            {
-              stepNumber: 5,
-              action: "Login using valid test credentials (Username: " + (testDataConfig?.username || 'test user') + ", Password: configured)",
-              expectedResult: "User successfully authenticates and gains access to the application"
-            },
-            {
-              stepNumber: 6,
-              action: "Access the main navigation menu/sidebar in the web portal",
-              expectedResult: "Navigation menu displays with appropriate options for user role"
-            },
-            {
-              stepNumber: 7,
-              action: "Navigate to the target page/module as specified in user story",
-              expectedResult: "Target page loads successfully with all required functionality visible"
+              action: `Verify the implementation of: ${story.title}`,
+              expectedResult: `The system implements the functionality as described: ${story.title}`
             }
           ];
+        }
         }
         testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
       } else if (platform === 'mobile') {
