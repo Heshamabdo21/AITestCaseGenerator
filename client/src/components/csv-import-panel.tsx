@@ -1,46 +1,94 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { Upload, FileText, Download, CheckCircle, AlertCircle, Info } from "lucide-react";
 
-interface CsvImportResponse {
+interface CsvPreview {
+  success: boolean;
+  preview: Array<{
+    originalData: any;
+    processedPreview: any;
+  }>;
+  analysis: {
+    totalRows: number;
+    uniqueTitles: number;
+    workItemTypes: string[];
+    hasTestSteps: number;
+    hasExpectedResults: number;
+  };
+  fileName: string;
+  recommendations: string[];
+}
+
+interface ImportResult {
+  success: boolean;
   message: string;
+  stats: {
+    total: number;
+    enhanced: number;
+    categories: Record<string, number>;
+  };
   testCases: any[];
   userStory: any;
+  fileName: string;
 }
 
 export function CsvImportPanel() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [importResult, setImportResult] = useState<CsvImportResponse | null>(null);
+  const [preview, setPreview] = useState<CsvPreview | null>(null);
+  const [enhanceTestCases, setEnhanceTestCases] = useState(true);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const importMutation = useMutation({
+  const previewMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('csvFile', file);
-      
-      const response = await fetch('/api/test-cases/import-csv', {
+      return apiRequest('/api/test-cases/preview-csv', {
         method: 'POST',
         body: formData,
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Import failed');
-      }
-      
-      return response.json();
     },
-    onSuccess: (data: CsvImportResponse) => {
+    onSuccess: (data: CsvPreview) => {
+      setPreview(data);
+      toast({
+        title: "CSV Preview Generated",
+        description: `Analyzed ${data.analysis.totalRows} rows from ${data.fileName}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Preview Failed",
+        description: error.message || "Failed to preview CSV file",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const importMutation = useMutation({
+    mutationFn: async ({ file, enhance }: { file: File; enhance: boolean }) => {
+      const formData = new FormData();
+      formData.append('csvFile', file);
+      formData.append('enhanceTestCases', enhance.toString());
+      return apiRequest('/api/test-cases/import-csv', {
+        method: 'POST',
+        body: formData,
+      });
+    },
+    onSuccess: (data: ImportResult) => {
       setImportResult(data);
       queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/user-stories/stored'] });
       toast({
         title: "Import Successful",
         description: data.message,
@@ -49,7 +97,7 @@ export function CsvImportPanel() {
     onError: (error: any) => {
       toast({
         title: "Import Failed",
-        description: error.message,
+        description: error.message || "Failed to import CSV file",
         variant: "destructive",
       });
     },
@@ -59,6 +107,7 @@ export function CsvImportPanel() {
     const file = event.target.files?.[0];
     if (file && file.type === 'text/csv') {
       setSelectedFile(file);
+      setPreview(null);
       setImportResult(null);
     } else {
       toast({
@@ -69,114 +118,235 @@ export function CsvImportPanel() {
     }
   };
 
-  const handleImport = () => {
+  const handlePreview = () => {
     if (selectedFile) {
-      importMutation.mutate(selectedFile);
+      previewMutation.mutate(selectedFile);
     }
   };
 
+  const handleImport = () => {
+    if (selectedFile) {
+      importMutation.mutate({ file: selectedFile, enhance: enhanceTestCases });
+    }
+  };
+
+  const downloadTemplate = () => {
+    window.open('/api/test-cases/csv-template', '_blank');
+  };
+
+  const resetImport = () => {
+    setSelectedFile(null);
+    setPreview(null);
+    setImportResult(null);
+  };
+
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Upload className="h-5 w-5" />
+          <Upload size={20} />
           CSV Test Case Import
         </CardTitle>
+        <CardDescription>
+          Import and enhance test cases from CSV files
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-4">
+        {/* Template Download */}
+        <div className="flex items-center justify-between p-4 border rounded-lg">
           <div>
-            <Label htmlFor="csv-file">Select CSV File</Label>
-            <Input
-              id="csv-file"
-              type="file"
-              accept=".csv"
-              onChange={handleFileSelect}
-              className="cursor-pointer"
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              Upload a CSV file with test case data for enhanced processing
-            </p>
+            <p className="font-medium">Need a template?</p>
+            <p className="text-sm text-muted-foreground">Download CSV template with proper format</p>
           </div>
-
-          {selectedFile && (
-            <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-              <FileText className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium">{selectedFile.name}</span>
-              <span className="text-xs text-muted-foreground">
-                ({(selectedFile.size / 1024).toFixed(1)} KB)
-              </span>
-            </div>
-          )}
-
-          <Button 
-            onClick={handleImport}
-            disabled={!selectedFile || importMutation.isPending}
-            className="w-full"
-          >
-            {importMutation.isPending ? "Importing..." : "Import & Enhance Test Cases"}
+          <Button variant="outline" size="sm" onClick={downloadTemplate}>
+            <Download size={16} className="mr-2" />
+            Template
           </Button>
         </div>
 
-        {importResult && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                {importResult.message}
-              </span>
+        {/* File Selection */}
+        <div className="space-y-4">
+          <Label htmlFor="csv-file">Select CSV File</Label>
+          <Input
+            id="csv-file"
+            type="file"
+            accept=".csv"
+            onChange={handleFileSelect}
+            className="cursor-pointer"
+          />
+          {selectedFile && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <FileText size={16} />
+              {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
             </div>
+          )}
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Import Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Test Cases Created:</span>
-                    <span className="font-medium">{importResult.testCases.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>User Story:</span>
-                    <span className="font-medium">{importResult.userStory.title}</span>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Enhancement Option */}
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="enhance"
+            checked={enhanceTestCases}
+            onCheckedChange={setEnhanceTestCases}
+          />
+          <Label htmlFor="enhance" className="text-sm">
+            Generate enhanced test cases (positive, negative, edge cases)
+          </Label>
+        </div>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Enhancement Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="text-xs text-muted-foreground">
-                    Enhanced with comprehensive test scenarios including:
-                  </div>
-                  <ul className="text-xs space-y-1">
-                    <li>✓ Positive test cases</li>
-                    <li>✓ Negative test cases</li>
-                    <li>✓ Detailed prerequisites</li>
-                    <li>✓ Step-by-step instructions</li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Button
+            onClick={handlePreview}
+            disabled={!selectedFile || previewMutation.isPending}
+            variant="outline"
+          >
+            {previewMutation.isPending ? "Analyzing..." : "Preview"}
+          </Button>
+          <Button
+            onClick={handleImport}
+            disabled={!selectedFile || importMutation.isPending}
+          >
+            {importMutation.isPending ? "Importing..." : "Import"}
+          </Button>
+          {(preview || importResult) && (
+            <Button onClick={resetImport} variant="ghost">
+              Reset
+            </Button>
+          )}
+        </div>
+
+        {/* Loading Progress */}
+        {(previewMutation.isPending || importMutation.isPending) && (
+          <div className="space-y-2">
+            <Progress value={previewMutation.isPending ? 50 : 75} />
+            <p className="text-sm text-muted-foreground text-center">
+              {previewMutation.isPending ? "Analyzing CSV structure..." : "Importing test cases..."}
+            </p>
           </div>
         )}
 
-        <div className="border-t pt-4">
-          <h4 className="text-sm font-medium mb-2">CSV Format Requirements</h4>
-          <Textarea
-            readOnly
-            value={`Expected CSV columns:
-ID, Work Item Type, Title, Test Step, Step Action, Step Expected, Area Path, Assigned To, State
+        {/* Preview Results */}
+        {preview && (
+          <div className="space-y-4">
+            <Separator />
+            <div>
+              <h4 className="font-medium mb-3">CSV Analysis</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Total Rows:</span>
+                  <Badge variant="secondary" className="ml-2">{preview.analysis.totalRows}</Badge>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Unique Titles:</span>
+                  <Badge variant="secondary" className="ml-2">{preview.analysis.uniqueTitles}</Badge>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">With Test Steps:</span>
+                  <Badge variant="secondary" className="ml-2">{preview.analysis.hasTestSteps}</Badge>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">With Expected Results:</span>
+                  <Badge variant="secondary" className="ml-2">{preview.analysis.hasExpectedResults}</Badge>
+                </div>
+              </div>
+              
+              <div className="mt-3">
+                <span className="text-muted-foreground text-sm">Work Item Types:</span>
+                <div className="flex gap-1 mt-1">
+                  {preview.analysis.workItemTypes.map((type) => (
+                    <Badge key={type} variant="outline">{type}</Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-Example:
-,Test Case,"User can view page content",1,"Navigate to page","Page loads successfully",,,"Design"`}
-            className="text-xs font-mono"
-            rows={6}
-          />
-        </div>
+            {/* Recommendations */}
+            <div className="space-y-2">
+              <h4 className="font-medium">Recommendations</h4>
+              {preview.recommendations.map((rec, index) => (
+                <Alert key={index}>
+                  <Info size={16} />
+                  <AlertDescription>{rec}</AlertDescription>
+                </Alert>
+              ))}
+            </div>
+
+            {/* Sample Data Preview */}
+            {preview.preview.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2">Sample Data (First 5 rows)</h4>
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-muted p-3 border-b">
+                    <div className="grid grid-cols-3 gap-4 text-sm font-medium">
+                      <span>Title</span>
+                      <span>Action</span>
+                      <span>Expected</span>
+                    </div>
+                  </div>
+                  <div className="divide-y">
+                    {preview.preview.map((item, index) => (
+                      <div key={index} className="p-3">
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <span className="truncate">{item.processedPreview.title}</span>
+                          <span className="truncate">{item.processedPreview.stepAction}</span>
+                          <span className="truncate">{item.processedPreview.stepExpected}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Import Results */}
+        {importResult && (
+          <div className="space-y-4">
+            <Separator />
+            <Alert>
+              <CheckCircle size={16} />
+              <AlertDescription>
+                {importResult.message}
+              </AlertDescription>
+            </Alert>
+
+            <div>
+              <h4 className="font-medium mb-3">Import Statistics</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Base Test Cases:</span>
+                  <Badge variant="secondary" className="ml-2">{importResult.stats.total}</Badge>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Enhanced Cases:</span>
+                  <Badge variant="secondary" className="ml-2">{importResult.stats.enhanced}</Badge>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <span className="text-muted-foreground text-sm">Categories:</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {Object.entries(importResult.stats.categories).map(([category, count]) => (
+                    <Badge key={category} variant="outline">
+                      {category}: {count}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm">
+                <strong>User Story Created:</strong> {importResult.userStory?.title}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                All imported test cases have been organized under this user story
+              </p>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
