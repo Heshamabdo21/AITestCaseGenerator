@@ -377,7 +377,8 @@ export function TestCasesSection() {
     if (story) {
       return `US-${story.id.toString().padStart(3, '0')}: ${story.title}`;
     }
-    return `User Story ${userStoryId}`;
+    // Show ID even when user story details aren't loaded
+    return `US-${userStoryId.toString().padStart(3, '0')}: User Story ${userStoryId}`;
   };
   
   // Pagination logic
