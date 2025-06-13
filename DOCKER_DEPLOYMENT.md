@@ -37,17 +37,42 @@ If you prefer to use Docker directly instead of Docker Compose:
      azure-testcase-manager
    ```
 
-## Adding Database Persistence (Optional)
+## PostgreSQL Database Persistence
 
-To enable PostgreSQL database persistence, uncomment the database section in `docker-compose.yml`:
+### Option 1: Using Docker Compose (Recommended)
 
-1. Uncomment the postgres service and volumes section
-2. Set your database password in the environment variables
-3. Add this environment variable to the app service:
-   ```yaml
-   environment:
-     - DATABASE_URL=postgresql://postgres:your_password_here@postgres:5432/testcase_db
-   ```
+The `docker-compose.yml` file includes PostgreSQL persistence by default:
+
+```bash
+# Start with PostgreSQL persistence
+docker-compose up -d
+
+# View database logs
+docker-compose logs postgres
+
+# Connect to database directly
+docker-compose exec postgres psql -U postgres -d testcase_db
+```
+
+### Option 2: External PostgreSQL Database
+
+To use an external PostgreSQL database, update the app service environment:
+
+```yaml
+environment:
+  - DATABASE_URL=postgresql://username:password@your-host:5432/your-database
+```
+
+### Option 3: Memory Storage Only
+
+To run without database persistence, remove the DATABASE_URL environment variable:
+
+```yaml
+environment:
+  - NODE_ENV=production
+  - PORT=5000
+  # Remove DATABASE_URL for memory storage
+```
 
 ## Environment Variables
 
