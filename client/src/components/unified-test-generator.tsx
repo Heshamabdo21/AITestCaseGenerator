@@ -455,43 +455,115 @@ export function UnifiedTestGenerator() {
               <Separator />
 
               <div>
-                <label className="text-sm font-medium mb-3 block">Test Coverage</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="mp-positive" 
-                      checked={includePositive}
-                      onCheckedChange={(checked) => setIncludePositive(checked as boolean)}
-                    />
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <label htmlFor="mp-positive" className="text-sm">Positive</label>
+                <label className="text-sm font-medium mb-3 block">Comprehensive Test Coverage Types</label>
+                <div className="space-y-4">
+                  {/* Core Functional Testing */}
+                  <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                    <h4 className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Core Functional Testing</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="mp-positive" 
+                          checked={includePositive}
+                          onCheckedChange={(checked) => setIncludePositive(checked as boolean)}
+                        />
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <label htmlFor="mp-positive" className="text-sm">Positive Test Cases</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="mp-negative" 
+                          checked={includeNegative}
+                          onCheckedChange={(checked) => setIncludeNegative(checked as boolean)}
+                        />
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                        <label htmlFor="mp-negative" className="text-sm">Negative Test Cases</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="mp-edge" 
+                          checked={includeEdgeCases}
+                          onCheckedChange={(checked) => setIncludeEdgeCases(checked as boolean)}
+                        />
+                        <Target className="h-4 w-4 text-blue-500" />
+                        <label htmlFor="mp-edge" className="text-sm">Edge Cases</label>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="mp-negative" 
-                      checked={includeNegative}
-                      onCheckedChange={(checked) => setIncludeNegative(checked as boolean)}
-                    />
-                    <AlertCircle className="h-4 w-4 text-red-500" />
-                    <label htmlFor="mp-negative" className="text-sm">Negative</label>
+
+                  {/* Security & Performance Testing */}
+                  <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+                    <h4 className="text-xs font-medium text-red-700 dark:text-red-300 mb-2">Security & Performance Testing</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="mp-security" 
+                          checked={includeSecurity}
+                          onCheckedChange={(checked) => setIncludeSecurity(checked as boolean)}
+                        />
+                        <Shield className="h-4 w-4 text-purple-500" />
+                        <label htmlFor="mp-security" className="text-sm">Security Test Cases</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="mp-performance" 
+                          checked={includePerformance}
+                          onCheckedChange={(checked) => setIncludePerformance(checked as boolean)}
+                        />
+                        <Gauge className="h-4 w-4 text-orange-500" />
+                        <label htmlFor="mp-performance" className="text-sm">Performance Test Cases</label>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="mp-edge" 
-                      checked={includeEdgeCases}
-                      onCheckedChange={(checked) => setIncludeEdgeCases(checked as boolean)}
-                    />
-                    <Target className="h-4 w-4 text-blue-500" />
-                    <label htmlFor="mp-edge" className="text-sm">Edge Cases</label>
+
+                  {/* User Experience Testing */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                    <h4 className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2">User Experience Testing</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="mp-ui" 
+                          checked={includeUI}
+                          onCheckedChange={(checked) => setIncludeUI(checked as boolean)}
+                        />
+                        <Globe className="h-4 w-4 text-blue-500" />
+                        <label htmlFor="mp-ui" className="text-sm">UI Test Cases</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="mp-usability" 
+                          checked={includeUsability}
+                          onCheckedChange={(checked) => setIncludeUsability(checked as boolean)}
+                        />
+                        <Smartphone className="h-4 w-4 text-blue-600" />
+                        <label htmlFor="mp-usability" className="text-sm">Usability Test Cases</label>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="mp-security" 
-                      checked={includeSecurity}
-                      onCheckedChange={(checked) => setIncludeSecurity(checked as boolean)}
-                    />
-                    <Shield className="h-4 w-4 text-purple-500" />
-                    <label htmlFor="mp-security" className="text-sm">Security</label>
+
+                  {/* Technical & Integration Testing */}
+                  <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                    <h4 className="text-xs font-medium text-green-700 dark:text-green-300 mb-2">Technical & Integration Testing</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="mp-api" 
+                          checked={includeApi}
+                          onCheckedChange={(checked) => setIncludeApi(checked as boolean)}
+                        />
+                        <Code className="h-4 w-4 text-green-500" />
+                        <label htmlFor="mp-api" className="text-sm">API Test Cases</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="mp-compatibility" 
+                          checked={includeCompatibility}
+                          onCheckedChange={(checked) => setIncludeCompatibility(checked as boolean)}
+                        />
+                        <Settings className="h-4 w-4 text-green-600" />
+                        <label htmlFor="mp-compatibility" className="text-sm">Compatibility Test Cases</label>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
