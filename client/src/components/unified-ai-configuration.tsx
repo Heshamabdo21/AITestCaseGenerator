@@ -17,8 +17,22 @@ import type { InsertAiConfiguration, InsertAiContext } from "@shared/schema";
 
 const unifiedAiSchema = z.object({
   // AI Configuration fields
+  includePositiveTests: z.boolean().default(true),
+  includeNegativeTests: z.boolean().default(true),
+  includeEdgeCases: z.boolean().default(true),
+  includeSecurityCases: z.boolean().default(false),
+  includePerformanceTests: z.boolean().default(false),
+  includeUiTests: z.boolean().default(false),
+  includeUsabilityTests: z.boolean().default(false),
+  includeApiTests: z.boolean().default(false),
+  includeCompatibilityTests: z.boolean().default(false),
   testComplexity: z.enum(["simple", "medium", "complex"]).default("medium"),
   additionalInstructions: z.string().optional(),
+  
+  // Test type preferences
+  enableWebPortalTests: z.boolean().default(true),
+  enableMobileAppTests: z.boolean().default(false),
+  enableApiTests: z.boolean().default(false),
   
   // AI Context fields
   projectContext: z.array(z.string()).default([]),
@@ -39,8 +53,20 @@ export function UnifiedAiConfiguration() {
   const form = useForm<UnifiedAiFormData>({
     resolver: zodResolver(unifiedAiSchema),
     defaultValues: {
+      includePositiveTests: true,
+      includeNegativeTests: true,
+      includeEdgeCases: true,
+      includeSecurityCases: true,
+      includePerformanceTests: true,
+      includeUiTests: true,
+      includeUsabilityTests: true,
+      includeApiTests: true,
+      includeCompatibilityTests: true,
       testComplexity: "medium",
       additionalInstructions: "",
+      enableWebPortalTests: true,
+      enableMobileAppTests: false,
+      enableApiTests: false,
       projectContext: [],
       domainKnowledge: [],
       testingPatterns: [],
@@ -63,8 +89,20 @@ export function UnifiedAiConfiguration() {
   useEffect(() => {
     if (aiConfig && typeof aiConfig === 'object') {
       const config = aiConfig as any;
+      form.setValue("includePositiveTests", config.includePositiveTests ?? true);
+      form.setValue("includeNegativeTests", config.includeNegativeTests ?? true);
+      form.setValue("includeEdgeCases", config.includeEdgeCases ?? true);
+      form.setValue("includeSecurityCases", config.includeSecurityCases ?? false);
+      form.setValue("includePerformanceTests", config.includePerformanceTests ?? false);
+      form.setValue("includeUiTests", config.includeUiTests ?? false);
+      form.setValue("includeUsabilityTests", config.includeUsabilityTests ?? false);
+      form.setValue("includeApiTests", config.includeApiTests ?? false);
+      form.setValue("includeCompatibilityTests", config.includeCompatibilityTests ?? false);
       form.setValue("testComplexity", config.testComplexity ?? "medium");
       form.setValue("additionalInstructions", config.additionalInstructions ?? "");
+      form.setValue("enableWebPortalTests", config.enableWebPortalTests ?? true);
+      form.setValue("enableMobileAppTests", config.enableMobileAppTests ?? false);
+      form.setValue("enableApiTests", config.enableApiTests ?? false);
     }
   }, [aiConfig, form]);
 
@@ -138,8 +176,20 @@ export function UnifiedAiConfiguration() {
   const onSubmit = async (data: UnifiedAiFormData) => {
     // Save AI Configuration
     await saveAiConfigMutation.mutateAsync({
+      includePositiveTests: data.includePositiveTests,
+      includeNegativeTests: data.includeNegativeTests,
+      includeEdgeCases: data.includeEdgeCases,
+      includeSecurityCases: data.includeSecurityCases,
+      includePerformanceTests: data.includePerformanceTests,
+      includeUiTests: data.includeUiTests,
+      includeUsabilityTests: data.includeUsabilityTests,
+      includeApiTests: data.includeApiTests,
+      includeCompatibilityTests: data.includeCompatibilityTests,
       testComplexity: data.testComplexity,
       additionalInstructions: data.additionalInstructions,
+      enableWebPortalTests: data.enableWebPortalTests,
+      enableMobileAppTests: data.enableMobileAppTests,
+      enableApiTests: data.enableApiTests,
     });
 
     // Save AI Context
