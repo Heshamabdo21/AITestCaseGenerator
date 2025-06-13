@@ -64,12 +64,13 @@ export function UnifiedTestGenerator() {
   const [testType, setTestType] = useState<string>("web");
   const [includePositive, setIncludePositive] = useState(true);
   const [includeNegative, setIncludeNegative] = useState(true);
-  const [includeEdgeCases, setIncludeEdgeCases] = useState(false);
-  const [includeSecurity, setIncludeSecurity] = useState(false);
-  const [includePerformance, setIncludePerformance] = useState(false);
-  const [includeUI, setIncludeUI] = useState(false);
-  const [includeUsability, setIncludeUsability] = useState(false);
-  const [includeCompatibility, setIncludeCompatibility] = useState(false);
+  const [includeEdgeCases, setIncludeEdgeCases] = useState(true);
+  const [includeSecurity, setIncludeSecurity] = useState(true);
+  const [includePerformance, setIncludePerformance] = useState(true);
+  const [includeUI, setIncludeUI] = useState(true);
+  const [includeUsability, setIncludeUsability] = useState(true);
+  const [includeApi, setIncludeApi] = useState(true);
+  const [includeCompatibility, setIncludeCompatibility] = useState(true);
 
   // Generation state
   const [generationProgress, setGenerationProgress] = useState(0);
@@ -306,55 +307,106 @@ export function UnifiedTestGenerator() {
               </div>
               
               <div className="space-y-4">
-                <label className="text-sm font-medium mb-2 block">Test Case Types</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="positive" 
-                      checked={includePositive}
-                      onCheckedChange={(checked) => setIncludePositive(checked as boolean)}
-                    />
-                    <label htmlFor="positive" className="text-sm">Positive Tests</label>
+                <label className="text-sm font-medium mb-2 block">Comprehensive Test Coverage Types</label>
+                <div className="space-y-4">
+                  {/* Core Functional Testing */}
+                  <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                    <h4 className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Core Functional Testing</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="positive" 
+                          checked={includePositive}
+                          onCheckedChange={(checked) => setIncludePositive(checked as boolean)}
+                        />
+                        <label htmlFor="positive" className="text-sm">Positive Test Cases</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="negative" 
+                          checked={includeNegative}
+                          onCheckedChange={(checked) => setIncludeNegative(checked as boolean)}
+                        />
+                        <label htmlFor="negative" className="text-sm">Negative Test Cases</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="edge" 
+                          checked={includeEdgeCases}
+                          onCheckedChange={(checked) => setIncludeEdgeCases(checked as boolean)}
+                        />
+                        <label htmlFor="edge" className="text-sm">Edge Cases</label>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="negative" 
-                      checked={includeNegative}
-                      onCheckedChange={(checked) => setIncludeNegative(checked as boolean)}
-                    />
-                    <label htmlFor="negative" className="text-sm">Negative Tests</label>
+
+                  {/* Security & Performance Testing */}
+                  <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+                    <h4 className="text-xs font-medium text-red-700 dark:text-red-300 mb-2">Security & Performance Testing</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="security" 
+                          checked={includeSecurity}
+                          onCheckedChange={(checked) => setIncludeSecurity(checked as boolean)}
+                        />
+                        <label htmlFor="security" className="text-sm">Security Test Cases</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="performance" 
+                          checked={includePerformance}
+                          onCheckedChange={(checked) => setIncludePerformance(checked as boolean)}
+                        />
+                        <label htmlFor="performance" className="text-sm">Performance Test Cases</label>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="edge" 
-                      checked={includeEdgeCases}
-                      onCheckedChange={(checked) => setIncludeEdgeCases(checked as boolean)}
-                    />
-                    <label htmlFor="edge" className="text-sm">Edge Cases</label>
+
+                  {/* User Experience Testing */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                    <h4 className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2">User Experience Testing</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="ui" 
+                          checked={includeUI}
+                          onCheckedChange={(checked) => setIncludeUI(checked as boolean)}
+                        />
+                        <label htmlFor="ui" className="text-sm">UI Test Cases</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="usability" 
+                          checked={includeUsability}
+                          onCheckedChange={(checked) => setIncludeUsability(checked as boolean)}
+                        />
+                        <label htmlFor="usability" className="text-sm">Usability Test Cases</label>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="security" 
-                      checked={includeSecurity}
-                      onCheckedChange={(checked) => setIncludeSecurity(checked as boolean)}
-                    />
-                    <label htmlFor="security" className="text-sm">Security</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="performance" 
-                      checked={includePerformance}
-                      onCheckedChange={(checked) => setIncludePerformance(checked as boolean)}
-                    />
-                    <label htmlFor="performance" className="text-sm">Performance</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="ui" 
-                      checked={includeUI}
-                      onCheckedChange={(checked) => setIncludeUI(checked as boolean)}
-                    />
-                    <label htmlFor="ui" className="text-sm">UI/UX</label>
+
+                  {/* Technical & Integration Testing */}
+                  <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                    <h4 className="text-xs font-medium text-green-700 dark:text-green-300 mb-2">Technical & Integration Testing</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="api" 
+                          checked={includeApi}
+                          onCheckedChange={(checked) => setIncludeApi(checked as boolean)}
+                        />
+                        <label htmlFor="api" className="text-sm">API Test Cases</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="compatibility" 
+                          checked={includeCompatibility}
+                          onCheckedChange={(checked) => setIncludeCompatibility(checked as boolean)}
+                        />
+                        <label htmlFor="compatibility" className="text-sm">Compatibility Test Cases</label>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
