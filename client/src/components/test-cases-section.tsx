@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { FlaskRound, Check, X, Edit3, Download, CloudUpload, Eye, Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FlaskRound, Check, X, Edit3, Download, CloudUpload, Eye, Trash2, ChevronLeft, ChevronRight, Loader2, Filter, Search, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { LoadingSpinner, TestCaseLoading, BouncingDots } from "@/components/ui/loading-spinner";
@@ -24,6 +25,14 @@ export function TestCasesSection() {
   const [viewingTestCase, setViewingTestCase] = useState<TestCase | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [userStoryFilter, setUserStoryFilter] = useState<string>("all");
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { trigger: confettiAnimation, fire: fireConfetti } = useConfetti();
@@ -267,9 +276,50 @@ export function TestCasesSection() {
   };
 
   const typedTestCases = testCases as TestCase[];
+
+  // Filter logic
+  const filteredTestCases = typedTestCases.filter(testCase => {
+    // Search term filter
+    if (searchTerm && !testCase.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !testCase.id.toString().includes(searchTerm)) {
+      return false;
+    }
+
+    // Status filter
+    if (statusFilter !== "all" && testCase.status !== statusFilter) {
+      return false;
+    }
+
+    // Priority filter
+    if (priorityFilter !== "all" && testCase.priority?.toLowerCase() !== priorityFilter) {
+      return false;
+    }
+
+    // Type filter
+    if (typeFilter !== "all") {
+      const testType = testCase.title.includes('Positive') ? 'positive' : 
+                      testCase.title.includes('Negative') ? 'negative' :
+                      testCase.title.includes('Edge') ? 'edge' :
+                      testCase.title.includes('Security') ? 'security' :
+                      testCase.title.includes('Performance') ? 'performance' : 'standard';
+      if (testType !== typeFilter) {
+        return false;
+      }
+    }
+
+    // User story filter
+    if (userStoryFilter !== "all") {
+      const userStoryId = testCase.userStoryId?.toString() || 'unassigned';
+      if (userStoryId !== userStoryFilter) {
+        return false;
+      }
+    }
+
+    return true;
+  });
   
-  // Group test cases by user story
-  const groupedTestCases = typedTestCases.reduce((groups, testCase) => {
+  // Group filtered test cases by user story
+  const groupedTestCases = filteredTestCases.reduce((groups, testCase) => {
     const userStoryId = testCase.userStoryId || 'unassigned';
     if (!groups[userStoryId]) {
       groups[userStoryId] = [];
@@ -277,6 +327,41 @@ export function TestCasesSection() {
     groups[userStoryId].push(testCase);
     return groups;
   }, {} as Record<string, TestCase[]>);
+
+  // Reset filters function
+  const resetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setPriorityFilter("all");
+    setTypeFilter("all");
+    setUserStoryFilter("all");
+    setCurrentPage(1);
+  };
+
+  // Get unique values for filter options
+  const getUniqueStatuses = () => {
+    const statusSet = new Set<string>();
+    typedTestCases.forEach(tc => {
+      if (tc.status) statusSet.add(tc.status);
+    });
+    return Array.from(statusSet);
+  };
+
+  const getUniquePriorities = () => {
+    const prioritySet = new Set<string>();
+    typedTestCases.forEach(tc => {
+      if (tc.priority) prioritySet.add(tc.priority.toLowerCase());
+    });
+    return Array.from(prioritySet);
+  };
+
+  const getUniqueUserStories = () => {
+    const userStorySet = new Set<string>();
+    typedTestCases.forEach(tc => {
+      userStorySet.add(tc.userStoryId?.toString() || 'unassigned');
+    });
+    return Array.from(userStorySet);
+  };
 
   // Get user story title by ID
   const getUserStoryTitle = (userStoryId: number | string) => {
@@ -343,7 +428,7 @@ export function TestCasesSection() {
             <FlaskRound className="h-5 w-5 text-blue-600" />
             <CardTitle>Generated Test Cases</CardTitle>
             <Badge className="bg-green-100 text-green-800">
-              {typedTestCases.length} generated
+              {filteredTestCases.length} of {typedTestCases.length} test cases
             </Badge>
           </div>
           <div className="flex items-center space-x-3">
@@ -387,6 +472,175 @@ export function TestCasesSection() {
         </div>
       </CardHeader>
       <CardContent>
+        {/* Filter Toolbar */}
+        <div className="mb-6 p-4 bg-muted/30 rounded-lg border">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-medium text-muted-foreground">Quick Filters</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
+            {/* Search */}
+            <div className="lg:col-span-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search test cases..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {getUniqueStatuses().map(status => (
+                  <SelectItem key={status} value={status}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Priority Filter */}
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priority</SelectItem>
+                {getUniquePriorities().map(priority => (
+                  <SelectItem key={priority} value={priority}>
+                    {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Type Filter */}
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="positive">Positive</SelectItem>
+                <SelectItem value="negative">Negative</SelectItem>
+                <SelectItem value="edge">Edge Case</SelectItem>
+                <SelectItem value="security">Security</SelectItem>
+                <SelectItem value="performance">Performance</SelectItem>
+                <SelectItem value="standard">Standard</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* User Story Filter */}
+            <Select value={userStoryFilter} onValueChange={setUserStoryFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="User Story" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stories</SelectItem>
+                {getUniqueUserStories().map(userStoryId => (
+                  <SelectItem key={userStoryId} value={userStoryId}>
+                    {userStoryId === 'unassigned' 
+                      ? 'Unassigned' 
+                      : getUserStoryDisplay(userStoryId)
+                    }
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Active Filters Display */}
+          {(searchTerm || statusFilter !== "all" || priorityFilter !== "all" || typeFilter !== "all" || userStoryFilter !== "all") && (
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
+              <span className="text-xs text-muted-foreground">Active filters:</span>
+              {searchTerm && (
+                <Badge variant="secondary" className="text-xs">
+                  Search: "{searchTerm}"
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="ml-1 hover:bg-muted rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {statusFilter !== "all" && (
+                <Badge variant="secondary" className="text-xs">
+                  Status: {statusFilter}
+                  <button
+                    onClick={() => setStatusFilter("all")}
+                    className="ml-1 hover:bg-muted rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {priorityFilter !== "all" && (
+                <Badge variant="secondary" className="text-xs">
+                  Priority: {priorityFilter}
+                  <button
+                    onClick={() => setPriorityFilter("all")}
+                    className="ml-1 hover:bg-muted rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {typeFilter !== "all" && (
+                <Badge variant="secondary" className="text-xs">
+                  Type: {typeFilter}
+                  <button
+                    onClick={() => setTypeFilter("all")}
+                    className="ml-1 hover:bg-muted rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {userStoryFilter !== "all" && (
+                <Badge variant="secondary" className="text-xs">
+                  Story: {userStoryFilter === 'unassigned' ? 'Unassigned' : `US-${userStoryFilter}`}
+                  <button
+                    onClick={() => setUserStoryFilter("all")}
+                    className="ml-1 hover:bg-muted rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {/* Filter Actions */}
+          <div className="flex items-center justify-between mt-3">
+            <div className="text-xs text-muted-foreground">
+              Showing {filteredTestCases.length} of {typedTestCases.length} test cases
+              {filteredTestCases.length !== typedTestCases.length && (
+                <span className="ml-1 text-amber-600 dark:text-amber-400">(filtered)</span>
+              )}
+            </div>
+            {(searchTerm || statusFilter !== "all" || priorityFilter !== "all" || typeFilter !== "all" || userStoryFilter !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetFilters}
+                className="h-8 px-2 text-xs"
+              >
+                <RotateCcw className="h-3 w-3 mr-1" />
+                Reset All Filters
+              </Button>
+            )}
+          </div>
+        </div>
         {/* Test Cases Grouped by User Story */}
         <div className="space-y-6">
           {Object.entries(groupedTestCases).map(([userStoryId, groupTestCases]) => (
