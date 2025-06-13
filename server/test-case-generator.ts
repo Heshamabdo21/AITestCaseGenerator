@@ -147,18 +147,33 @@ export function generateSeparateTestCases(
           testStepsStructured = [
             {
               stepNumber: 1,
-              action: "Access the system with appropriate user permissions",
-              expectedResult: "User successfully gains access to test the specific functionality"
+              action: "Navigate to login page",
+              expectedResult: "Login page displays correctly"
+            },
+            {
+              stepNumber: 2,
+              action: "Enter valid email address",
+              expectedResult: "Email field accepts the input"
+            },
+            {
+              stepNumber: 3,
+              action: "Enter correct password", 
+              expectedResult: "Password field accepts the input"
+            },
+            {
+              stepNumber: 4,
+              action: "Click 'Login' button",
+              expectedResult: "User successfully logs into the system"
             }
           ];
           
-          // Add specific test steps based on acceptance criteria only
+          // Add specific test steps based on acceptance criteria
           criteriaLines.forEach((criteria: string, index: number) => {
             const cleanCriteria = criteria.trim();
             testStepsStructured.push({
-              stepNumber: 2 + index,
-              action: `Verify acceptance criteria: ${cleanCriteria}`,
-              expectedResult: `The requirement is met: ${cleanCriteria}`
+              stepNumber: 5 + index,
+              action: `Navigate to and verify: ${cleanCriteria}`,
+              expectedResult: `Feature works as specified: ${cleanCriteria}`
             });
           });
           
@@ -167,32 +182,57 @@ export function generateSeparateTestCases(
           testStepsStructured = [
             {
               stepNumber: 1,
-              action: "Access the system to test the functionality described in the user story",
-              expectedResult: "User can access the relevant feature or page"
+              action: "Navigate to login page",
+              expectedResult: "Login page displays correctly"
             },
             {
               stepNumber: 2,
-              action: `Verify the implementation of: ${story.title}`,
-              expectedResult: `The system implements the functionality as described: ${story.title}`
+              action: "Enter valid email address",
+              expectedResult: "Email field accepts the input"
+            },
+            {
+              stepNumber: 3,
+              action: "Enter correct password",
+              expectedResult: "Password field accepts the input"
+            },
+            {
+              stepNumber: 4,
+              action: "Click 'Login' button",
+              expectedResult: "User successfully logs into the system"
+            },
+            {
+              stepNumber: 5,
+              action: `Navigate to and test: ${story.title}`,
+              expectedResult: `Feature works as described in the user story`
             }
           ];
         }
         
         testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
-        expectedResult = `All acceptance criteria for the user story "${story.title}" are successfully verified and met.`;
+        expectedResult = `All test steps complete successfully and the user story "${story.title}" functions as expected.`;
         
       } else if (testType.type === 'Negative') {
-        // Negative test cases focused on user story edge cases and error scenarios
+        // Negative test cases with clear action steps
         testStepsStructured = [
           {
             stepNumber: 1,
-            action: `Test invalid scenarios for: ${story.title}`,
-            expectedResult: "System handles invalid inputs appropriately with proper error messages"
+            action: "Navigate to login page",
+            expectedResult: "Login page displays correctly"
           },
           {
             stepNumber: 2,
-            action: "Attempt operations with insufficient permissions or invalid data",
-            expectedResult: "System prevents unauthorized actions and displays appropriate error messages"
+            action: "Enter invalid email address",
+            expectedResult: "System shows email validation error"
+          },
+          {
+            stepNumber: 3,
+            action: "Enter incorrect password",
+            expectedResult: "System shows password error message"
+          },
+          {
+            stepNumber: 4,
+            action: "Click 'Login' button",
+            expectedResult: "System prevents login and shows error message"
           }
         ];
         
@@ -200,23 +240,43 @@ export function generateSeparateTestCases(
           criteriaLines.forEach((criteria: string, index: number) => {
             const cleanCriteria = criteria.trim();
             testStepsStructured.push({
-              stepNumber: 3 + index,
-              action: `Test negative scenarios for: ${cleanCriteria}`,
-              expectedResult: `System properly handles edge cases and errors for: ${cleanCriteria}`
+              stepNumber: 5 + index,
+              action: `Test invalid data for: ${cleanCriteria}`,
+              expectedResult: `System handles errors appropriately for: ${cleanCriteria}`
             });
           });
         }
         
         testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
-        expectedResult = `All error scenarios for "${story.title}" are properly handled with appropriate error messages and system stability.`;
+        expectedResult = `System properly handles all invalid scenarios and displays appropriate error messages.`;
         
       } else {
-        // Other test types (Edge Case, Security, Performance, etc.)
+        // Other test types (Edge Case, Security, Performance, etc.) with clear action steps
         testStepsStructured = [
           {
             stepNumber: 1,
-            action: `Perform ${testType.type.toLowerCase()} testing for: ${story.title}`,
-            expectedResult: `${testType.type} requirements are met for the user story functionality`
+            action: "Navigate to login page",
+            expectedResult: "Login page displays correctly"
+          },
+          {
+            stepNumber: 2,
+            action: "Enter valid email address",
+            expectedResult: "Email field accepts the input"
+          },
+          {
+            stepNumber: 3,
+            action: "Enter correct password",
+            expectedResult: "Password field accepts the input"
+          },
+          {
+            stepNumber: 4,
+            action: "Click 'Login' button",
+            expectedResult: "User successfully logs into the system"
+          },
+          {
+            stepNumber: 5,
+            action: `Perform ${testType.type.toLowerCase()} verification for: ${story.title}`,
+            expectedResult: `${testType.type} requirements are validated`
           }
         ];
         
@@ -224,15 +284,15 @@ export function generateSeparateTestCases(
           criteriaLines.forEach((criteria: string, index: number) => {
             const cleanCriteria = criteria.trim();
             testStepsStructured.push({
-              stepNumber: 2 + index,
-              action: `Verify ${testType.type.toLowerCase()} aspects of: ${cleanCriteria}`,
-              expectedResult: `${testType.type} requirements are satisfied for: ${cleanCriteria}`
+              stepNumber: 6 + index,
+              action: `Test ${testType.type.toLowerCase()} aspects of: ${cleanCriteria}`,
+              expectedResult: `${testType.type} requirements satisfied for: ${cleanCriteria}`
             });
           });
         }
         
         testSteps = testStepsStructured.map(step => `${step.stepNumber}. ${step.action}`);
-        expectedResult = `All ${testType.type.toLowerCase()} requirements for "${story.title}" are successfully verified and meet quality standards.`;
+        expectedResult = `All ${testType.type.toLowerCase()} requirements are verified and meet quality standards.`;
       }
 
       // Generate required permissions based on test type and test data config
