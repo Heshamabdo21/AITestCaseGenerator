@@ -57,6 +57,7 @@ export interface IStorage {
   getTestCase(id: number): Promise<TestCase | undefined>;
   updateTestCase(id: number, testCase: Partial<InsertTestCase>): Promise<TestCase | undefined>;
   deleteTestCase(id: number): Promise<boolean>;
+  deleteAllTestCases(): Promise<number>;
   getTestCasesByIds(ids: number[]): Promise<TestCase[]>;
 
   // Test Plans methods
@@ -187,6 +188,11 @@ export class DatabaseStorage implements IStorage {
   async deleteTestCase(id: number): Promise<boolean> {
     const result = await db.delete(testCases).where(eq(testCases.id, id));
     return result.rowCount > 0;
+  }
+
+  async deleteAllTestCases(): Promise<number> {
+    const result = await db.delete(testCases);
+    return result.rowCount || 0;
   }
 
   async getTestCasesByIds(ids: number[]): Promise<TestCase[]> {

@@ -33,6 +33,7 @@ export interface ISimpleStorage {
   getTestCase(id: number): Promise<TestCase | undefined>;
   updateTestCase(id: number, testCase: Partial<InsertTestCase>): Promise<TestCase | undefined>;
   deleteTestCase(id: number): Promise<boolean>;
+  deleteAllTestCases(): Promise<number>;
   getTestCasesByIds(ids: number[]): Promise<TestCase[]>;
 
   // Test Plans methods
@@ -231,6 +232,12 @@ export class SimpleMemoryStorage implements ISimpleStorage {
 
   async deleteTestCase(id: number): Promise<boolean> {
     return this.data.testCases.delete(id);
+  }
+
+  async deleteAllTestCases(): Promise<number> {
+    const count = this.data.testCases.size;
+    this.data.testCases.clear();
+    return count;
   }
 
   async getTestCasesByIds(ids: number[]): Promise<TestCase[]> {

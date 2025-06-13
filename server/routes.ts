@@ -1348,6 +1348,35 @@ For each test case, provide the following in JSON format:
     }
   });
 
+  // Delete individual test case
+  app.delete("/api/test-cases/:id", async (req, res) => {
+    try {
+      const testCaseId = parseInt(req.params.id);
+      if (isNaN(testCaseId)) {
+        return res.status(400).json({ message: "Invalid test case ID" });
+      }
+
+      const deleted = await activeStorage.deleteTestCase(testCaseId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Test case not found" });
+      }
+
+      res.json({ message: "Test case deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Delete all test cases
+  app.delete("/api/test-cases", async (req, res) => {
+    try {
+      const deletedCount = await (activeStorage as any).deleteAllTestCases();
+      res.json({ message: `Successfully deleted ${deletedCount} test cases` });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Health check endpoint for Docker
   app.get("/api/health", (req, res) => {
     res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
