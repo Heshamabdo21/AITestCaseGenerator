@@ -1349,66 +1349,6 @@ For each test case, provide the following in JSON format:
   });
 
   // Health check endpoint for Docker
-  // Test Coverage Configuration endpoints
-  app.post("/api/test-coverage-config", async (req, res) => {
-    try {
-      const config = await activeStorage.getLatestAzureConfig();
-      if (!config) {
-        return res.status(404).json({ message: "No Azure DevOps configuration found" });
-      }
-
-      const testCoverageConfig = await activeStorage.updateTestDataConfig(config.id, {
-        ...req.body,
-        configId: config.id
-      });
-      
-      if (!testCoverageConfig) {
-        const newConfig = await activeStorage.createTestDataConfig({
-          ...req.body,
-          configId: config.id
-        });
-        return res.json(newConfig);
-      }
-      
-      res.json(testCoverageConfig);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
-
-  app.get("/api/test-coverage-config", async (req, res) => {
-    try {
-      const config = await activeStorage.getLatestAzureConfig();
-      if (!config) {
-        return res.status(404).json({ message: "No Azure DevOps configuration found" });
-      }
-
-      const testCoverageConfig = await activeStorage.getTestDataConfig(config.id);
-      res.json(testCoverageConfig || {
-        includePositiveTests: true,
-        includeNegativeTests: true,
-        includeEdgeCases: true,
-        includeSecurityTests: false,
-        includePerformanceTests: false,
-        includeUsabilityTests: false,
-        includeCompatibilityTests: false,
-        includeApiTests: false,
-        includeUiTests: true,
-        enableWebPortalTests: true,
-        enableMobileAppTests: false,
-        enableApiEndpointTests: false,
-        basicTestComplexity: true,
-        intermediateTestComplexity: true,
-        advancedTestComplexity: false,
-        minimumCoveragePercentage: 80,
-        includeRegressionTests: true,
-        includeSmokeTests: true
-      });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-
   app.get("/api/health", (req, res) => {
     res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
   });
