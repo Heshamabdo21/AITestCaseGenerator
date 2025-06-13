@@ -666,6 +666,7 @@ export function TestCasesSection() {
           </div>
         )}
       </CardContent>
+      <Confetti trigger={confettiAnimation} />
     </Card>
   );
 }
