@@ -75,6 +75,9 @@ export interface ISimpleStorage {
   createAiConfiguration(config: InsertAiConfiguration): Promise<AiConfiguration>;
   getAiConfiguration(configId: number): Promise<AiConfiguration | undefined>;
   updateAiConfiguration(configId: number, config: Partial<InsertAiConfiguration>): Promise<AiConfiguration | undefined>;
+
+  // Data management methods
+  clearAllDemoData(): Promise<void>;
 }
 
 export class SimpleMemoryStorage implements ISimpleStorage {
@@ -440,6 +443,16 @@ export class SimpleMemoryStorage implements ISimpleStorage {
     const updated = { ...existing, ...config };
     this.data.aiConfigurations.set(existing.id, updated);
     return updated;
+  }
+
+  async clearAllDemoData(): Promise<void> {
+    // Clear user stories and test cases but keep configuration
+    this.data.userStories.clear();
+    this.data.testCases.clear();
+    this.data.testPlans.clear();
+    this.data.testSuites.clear();
+    this.data.testCaseLinks.clear();
+    this.data.testCaseFeedback.clear();
   }
 }
 
