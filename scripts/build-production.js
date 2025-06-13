@@ -22,4 +22,14 @@ await build({
   packages: 'external'
 });
 
+// Build production static server separately
+await build({
+  entryPoints: ['server/production-static.ts'],
+  platform: 'node',
+  format: 'esm',
+  bundle: true,
+  outdir: 'dist',
+  packages: 'external'
+});
+
 console.log('Production build complete');
