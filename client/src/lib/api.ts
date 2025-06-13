@@ -131,6 +131,16 @@ export const api = {
     window.URL.revokeObjectURL(url);
   },
 
+  async deleteTestCase(testCaseId: number): Promise<{ message: string }> {
+    const response = await apiRequest("DELETE", `/api/test-cases/${testCaseId}`);
+    return safeJsonParse(response);
+  },
+
+  async deleteAllTestCases(): Promise<{ message: string }> {
+    const response = await apiRequest("DELETE", "/api/test-cases");
+    return safeJsonParse(response);
+  },
+
   // Test Data Configuration
   async createTestDataConfig(config: InsertTestDataConfig): Promise<TestDataConfig> {
     const response = await apiRequest("POST", "/api/test-data-config", config);

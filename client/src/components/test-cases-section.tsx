@@ -91,14 +91,16 @@ export function TestCasesSection() {
 
   // Mutation to delete test case
   const deleteTestCaseMutation = useMutation({
-    mutationFn: (testCaseId: number) => api.deleteTestCase(testCaseId),
-    onSuccess: () => {
+    mutationFn: (testCaseId: number) => 
+      fetch(`/api/test-cases/${testCaseId}`, { method: 'DELETE' })
+        .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to delete'))),
+    onSuccess: (_, deletedTestCaseId) => {
       toast({
         title: "Test Case Deleted",
         description: "Test case deleted successfully",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
-      setSelectedTestCases(prev => prev.filter(id => id !== testCaseId));
+      setSelectedTestCases(prev => prev.filter(id => id !== deletedTestCaseId));
     },
     onError: (error: any) => {
       toast({
@@ -111,7 +113,9 @@ export function TestCasesSection() {
 
   // Mutation to delete all test cases
   const deleteAllTestCasesMutation = useMutation({
-    mutationFn: () => api.deleteAllTestCases(),
+    mutationFn: () => 
+      fetch('/api/test-cases', { method: 'DELETE' })
+        .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to delete all'))),
     onSuccess: () => {
       toast({
         title: "All Test Cases Deleted",
@@ -289,244 +293,436 @@ export function TestCasesSection() {
         </div>
       </CardHeader>
       <CardContent>
-        {/* Test Cases List */}
-        <div className="space-y-6">
-          {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="border border-border rounded-lg p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3 flex-1">
-                    <Skeleton className="w-4 h-4" />
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-5 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Skeleton className="h-6 w-20" />
-                    <Skeleton className="h-8 w-8" />
-                    <Skeleton className="h-8 w-8" />
-                    <Skeleton className="h-8 w-8" />
-                  </div>
-                </div>
-                <Skeleton className="h-24 w-full" />
-              </div>
-            ))
-          ) : (
-            typedTestCases.map((testCase) => (
-              <div
-                key={testCase.id}
-                className={`border border-gray-200 rounded-lg p-5 ${
-                  testCase.status === "approved" ? "bg-green-50 border-green-200" : 
-                  testCase.status === "rejected" ? "bg-red-50 border-red-200 opacity-75" : ""
-                }`}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
+        {/* Test Cases Table */}
+        <div className="space-y-4">
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
                     <Checkbox
-                      checked={selectedTestCases.includes(testCase.id)}
-                      onCheckedChange={() => handleTestCaseSelect(testCase.id)}
+                      checked={selectedTestCases.length === paginatedTestCases.length && paginatedTestCases.length > 0}
+                      onCheckedChange={handleSelectAll}
                     />
-                    <div>
-                      <h4 className="font-medium text-gray-900">{testCase.title}</h4>
-                      <p className="text-sm text-gray-600">Test Case ID: TC-{testCase.id.toString().padStart(3, '0')}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={getPriorityColor(testCase.priority)}>
-                      {testCase.priority} Priority
-                    </Badge>
-                    <Badge className={getStatusColor(testCase.status)}>
-                      {testCase.status}
-                    </Badge>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => updateStatusMutation.mutate({ id: testCase.id, status: "approved" })}
-                      disabled={testCase.status === "approved" || updateStatusMutation.isPending}
-                      title="Approve"
-                      className="text-green-600 hover:text-green-700"
+                  </TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: itemsPerPage }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : paginatedTestCases.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <FlaskRound className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-muted-foreground">No test cases found</p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedTestCases.map((testCase) => (
+                    <TableRow 
+                      key={testCase.id}
+                      className={
+                        testCase.status === "approved" ? "bg-green-50/50" : 
+                        testCase.status === "rejected" ? "bg-red-50/50" : ""
+                      }
                     >
-                      <Check className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => updateStatusMutation.mutate({ id: testCase.id, status: "rejected" })}
-                      disabled={testCase.status === "rejected" || updateStatusMutation.isPending}
-                      title="Reject"
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          title="Edit"
-                          className="text-blue-600 hover:text-blue-700"
-                          onClick={() => setEditingTestCase(testCase)}
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Edit Test Case</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="title">Title</Label>
-                            <Input id="title" defaultValue={testCase.title} />
-                          </div>
-                          <div>
-                            <Label htmlFor="objective">Objective</Label>
-                            <Textarea id="objective" defaultValue={testCase.objective} />
-                          </div>
-                          <div>
-                            <Label>Prerequisites</Label>
-                            <Textarea 
-                              defaultValue={Array.isArray(testCase.prerequisites) 
-                                ? testCase.prerequisites.join('\n') 
-                                : testCase.prerequisites || ''} 
-                              placeholder="Enter each prerequisite on a new line"
-                            />
-                          </div>
-                          <div>
-                            <Label>Test Steps</Label>
-                            <Textarea 
-                              defaultValue={Array.isArray(testCase.testSteps) 
-                                ? testCase.testSteps.join('\n') 
-                                : testCase.testSteps || ''} 
-                              placeholder="Enter each step on a new line"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="expectedResult">Expected Result</Label>
-                            <Textarea id="expectedResult" defaultValue={testCase.expectedResult} />
-                          </div>
-                          <div>
-                            <Label htmlFor="testPassword">Test Password</Label>
-                            <Input 
-                              id="testPassword" 
-                              type="text" 
-                              defaultValue={testCase.testPassword || ''} 
-                              placeholder="Enter test password for execution"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="requiredPermissions">Required Permissions</Label>
-                            <Textarea 
-                              id="requiredPermissions" 
-                              defaultValue={testCase.requiredPermissions || ''} 
-                              placeholder="Enter required permissions for test execution (e.g., admin, read-write, user-management)"
-                              rows={3}
-                            />
-                          </div>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedTestCases.includes(testCase.id)}
+                          onCheckedChange={() => handleTestCaseSelect(testCase.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-mono">
+                        TC-{testCase.id.toString().padStart(3, '0')}
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        <div className="truncate" title={testCase.title}>
+                          {testCase.title}
                         </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 rounded-md p-4">
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-sm font-medium text-gray-900">Objective:</span>
-                      <p className="text-sm text-gray-700 mt-1">{testCase.objective}</p>
-                    </div>
-
-                    {testCase.prerequisites && (
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">Prerequisites:</span>
-                        <div className="text-sm text-gray-700 mt-1 whitespace-pre-line">
-                          {Array.isArray(testCase.prerequisites) 
-                            ? testCase.prerequisites.join('\n')
-                            : testCase.prerequisites}
-                        </div>
-                      </div>
-                    )}
-
-                    {testCase.testSteps && (
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">Test Steps:</span>
-                        <div className="text-sm text-gray-700 mt-1">
-                          {testCase.testStepsStructured && testCase.testStepsStructured.length > 0 ? (
-                            <div className="space-y-3">
-                              {testCase.testStepsStructured.map((step, index) => (
-                                <div key={index} className="border border-gray-200 rounded-md p-3 bg-white">
-                                  <div className="mb-2">
-                                    <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                      Step {step.stepNumber}
-                                    </span>
-                                  </div>
-                                  <div className="mb-2">
-                                    <span className="text-xs font-medium text-gray-600">Action:</span>
-                                    <p className="text-sm text-gray-800 mt-1">{step.action}</p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getPriorityColor(testCase.priority)}>
+                          {testCase.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(testCase.status)}>
+                          {testCase.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {testCase.title.includes('Positive') ? 'Positive' : 
+                           testCase.title.includes('Negative') ? 'Negative' :
+                           testCase.title.includes('Edge') ? 'Edge Case' :
+                           testCase.title.includes('Security') ? 'Security' :
+                           testCase.title.includes('Performance') ? 'Performance' : 'Standard'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-1">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                title="View Details"
+                                className="h-8 w-8"
+                                onClick={() => setViewingTestCase(testCase)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Test Case Details - TC-{testCase.id.toString().padStart(3, '0')}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-6">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                  <div>
+                                    <Label className="text-xs font-semibold text-muted-foreground">PRIORITY</Label>
+                                    <Badge className={getPriorityColor(testCase.priority)}>
+                                      {testCase.priority}
+                                    </Badge>
                                   </div>
                                   <div>
-                                    <span className="text-xs font-medium text-gray-600">Expected Result:</span>
-                                    <p className="text-sm text-green-700 mt-1">{step.expectedResult}</p>
+                                    <Label className="text-xs font-semibold text-muted-foreground">STATUS</Label>
+                                    <Badge className={getStatusColor(testCase.status)}>
+                                      {testCase.status}
+                                    </Badge>
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs font-semibold text-muted-foreground">TYPE</Label>
+                                    <Badge variant="outline">
+                                      {testCase.title.includes('Positive') ? 'Positive' : 
+                                       testCase.title.includes('Negative') ? 'Negative' :
+                                       testCase.title.includes('Edge') ? 'Edge Case' :
+                                       testCase.title.includes('Security') ? 'Security' :
+                                       testCase.title.includes('Performance') ? 'Performance' : 'Standard'}
+                                    </Badge>
                                   </div>
                                 </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="whitespace-pre-line">
-                              {Array.isArray(testCase.testSteps) 
-                                ? testCase.testSteps.join('\n')
-                                : testCase.testSteps}
-                            </div>
-                          )}
+                                
+                                <div>
+                                  <Label className="text-sm font-semibold">Title</Label>
+                                  <p className="mt-1 text-sm">{testCase.title}</p>
+                                </div>
+
+                                <div>
+                                  <Label className="text-sm font-semibold">Objective</Label>
+                                  <p className="mt-1 text-sm text-muted-foreground">{testCase.objective}</p>
+                                </div>
+
+                                {testCase.prerequisites && (
+                                  <div>
+                                    <Label className="text-sm font-semibold">Prerequisites</Label>
+                                    <div className="mt-1 p-3 bg-muted rounded-md">
+                                      <pre className="text-sm whitespace-pre-wrap">
+                                        {Array.isArray(testCase.prerequisites) 
+                                          ? testCase.prerequisites.join('\n')
+                                          : testCase.prerequisites}
+                                      </pre>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {testCase.testSteps && (
+                                  <div>
+                                    <Label className="text-sm font-semibold">Test Steps</Label>
+                                    <div className="mt-1 p-3 bg-muted rounded-md">
+                                      {testCase.testStepsStructured && testCase.testStepsStructured.length > 0 ? (
+                                        <div className="space-y-3">
+                                          {testCase.testStepsStructured.map((step, index) => (
+                                            <div key={index} className="border rounded-md p-3 bg-background">
+                                              <div className="mb-2">
+                                                <Badge variant="secondary" className="text-xs">
+                                                  Step {step.stepNumber}
+                                                </Badge>
+                                              </div>
+                                              <div className="space-y-2">
+                                                <div>
+                                                  <span className="text-xs font-medium">Action:</span>
+                                                  <p className="text-sm">{step.action}</p>
+                                                </div>
+                                                <div>
+                                                  <span className="text-xs font-medium">Expected Result:</span>
+                                                  <p className="text-sm text-green-700">{step.expectedResult}</p>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <pre className="text-sm whitespace-pre-wrap">
+                                          {Array.isArray(testCase.testSteps) 
+                                            ? testCase.testSteps.join('\n')
+                                            : testCase.testSteps}
+                                        </pre>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div>
+                                  <Label className="text-sm font-semibold">Expected Result</Label>
+                                  <div className="mt-1 p-3 bg-green-50 border-l-4 border-green-400 rounded-md">
+                                    <p className="text-sm">{testCase.expectedResult}</p>
+                                  </div>
+                                </div>
+
+                                {testCase.testPassword && (
+                                  <div>
+                                    <Label className="text-sm font-semibold">Test Password</Label>
+                                    <div className="font-mono bg-muted px-3 py-2 rounded-md mt-1">
+                                      {testCase.testPassword}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {testCase.requiredPermissions && (
+                                  <div>
+                                    <Label className="text-sm font-semibold">Required Permissions</Label>
+                                    <div className="mt-1 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-md">
+                                      <pre className="text-sm whitespace-pre-wrap">{testCase.requiredPermissions}</pre>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                title="Edit"
+                                className="h-8 w-8"
+                                onClick={() => setEditingTestCase(testCase)}
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Edit Test Case</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="title">Title</Label>
+                                  <Input id="title" defaultValue={testCase.title} />
+                                </div>
+                                <div>
+                                  <Label htmlFor="objective">Objective</Label>
+                                  <Textarea id="objective" defaultValue={testCase.objective} />
+                                </div>
+                                <div>
+                                  <Label>Prerequisites</Label>
+                                  <Textarea 
+                                    defaultValue={Array.isArray(testCase.prerequisites) 
+                                      ? testCase.prerequisites.join('\n') 
+                                      : testCase.prerequisites || ''} 
+                                    placeholder="Enter each prerequisite on a new line"
+                                  />
+                                </div>
+                                <div>
+                                  <Label>Test Steps</Label>
+                                  <Textarea 
+                                    defaultValue={Array.isArray(testCase.testSteps) 
+                                      ? testCase.testSteps.join('\n') 
+                                      : testCase.testSteps || ''} 
+                                    placeholder="Enter each step on a new line"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="expectedResult">Expected Result</Label>
+                                  <Textarea id="expectedResult" defaultValue={testCase.expectedResult} />
+                                </div>
+                                <div>
+                                  <Label htmlFor="testPassword">Test Password</Label>
+                                  <Input 
+                                    id="testPassword" 
+                                    type="text" 
+                                    defaultValue={testCase.testPassword || ''} 
+                                    placeholder="Enter test password for execution"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="requiredPermissions">Required Permissions</Label>
+                                  <Textarea 
+                                    id="requiredPermissions" 
+                                    defaultValue={testCase.requiredPermissions || ''} 
+                                    placeholder="Enter required permissions for test execution (e.g., admin, read-write, user-management)"
+                                    rows={3}
+                                  />
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => updateStatusMutation.mutate({ id: testCase.id, status: "approved" })}
+                            disabled={testCase.status === "approved" || updateStatusMutation.isPending}
+                            title="Approve"
+                            className="h-8 w-8 text-green-600 hover:text-green-700"
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => updateStatusMutation.mutate({ id: testCase.id, status: "rejected" })}
+                            disabled={testCase.status === "rejected" || updateStatusMutation.isPending}
+                            title="Reject"
+                            className="h-8 w-8 text-red-600 hover:text-red-700"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                title="Delete"
+                                className="h-8 w-8 text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Test Case</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this test case? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteTestCase(testCase.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
-                      </div>
-                    )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-                    <div>
-                      <span className="text-sm font-medium text-gray-900">Expected Result:</span>
-                      <p className="text-sm text-gray-700 mt-1">{testCase.expectedResult}</p>
-                    </div>
-
-                    {testCase.testPassword && (
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">Test Password:</span>
-                        <p className="text-sm text-gray-700 mt-1 font-mono bg-gray-100 px-2 py-1 rounded">
-                          {testCase.testPassword}
-                        </p>
-                      </div>
-                    )}
-
-                    {testCase.requiredPermissions && (
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">Required Permissions:</span>
-                        <p className="text-sm text-gray-700 mt-1 whitespace-pre-line bg-blue-50 px-3 py-2 rounded border-l-4 border-blue-400">
-                          {testCase.requiredPermissions}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, typedTestCases.length)} of {typedTestCases.length} test cases
               </div>
-            ))
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(page)}
+                      className="h-8 w-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Approval Actions */}
+        {/* Bulk Actions */}
         {typedTestCases.length > 0 && (
-          <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-between pt-4 border-t">
             <div className="flex items-center space-x-4">
               <Button variant="outline" onClick={handleSelectAll}>
                 <Check className="h-4 w-4 mr-2" />
                 {selectedTestCases.length === typedTestCases.length ? "Deselect All" : "Select All"}
               </Button>
               {selectedTestCases.length > 0 && (
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   {selectedTestCases.length} of {typedTestCases.length} selected
                 </span>
               )}
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="border-red-300 text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete All
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete All Test Cases</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete all {typedTestCases.length} test cases? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAllTestCases}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Delete All
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
               <Button
                 variant="outline"
                 onClick={() => {
@@ -541,6 +737,7 @@ export function TestCasesSection() {
                 <X className="h-4 w-4 mr-2" />
                 Reject Selected
               </Button>
+
               <Button
                 onClick={handleApproveSelected}
                 disabled={selectedTestCases.length === 0 || addToAzureMutation.isPending}
