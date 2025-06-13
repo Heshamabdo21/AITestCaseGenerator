@@ -212,92 +212,114 @@ export function UnifiedAiConfiguration() {
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* AI Configuration Section */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h3 className="text-lg font-medium flex items-center space-x-2">
               <Settings className="h-4 w-4 text-blue-600" />
-              <span>Test Generation Settings</span>
+              <span>Comprehensive Test Coverage Configuration</span>
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includePositiveTests"
-                  checked={form.watch("includePositiveTests")}
-                  onCheckedChange={(checked) => form.setValue("includePositiveTests", !!checked)}
-                />
-                <Label htmlFor="includePositiveTests">Include Positive Test Cases</Label>
+            {/* Core Functional Test Types */}
+            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+              <h4 className="font-medium text-sm text-slate-700 dark:text-slate-300 mb-3">Core Functional Testing</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="includePositiveTests"
+                    checked={form.watch("includePositiveTests")}
+                    onCheckedChange={(checked) => form.setValue("includePositiveTests", !!checked)}
+                  />
+                  <Label htmlFor="includePositiveTests" className="text-sm">Positive Test Cases</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="includeNegativeTests"
+                    checked={form.watch("includeNegativeTests")}
+                    onCheckedChange={(checked) => form.setValue("includeNegativeTests", !!checked)}
+                  />
+                  <Label htmlFor="includeNegativeTests" className="text-sm">Negative Test Cases</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="includeEdgeCases"
+                    checked={form.watch("includeEdgeCases")}
+                    onCheckedChange={(checked) => form.setValue("includeEdgeCases", !!checked)}
+                  />
+                  <Label htmlFor="includeEdgeCases" className="text-sm">Edge Cases</Label>
+                </div>
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includeNegativeTests"
-                  checked={form.watch("includeNegativeTests")}
-                  onCheckedChange={(checked) => form.setValue("includeNegativeTests", !!checked)}
-                />
-                <Label htmlFor="includeNegativeTests">Include Negative Test Cases</Label>
+            </div>
+
+            {/* Security & Performance Test Types */}
+            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-sm text-red-700 dark:text-red-300 mb-3">Security & Performance Testing</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="includeSecurityCases"
+                    checked={form.watch("includeSecurityCases")}
+                    onCheckedChange={(checked) => form.setValue("includeSecurityCases", !!checked)}
+                  />
+                  <Label htmlFor="includeSecurityCases" className="text-sm">Security Test Cases</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="includePerformanceTests"
+                    checked={form.watch("includePerformanceTests")}
+                    onCheckedChange={(checked) => form.setValue("includePerformanceTests", !!checked)}
+                  />
+                  <Label htmlFor="includePerformanceTests" className="text-sm">Performance Test Cases</Label>
+                </div>
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includeEdgeCases"
-                  checked={form.watch("includeEdgeCases")}
-                  onCheckedChange={(checked) => form.setValue("includeEdgeCases", !!checked)}
-                />
-                <Label htmlFor="includeEdgeCases">Include Edge Cases</Label>
+            </div>
+
+            {/* User Experience Test Types */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-sm text-blue-700 dark:text-blue-300 mb-3">User Experience Testing</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="includeUiTests"
+                    checked={form.watch("includeUiTests")}
+                    onCheckedChange={(checked) => form.setValue("includeUiTests", !!checked)}
+                  />
+                  <Label htmlFor="includeUiTests" className="text-sm">UI Test Cases</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="includeUsabilityTests"
+                    checked={form.watch("includeUsabilityTests")}
+                    onCheckedChange={(checked) => form.setValue("includeUsabilityTests", !!checked)}
+                  />
+                  <Label htmlFor="includeUsabilityTests" className="text-sm">Usability Test Cases</Label>
+                </div>
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includeSecurityCases"
-                  checked={form.watch("includeSecurityCases")}
-                  onCheckedChange={(checked) => form.setValue("includeSecurityCases", !!checked)}
-                />
-                <Label htmlFor="includeSecurityCases">Include Security Test Cases</Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includePerformanceTests"
-                  checked={form.watch("includePerformanceTests")}
-                  onCheckedChange={(checked) => form.setValue("includePerformanceTests", !!checked)}
-                />
-                <Label htmlFor="includePerformanceTests">Include Performance Test Cases</Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includeUiTests"
-                  checked={form.watch("includeUiTests")}
-                  onCheckedChange={(checked) => form.setValue("includeUiTests", !!checked)}
-                />
-                <Label htmlFor="includeUiTests">Include UI Test Cases</Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includeUsabilityTests"
-                  checked={form.watch("includeUsabilityTests")}
-                  onCheckedChange={(checked) => form.setValue("includeUsabilityTests", !!checked)}
-                />
-                <Label htmlFor="includeUsabilityTests">Include Usability Test Cases</Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includeApiTests"
-                  checked={form.watch("includeApiTests")}
-                  onCheckedChange={(checked) => form.setValue("includeApiTests", !!checked)}
-                />
-                <Label htmlFor="includeApiTests">Include API Test Cases</Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includeCompatibilityTests"
-                  checked={form.watch("includeCompatibilityTests")}
-                  onCheckedChange={(checked) => form.setValue("includeCompatibilityTests", !!checked)}
-                />
-                <Label htmlFor="includeCompatibilityTests">Include Compatibility Test Cases</Label>
+            </div>
+
+            {/* Technical & Integration Test Types */}
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-sm text-green-700 dark:text-green-300 mb-3">Technical & Integration Testing</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="includeApiTests"
+                    checked={form.watch("includeApiTests")}
+                    onCheckedChange={(checked) => form.setValue("includeApiTests", !!checked)}
+                  />
+                  <Label htmlFor="includeApiTests" className="text-sm">API Test Cases</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="includeCompatibilityTests"
+                    checked={form.watch("includeCompatibilityTests")}
+                    onCheckedChange={(checked) => form.setValue("includeCompatibilityTests", !!checked)}
+                  />
+                  <Label htmlFor="includeCompatibilityTests" className="text-sm">Compatibility Test Cases</Label>
+                </div>
               </div>
             </div>
 
