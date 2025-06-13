@@ -26,6 +26,10 @@ export function TestCasesSection() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   
+  // Per-user-story pagination state
+  const [userStoryPages, setUserStoryPages] = useState<Record<string, number>>({});
+  const [userStoryItemsPerPage] = useState(5);
+  
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -393,6 +397,26 @@ export function TestCasesSection() {
     setCurrentPage(page);
   };
 
+  // Helper functions for per-user-story pagination
+  const getUserStoryPage = (userStoryId: string) => {
+    return userStoryPages[userStoryId] || 1;
+  };
+
+  const setUserStoryPage = (userStoryId: string, page: number) => {
+    setUserStoryPages(prev => ({ ...prev, [userStoryId]: page }));
+  };
+
+  const getPaginatedTestCasesForUserStory = (testCases: TestCase[], userStoryId: string) => {
+    const currentPage = getUserStoryPage(userStoryId);
+    const startIndex = (currentPage - 1) * userStoryItemsPerPage;
+    const endIndex = startIndex + userStoryItemsPerPage;
+    return testCases.slice(startIndex, endIndex);
+  };
+
+  const getTotalPagesForUserStory = (testCasesCount: number) => {
+    return Math.ceil(testCasesCount / userStoryItemsPerPage);
+  };
+
   const handleDeleteTestCase = (testCaseId: number) => {
     deleteTestCaseMutation.mutate(testCaseId);
   };
@@ -662,55 +686,67 @@ export function TestCasesSection() {
           <>
             {/* Test Cases Grouped by User Story */}
             <div className="space-y-6">
-              {Object.entries(groupedTestCases).map(([userStoryId, groupTestCases]) => (
-            <div key={userStoryId} className="border rounded-lg">
-              <div className="px-4 py-3 bg-muted/50 border-b">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm">{getUserStoryDisplay(userStoryId)}</h3>
-                  <Badge variant="outline" className="text-xs">
-                    {groupTestCases.length} test{groupTestCases.length !== 1 ? 's' : ''}
-                  </Badge>
-                </div>
-              </div>
-              <div className="rounded-md border-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={selectedTestCases.filter(id => groupTestCases.map(tc => tc.id).includes(id)).length === groupTestCases.length && groupTestCases.length > 0}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedTestCases(prev => [...prev, ...groupTestCases.map(tc => tc.id).filter(id => !prev.includes(id))]);
-                            } else {
-                              setSelectedTestCases(prev => prev.filter(id => !groupTestCases.map(tc => tc.id).includes(id)));
-                            }
-                          }}
-                        />
-                      </TableHead>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Priority</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      Array.from({ length: 3 }).map((_, i) => (
-                        <TableRow key={i} className="animate-fade-in-up">
-                          <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                          <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      groupTestCases.map((testCase) => (
+              {Object.entries(groupedTestCases).map(([userStoryId, groupTestCases]) => {
+                const paginatedGroupTestCases = getPaginatedTestCasesForUserStory(groupTestCases, userStoryId);
+                const totalPages = getTotalPagesForUserStory(groupTestCases.length);
+                const currentPage = getUserStoryPage(userStoryId);
+                
+                return (
+                  <div key={userStoryId} className="border rounded-lg">
+                    <div className="px-4 py-3 bg-muted/50 border-b">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-sm">{getUserStoryDisplay(userStoryId)}</h3>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="outline" className="text-xs">
+                            {groupTestCases.length} test{groupTestCases.length !== 1 ? 's' : ''}
+                          </Badge>
+                          {totalPages > 1 && (
+                            <div className="text-xs text-muted-foreground">
+                              Page {currentPage} of {totalPages}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-md border-0">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">
+                              <Checkbox
+                                checked={selectedTestCases.filter(id => paginatedGroupTestCases.map(tc => tc.id).includes(id)).length === paginatedGroupTestCases.length && paginatedGroupTestCases.length > 0}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedTestCases(prev => [...prev, ...paginatedGroupTestCases.map(tc => tc.id).filter(id => !prev.includes(id))]);
+                                  } else {
+                                    setSelectedTestCases(prev => prev.filter(id => !paginatedGroupTestCases.map(tc => tc.id).includes(id)));
+                                  }
+                                }}
+                              />
+                            </TableHead>
+                            <TableHead>ID</TableHead>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Priority</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {isLoading ? (
+                            Array.from({ length: 3 }).map((_, i) => (
+                              <TableRow key={i} className="animate-fade-in-up">
+                                <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            paginatedGroupTestCases.map((testCase) => (
                         <TableRow 
                           key={testCase.id}
                           className={
@@ -938,14 +974,57 @@ export function TestCasesSection() {
                             </div>
                           </TableCell>
                         </TableRow>
-                      ))
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    
+                    {/* Pagination Controls for this User Story */}
+                    {totalPages > 1 && (
+                      <div className="px-4 py-3 bg-muted/25 border-t flex items-center justify-between">
+                        <div className="text-xs text-muted-foreground">
+                          Showing {((currentPage - 1) * userStoryItemsPerPage) + 1} to {Math.min(currentPage * userStoryItemsPerPage, groupTestCases.length)} of {groupTestCases.length} test cases
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setUserStoryPage(userStoryId, currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="h-8 w-8 p-0"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <div className="flex items-center space-x-1">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                              <Button
+                                key={pageNum}
+                                variant={pageNum === currentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setUserStoryPage(userStoryId, pageNum)}
+                                className="h-8 w-8 p-0"
+                              >
+                                {pageNum}
+                              </Button>
+                            ))}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setUserStoryPage(userStoryId, currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="h-8 w-8 p-0"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     )}
-                  </TableBody>
-                </Table>
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
 
             {/* Bulk Actions */}
             {filteredTestCases.length > 0 && (
