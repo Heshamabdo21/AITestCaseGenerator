@@ -150,8 +150,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
   });
 
-  // CSV Import endpoint
+  // Helper function to generate import recommendations
+  function generateImportRecommendations(analysis: any): string[] {
+    const recommendations: string[] = [];
+    
+    if (analysis.totalRows > 100) {
+      recommendations.push("Large file detected. Consider breaking into smaller batches for better performance.");
+    }
+    
+    if (analysis.hasTestSteps < analysis.totalRows * 0.5) {
+      recommendations.push("Many rows are missing test step actions. Review data completeness before importing.");
+    }
+    
+    if (analysis.hasExpectedResults < analysis.totalRows * 0.3) {
+      recommendations.push("Consider adding expected results to improve test case quality.");
+    }
+    
+    if (analysis.workItemTypes.length > 1) {
+      recommendations.push(`Multiple work item types found: ${analysis.workItemTypes.join(', ')}. Only 'Test Case' types will be imported.`);
+    }
+    
+    if (analysis.uniqueTitles < analysis.totalRows * 0.8) {
+      recommendations.push("Many duplicate titles detected. Test steps will be grouped by title during import.");
+    }
+    
+    if (recommendations.length === 0) {
+      recommendations.push("CSV file looks good for import. All validation checks passed.");
+    }
+    
+    return recommendations;
+  }
+
+  // Enhanced CSV Import endpoint with validation and preview
   app.post("/api/test-cases/import-csv", upload.single('csvFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No CSV file uploaded" });
+      }
+
+      const { enhanceTestCases = true, userStoryId } = req.body;
+      const csvContent = req.file.buffer.toString('utf-8');
+      
+      // Validate and parse CSV
+      const csvTestCases = parseCsvTestCases(csvContent);
+      
+      if (csvTestCases.length === 0) {
+        return res.status(400).json({ message: "No valid test cases found in CSV" });
+      }
+
+      // Get or create user story
+      let targetUserStory;
+      if (userStoryId) {
+        targetUserStory = await storage.getUserStory(parseInt(userStoryId));
+        if (!targetUserStory) {
+          return res.status(400).json({ message: "Invalid user story ID provided" });
+        }
+      } else {
+        // Create a new user story for imported test cases
+        targetUserStory = await storage.createUserStory({
+          azureId: `imported-${Date.now()}`,
+          title: `CSV Import - ${req.file.originalname}`,
+          description: `Test cases imported from CSV file: ${req.file.originalname}`,
+          acceptanceCriteria: "All imported test cases should be properly validated and executable",
+          state: "Active",
+          assignedTo: "QA Team",
+          priority: "Medium",
+          createdDate: new Date().toISOString(),
+          tags: ["imported", "csv", "automated-import"],
+          configId: 1
+        });
+      }
+
+      const convertedTestCases = convertCsvToTestCases(csvTestCases, targetUserStory.id);
+      const importedTestCases = [];
+      const importStats = {
+        total: 0,
+        enhanced: 0,
+        categories: {} as Record<string, number>
+      };
+
+      // Import base test cases
+      for (const testCase of convertedTestCases) {
+        const created = await storage.createTestCase(testCase);
+        importedTestCases.push(created);
+        importStats.total++;
+        
+        // Track categories
+        const category = testCase.title.split(' ')[0];
+        importStats.categories[category] = (importStats.categories[category] || 0) + 1;
+        
+        // Create enhanced versions if requested
+        if (enhanceTestCases === 'true' || enhanceTestCases === true) {
+          const enhancedCases = enhanceImportedTestCase(testCase);
+          for (const enhanced of enhancedCases) {
+            const enhancedCreated = await storage.createTestCase(enhanced);
+            importedTestCases.push(enhancedCreated);
+            importStats.enhanced++;
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Successfully imported ${importStats.total} test cases${importStats.enhanced > 0 ? ` with ${importStats.enhanced} enhanced variations` : ''}`,
+        stats: importStats,
+        testCases: importedTestCases,
+        userStory: targetUserStory,
+        fileName: req.file.originalname
+      });
+    } catch (error: any) {
+      console.error('CSV Import Error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: `Import failed: ${error.message}`,
+        details: error.stack
+      });
+    }
+  });
+
+  // CSV Preview endpoint for validation before import
+  app.post("/api/test-cases/preview-csv", upload.single('csvFile'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No CSV file uploaded" });
@@ -160,47 +278,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const csvContent = req.file.buffer.toString('utf-8');
       const csvTestCases = parseCsvTestCases(csvContent);
       
-      if (csvTestCases.length === 0) {
-        return res.status(400).json({ message: "No valid test cases found in CSV" });
-      }
-
-      // Create a mock user story for imported test cases
-      const mockUserStory = await storage.createUserStory({
-        azureId: `imported-${Date.now()}`,
-        title: "Imported Test Cases from CSV",
-        description: "Test cases imported from CSV file",
-        acceptanceCriteria: "Test cases should be properly imported and enhanced",
-        state: "Active",
-        assignedTo: "QA Team",
-        priority: "Medium",
-        createdDate: new Date().toISOString(),
-        tags: ["imported", "csv"],
-        configId: 1
-      });
-
-      const convertedTestCases = convertCsvToTestCases(csvTestCases, mockUserStory.id);
-      const importedTestCases = [];
-
-      for (const testCase of convertedTestCases) {
-        const created = await storage.createTestCase(testCase);
-        importedTestCases.push(created);
-        
-        // Create enhanced versions
-        const enhancedCases = enhanceImportedTestCase(testCase);
-        for (const enhanced of enhancedCases) {
-          const enhancedCreated = await storage.createTestCase(enhanced);
-          importedTestCases.push(enhancedCreated);
+      // Generate preview without saving to storage
+      const preview = csvTestCases.slice(0, 5).map(csvCase => ({
+        originalData: csvCase,
+        processedPreview: {
+          title: csvCase.title,
+          workItemType: csvCase.workItemType,
+          stepAction: csvCase.stepAction?.substring(0, 100) + (csvCase.stepAction?.length > 100 ? '...' : ''),
+          stepExpected: csvCase.stepExpected?.substring(0, 100) + (csvCase.stepExpected?.length > 100 ? '...' : '')
         }
-      }
+      }));
+
+      const analysis = {
+        totalRows: csvTestCases.length,
+        uniqueTitles: new Set(csvTestCases.map(tc => tc.title)).size,
+        workItemTypes: Array.from(new Set(csvTestCases.map(tc => tc.workItemType))),
+        hasTestSteps: csvTestCases.filter(tc => tc.stepAction).length,
+        hasExpectedResults: csvTestCases.filter(tc => tc.stepExpected).length
+      };
 
       res.json({
-        message: `Successfully imported ${importedTestCases.length} test cases`,
-        testCases: importedTestCases,
-        userStory: mockUserStory
+        success: true,
+        preview,
+        analysis,
+        fileName: req.file.originalname,
+        recommendations: generateImportRecommendations(analysis)
       });
     } catch (error: any) {
-      res.status(500).json({ message: `Import failed: ${error.message}` });
+      res.status(400).json({ 
+        success: false,
+        message: `Preview failed: ${error.message}` 
+      });
     }
+  });
+
+  // Generate CSV template for test case import
+  app.get("/api/test-cases/csv-template", (req, res) => {
+    const template = `ID,WorkItemType,Title,TestStep,StepAction,StepExpected,AreaPath,AssignedTo,State
+1,Test Case,Login Functionality Test,1,Navigate to login page,Login page displays correctly,MyProject\\UI,tester@company.com,Active
+1,Test Case,Login Functionality Test,2,Enter valid username and password,Credentials are accepted,MyProject\\UI,tester@company.com,Active
+1,Test Case,Login Functionality Test,3,Click login button,User is successfully logged in and redirected,MyProject\\UI,tester@company.com,Active
+2,Test Case,Negative Login Test,1,Navigate to login page,Login page displays correctly,MyProject\\Security,tester@company.com,Design
+2,Test Case,Negative Login Test,2,Enter invalid credentials,Error message is displayed,MyProject\\Security,tester@company.com,Design
+3,Test Case,Performance Load Test,1,Precondition: Set up load testing environment,Environment is ready for testing,MyProject\\Performance,perf-tester@company.com,Active
+3,Test Case,Performance Load Test,2,Execute load test with 100 concurrent users,System maintains response time under 2 seconds,MyProject\\Performance,perf-tester@company.com,Active`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="test_cases_template.csv"');
+    res.send(template);
   });
 
   // Azure DevOps Configuration
