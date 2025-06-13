@@ -17,9 +17,13 @@ await build({
     'vite',
     '@vitejs/plugin-react',
     '@replit/vite-plugin-cartographer',
-    '@replit/vite-plugin-runtime-error-modal'
+    '@replit/vite-plugin-runtime-error-modal',
+    './vite.js'
   ],
-  packages: 'external'
+  packages: 'external',
+  define: {
+    'process.env.NODE_ENV': '"production"'
+  }
 });
 
 // Build production static server separately
