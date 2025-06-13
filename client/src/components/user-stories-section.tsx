@@ -357,14 +357,14 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
 
         {/* Bulk Actions */}
         {filteredStories.length > 0 && (
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
             <div className="flex items-center space-x-4">
               <Button variant="outline" onClick={handleSelectAll}>
                 <i className="fas fa-check-square mr-2"></i>
                 {selectedStories.length === filteredStories.length ? "Deselect All" : "Select All"}
               </Button>
               {selectedStories.length > 0 && (
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   {selectedStories.length} of {filteredStories.length} selected
                 </span>
               )}

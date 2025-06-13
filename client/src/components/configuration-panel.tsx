@@ -412,8 +412,8 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
               </div>
             </div>
 
-            <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <h4 className="font-medium text-gray-900">Test Suite Management</h4>
+            <div className="space-y-4 p-4 border border-border rounded-lg bg-muted">
+              <h4 className="font-medium text-foreground">Test Suite Management</h4>
               
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -439,7 +439,7 @@ export function ConfigurationPanel({ onConfigurationSaved }: ConfigurationPanelP
                       <SelectItem value="single">Single Suite for All</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {form.watch("testSuiteStrategy") === "user_story" && "Creates separate test suites for each user story"}
                     {form.watch("testSuiteStrategy") === "test_type" && "Creates test suites based on test case types (Functional, Security, etc.)"}
                     {form.watch("testSuiteStrategy") === "single" && "Places all test cases in the root suite"}
