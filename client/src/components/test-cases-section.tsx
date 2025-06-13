@@ -141,11 +141,10 @@ export function TestCasesSection() {
   // Mutation to delete all test cases
   const deleteAllTestCasesMutation = useMutation({
     mutationFn: () => api.deleteAllTestCases(),
-    onSuccess: () => {
-      setSelectedTestCases([]);
+    onSuccess: (deletedCount) => {
       toast({
         title: "All Test Cases Deleted",
-        description: "All test cases have been deleted successfully",
+        description: `Successfully deleted ${deletedCount} test cases`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
     },
@@ -158,22 +157,21 @@ export function TestCasesSection() {
     },
   });
 
-  // Mutation to add test cases to Azure DevOps
-  const addToAzureMutation = useMutation({
-    mutationFn: (testCaseIds: number[]) => api.addTestCasesToAzure(testCaseIds),
+  // Mutation to update test case
+  const updateTestCaseMutation = useMutation({
+    mutationFn: ({ id, testCase }: { id: number; testCase: Partial<TestCase> }) => 
+      api.updateTestCase(id, testCase),
     onSuccess: () => {
-      const count = selectedTestCases.length;
-      setSelectedTestCases([]);
-      celebrateSuccess('azure', count);
       toast({
-        title: "Test Cases Added to Azure DevOps",
-        description: "Selected test cases have been added to Azure DevOps successfully",
+        title: "Test Case Updated",
+        description: "Test case updated successfully",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
+      setEditingTestCase(null);
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Add Test Cases",
+        title: "Failed to Update Test Case",
         description: error.message,
         variant: "destructive",
       });
@@ -181,25 +179,11 @@ export function TestCasesSection() {
   });
 
   // Mutation to export test cases
-  const exportToExcelMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/test-cases/export", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Export failed: ${response.statusText}`);
-      }
-      
-      return response.blob();
-    },
-    onSuccess: (blob: Blob) => {
+  const exportTestCasesMutation = useMutation({
+    mutationFn: () => api.exportTestCases(),
+    onSuccess: (blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.style.display = 'none';
       a.href = url;
       a.download = 'test-cases.xlsx';
       document.body.appendChild(a);
@@ -378,7 +362,6 @@ export function TestCasesSection() {
   const getUserStoryDisplay = (userStoryId: number | string) => {
     if (userStoryId === 'unassigned') return 'Unassigned Test Cases';
     const story = userStories.find((s: any) => s.id === userStoryId);
-    console.log('getUserStoryDisplay - userStoryId:', userStoryId, 'found story:', story, 'all userStories:', userStories);
     if (story) {
       // Use Azure DevOps ID and title from the actual Azure DevOps data
       return `${story.azureId}: ${story.title}`;
@@ -424,68 +407,66 @@ export function TestCasesSection() {
   const handleDeleteAllTestCases = () => {
     deleteAllTestCasesMutation.mutate();
   };
-  
-  if (typedTestCases.length === 0 && !isLoading) {
+
+  if (isLoading) {
     return (
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <FlaskRound className="h-5 w-5 text-primary" />
-            <span>Generated Test Cases</span>
+            <FlaskRound className="h-5 w-5" />
+            <span>Test Cases</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12">
-            <FlaskRound className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No Test Cases Generated</h3>
-            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-              Select user stories and generate test cases to begin the testing workflow.
-            </p>
-          </div>
+          <TestCaseLoading />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <FlaskRound className="h-5 w-5 text-blue-600" />
-            <CardTitle>Generated Test Cases</CardTitle>
-            <Badge className="bg-green-100 text-green-800">
-              {filteredTestCases.length} of {typedTestCases.length} test cases
+          <CardTitle className="flex items-center space-x-2">
+            <FlaskRound className="h-5 w-5" />
+            <span>Test Cases</span>
+            <Badge variant="outline" className="ml-2">
+              {typedTestCases.length}
             </Badge>
-          </div>
-          <div className="flex items-center space-x-3">
-            <Button 
-              variant="outline" 
+          </CardTitle>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
               size="sm"
-              onClick={() => exportToExcelMutation.mutate()}
-              disabled={typedTestCases.length === 0 || exportToExcelMutation.isPending}
+              onClick={() => exportTestCasesMutation.mutate()}
+              disabled={exportTestCasesMutation.isPending || typedTestCases.length === 0}
+              className="border-blue-300 text-blue-700 hover:bg-blue-50 transition-all duration-200 hover:scale-105"
             >
-              {exportToExcelMutation.isPending ? (
+              {exportTestCasesMutation.isPending ? (
                 <>
-                  <LoadingSpinner size="sm" className="mr-2" />
-                  Exporting...
+                  <LoadingSpinner size="sm" className="mr-2 border-blue-600" />
+                  Exporting
+                  <BouncingDots className="ml-2" />
                 </>
               ) : (
                 <>
                   <Download className="h-4 w-4 mr-2" />
-                  Export
+                  Export to Excel
                 </>
               )}
             </Button>
             <Button
+              variant="outline"
+              size="sm"
               onClick={handleApproveSelected}
-              disabled={selectedTestCases.length === 0 || addToAzureMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
+              disabled={selectedTestCases.length === 0 || updateStatusMutation.isPending}
+              className="border-green-300 text-green-700 hover:bg-green-50 transition-all duration-200 hover:scale-105"
             >
-              {addToAzureMutation.isPending ? (
+              {updateStatusMutation.isPending ? (
                 <>
-                  <LoadingSpinner size="sm" className="mr-2 border-white" />
-                  Processing
+                  <LoadingSpinner size="sm" className="mr-2 border-green-600" />
+                  Approving
                   <BouncingDots className="ml-2" />
                 </>
               ) : (
@@ -499,99 +480,83 @@ export function TestCasesSection() {
         </div>
       </CardHeader>
       <CardContent>
-        {/* Filter Toolbar */}
-        <div className="mb-6 p-4 bg-muted/30 rounded-lg border">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-medium text-muted-foreground">Quick Filters</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
-            {/* Search */}
-            <div className="lg:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search test cases..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+        {/* Filters */}
+        <div className="space-y-4 mb-6">
+          {/* Search and Filter Controls */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search test cases..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                {getUniqueStatuses().map(status => (
-                  <SelectItem key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Priority Filter */}
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priority</SelectItem>
-                {getUniquePriorities().map(priority => (
-                  <SelectItem key={priority} value={priority}>
-                    {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Type Filter */}
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="positive">Positive</SelectItem>
-                <SelectItem value="negative">Negative</SelectItem>
-                <SelectItem value="edge">Edge Case</SelectItem>
-                <SelectItem value="security">Security</SelectItem>
-                <SelectItem value="performance">Performance</SelectItem>
-                <SelectItem value="standard">Standard</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* User Story Filter */}
-            <Select value={userStoryFilter} onValueChange={setUserStoryFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="User Story" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Stories</SelectItem>
-                {getUniqueUserStories().map(userStoryId => (
-                  <SelectItem key={userStoryId} value={userStoryId}>
-                    {userStoryId === 'unassigned' 
-                      ? 'Unassigned' 
-                      : getUserStoryDisplay(userStoryId)
-                    }
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  {getUniqueStatuses().map(status => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priority</SelectItem>
+                  {getUniquePriorities().map(priority => (
+                    <SelectItem key={priority} value={priority}>
+                      {priority}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="positive">Positive</SelectItem>
+                  <SelectItem value="negative">Negative</SelectItem>
+                  <SelectItem value="edge">Edge Case</SelectItem>
+                  <SelectItem value="security">Security</SelectItem>
+                  <SelectItem value="performance">Performance</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={userStoryFilter} onValueChange={setUserStoryFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="User Story" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Stories</SelectItem>
+                  {getUniqueUserStories().map(userStoryId => (
+                    <SelectItem key={userStoryId} value={userStoryId}>
+                      {userStoryId === 'unassigned' ? 'Unassigned' : `Story ${userStoryId}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Active Filters Display */}
           {(searchTerm || statusFilter !== "all" || priorityFilter !== "all" || typeFilter !== "all" || userStoryFilter !== "all") && (
-            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
-              <span className="text-xs text-muted-foreground">Active filters:</span>
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-sm font-medium text-muted-foreground">Active filters:</span>
               {searchTerm && (
                 <Badge variant="secondary" className="text-xs">
-                  Search: "{searchTerm}"
+                  Search: {searchTerm}
                   <button
                     onClick={() => setSearchTerm("")}
                     className="ml-1 hover:bg-muted rounded-full p-0.5"
@@ -669,414 +634,408 @@ export function TestCasesSection() {
           </div>
         </div>
 
-        {/* Empty State for Filtered Results */}
-        {filteredTestCases.length === 0 && typedTestCases.length > 0 ? (
+        {/* Empty State for No Test Cases */}
+        {typedTestCases.length === 0 ? (
           <div className="text-center py-12">
-            <Filter className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No Test Cases Match Your Filters</h3>
+            <FlaskRound className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No Test Cases Found</h3>
             <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-              Try adjusting your filters or clearing them to see more test cases.
+              Test cases will appear here once you import user stories and generate test cases from them.
             </p>
-            <Button onClick={resetFilters} variant="outline">
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Clear All Filters
-            </Button>
           </div>
         ) : (
           <>
-            {/* Test Cases Grouped by User Story */}
-            <div className="space-y-6">
-              {Object.entries(groupedTestCases).map(([userStoryId, groupTestCases]) => {
-                const paginatedGroupTestCases = getPaginatedTestCasesForUserStory(groupTestCases, userStoryId);
-                const totalPages = getTotalPagesForUserStory(groupTestCases.length);
-                const currentPage = getUserStoryPage(userStoryId);
-                
-                return (
-                  <div key={userStoryId} className="border rounded-lg">
-                    <div className="px-4 py-3 bg-muted/50 border-b">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-sm">{getUserStoryDisplay(userStoryId)}</h3>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline" className="text-xs">
-                            {groupTestCases.length} test{groupTestCases.length !== 1 ? 's' : ''}
-                          </Badge>
-                          {totalPages > 1 && (
-                            <div className="text-xs text-muted-foreground">
-                              Page {currentPage} of {totalPages}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-md border-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-12">
-                              <Checkbox
-                                checked={selectedTestCases.filter(id => paginatedGroupTestCases.map(tc => tc.id).includes(id)).length === paginatedGroupTestCases.length && paginatedGroupTestCases.length > 0}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedTestCases(prev => [...prev, ...paginatedGroupTestCases.map(tc => tc.id).filter(id => !prev.includes(id))]);
-                                  } else {
-                                    setSelectedTestCases(prev => prev.filter(id => !paginatedGroupTestCases.map(tc => tc.id).includes(id)));
-                                  }
-                                }}
-                              />
-                            </TableHead>
-                            <TableHead>ID</TableHead>
-                            <TableHead>Title</TableHead>
-                            <TableHead>Priority</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {isLoading ? (
-                            Array.from({ length: 3 }).map((_, i) => (
-                              <TableRow key={i} className="animate-fade-in-up">
-                                <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            paginatedGroupTestCases.map((testCase) => (
-                        <TableRow 
-                          key={testCase.id}
-                          className={
-                            testCase.status === "approved" ? "bg-green-50/50 dark:bg-green-950/20" : 
-                            testCase.status === "rejected" ? "bg-red-50/50 dark:bg-red-950/20" : ""
-                          }
-                        >
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedTestCases.includes(testCase.id)}
-                              onCheckedChange={() => handleTestCaseSelect(testCase.id)}
-                            />
-                          </TableCell>
-                          <TableCell className="font-mono">
-                            TC-{testCase.id.toString().padStart(3, '0')}
-                          </TableCell>
-                          <TableCell className="max-w-xs">
-                            <div className="truncate" title={testCase.title}>
-                              {testCase.title}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={getPriorityColor(testCase.priority)}>
-                              {testCase.priority}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
+            {/* Empty State for Filtered Results */}
+            {filteredTestCases.length === 0 && typedTestCases.length > 0 ? (
+              <div className="text-center py-12">
+                <Filter className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No Test Cases Match Your Filters</h3>
+                <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                  Try adjusting your filters or clearing them to see more test cases.
+                </p>
+                <Button onClick={resetFilters} variant="outline">
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Clear All Filters
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Test Cases Grouped by User Story */}
+                <div className="space-y-6">
+                  {Object.entries(groupedTestCases).map(([userStoryId, groupTestCases]) => {
+                    const paginatedGroupTestCases = getPaginatedTestCasesForUserStory(groupTestCases, userStoryId);
+                    const totalPages = getTotalPagesForUserStory(groupTestCases.length);
+                    const currentPage = getUserStoryPage(userStoryId);
+                    
+                    return (
+                      <div key={userStoryId} className="border rounded-lg">
+                        <div className="px-4 py-3 bg-muted/50 border-b">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-semibold text-sm">{getUserStoryDisplay(userStoryId)}</h3>
                             <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${
-                                testCase.status === "approved" ? "bg-green-500" :
-                                testCase.status === "rejected" ? "bg-red-500" :
-                                "bg-yellow-500"
-                              }`}></div>
-                              <Badge className={getStatusColor(testCase.status)}>
-                                {testCase.status}
+                              <Badge variant="outline" className="text-xs">
+                                {groupTestCases.length} test{groupTestCases.length !== 1 ? 's' : ''}
                               </Badge>
+                              {totalPages > 1 && (
+                                <div className="text-xs text-muted-foreground">
+                                  Page {currentPage} of {totalPages}
+                                </div>
+                              )}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs">
-                              {testCase.title.includes('Positive') ? 'Positive' : 
-                               testCase.title.includes('Negative') ? 'Negative' :
-                               testCase.title.includes('Edge') ? 'Edge Case' :
-                               testCase.title.includes('Security') ? 'Security' :
-                               testCase.title.includes('Performance') ? 'Performance' : 'Standard'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end space-x-1">
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    title="View Details"
-                                    className="h-8 w-8"
+                          </div>
+                        </div>
+                        <div className="rounded-md border-0">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-12">
+                                  <Checkbox
+                                    checked={selectedTestCases.filter(id => paginatedGroupTestCases.map(tc => tc.id).includes(id)).length === paginatedGroupTestCases.length && paginatedGroupTestCases.length > 0}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedTestCases(prev => [...prev, ...paginatedGroupTestCases.map(tc => tc.id).filter(id => !prev.includes(id))]);
+                                      } else {
+                                        setSelectedTestCases(prev => prev.filter(id => !paginatedGroupTestCases.map(tc => tc.id).includes(id)));
+                                      }
+                                    }}
+                                  />
+                                </TableHead>
+                                <TableHead>ID</TableHead>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Priority</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {isLoading ? (
+                                Array.from({ length: 3 }).map((_, i) => (
+                                  <TableRow key={i} className="animate-fade-in-up">
+                                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                                  </TableRow>
+                                ))
+                              ) : (
+                                paginatedGroupTestCases.map((testCase) => (
+                                  <TableRow 
+                                    key={testCase.id}
+                                    className={
+                                      testCase.status === "approved" ? "bg-green-50/50 dark:bg-green-950/20" : 
+                                      testCase.status === "rejected" ? "bg-red-50/50 dark:bg-red-950/20" : ""
+                                    }
                                   >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                                  <DialogHeader>
-                                    <DialogTitle>Test Case Details - TC-{testCase.id.toString().padStart(3, '0')}</DialogTitle>
-                                  </DialogHeader>
-                                  <div className="space-y-6">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                      <div>
-                                        <Label className="text-xs font-semibold text-muted-foreground">PRIORITY</Label>
-                                        <Badge className={getPriorityColor(testCase.priority)}>
-                                          {testCase.priority}
+                                    <TableCell>
+                                      <Checkbox
+                                        checked={selectedTestCases.includes(testCase.id)}
+                                        onCheckedChange={() => handleTestCaseSelect(testCase.id)}
+                                      />
+                                    </TableCell>
+                                    <TableCell className="font-mono">
+                                      TC-{testCase.id.toString().padStart(3, '0')}
+                                    </TableCell>
+                                    <TableCell className="max-w-xs">
+                                      <div className="truncate" title={testCase.title}>
+                                        {testCase.title}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge className={getPriorityColor(testCase.priority)}>
+                                        {testCase.priority}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex items-center space-x-2">
+                                        <div className={`w-2 h-2 rounded-full ${
+                                          testCase.status === "approved" ? "bg-green-500" :
+                                          testCase.status === "rejected" ? "bg-red-500" :
+                                          "bg-yellow-500"
+                                        }`}></div>
+                                        <Badge className={getStatusColor(testCase.status)}>
+                                          {testCase.status}
                                         </Badge>
                                       </div>
-                                      <div>
-                                        <Label className="text-xs font-semibold text-muted-foreground">STATUS</Label>
-                                        <div className="flex items-center space-x-2">
-                                          <div className={`w-2 h-2 rounded-full ${
-                                            testCase.status === "approved" ? "bg-green-500" :
-                                            testCase.status === "rejected" ? "bg-red-500" :
-                                            "bg-yellow-500"
-                                          }`}></div>
-                                          <Badge className={getStatusColor(testCase.status)}>
-                                            {testCase.status}
-                                          </Badge>
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <Label className="text-xs font-semibold text-muted-foreground">TYPE</Label>
-                                        <Badge variant="outline">
-                                          {testCase.title.includes('Positive') ? 'Positive' : 
-                                           testCase.title.includes('Negative') ? 'Negative' :
-                                           testCase.title.includes('Edge') ? 'Edge Case' :
-                                           testCase.title.includes('Security') ? 'Security' :
-                                           testCase.title.includes('Performance') ? 'Performance' : 'Standard'}
-                                        </Badge>
-                                      </div>
-                                    </div>
-                                    
-                                    <div>
-                                      <Label className="text-sm font-semibold">Title</Label>
-                                      <p className="mt-1 text-sm">{testCase.title}</p>
-                                    </div>
-
-                                    {testCase.prerequisites && (
-                                      <div>
-                                        <Label className="text-sm font-semibold">Prerequisites</Label>
-                                        <div className="mt-1 p-3 bg-muted rounded-md">
-                                          <pre className="text-sm whitespace-pre-wrap">
-                                            {Array.isArray(testCase.prerequisites) 
-                                              ? testCase.prerequisites.join('\n')
-                                              : testCase.prerequisites}
-                                          </pre>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {testCase.testSteps && (
-                                      <div>
-                                        <Label className="text-sm font-semibold">Test Steps</Label>
-                                        <div className="mt-1 p-3 bg-muted rounded-md">
-                                          {testCase.testStepsStructured && testCase.testStepsStructured.length > 0 ? (
-                                            <div className="space-y-3">
-                                              {testCase.testStepsStructured.map((step, index) => (
-                                                <div key={index} className="border rounded-md p-3 bg-background">
-                                                  <div className="mb-2">
-                                                    <Badge variant="secondary" className="text-xs">
-                                                      Step {step.stepNumber}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge variant="outline" className="text-xs">
+                                        {testCase.title.includes('Positive') ? 'Positive' : 
+                                         testCase.title.includes('Negative') ? 'Negative' :
+                                         testCase.title.includes('Edge') ? 'Edge Case' :
+                                         testCase.title.includes('Security') ? 'Security' :
+                                         testCase.title.includes('Performance') ? 'Performance' : 'Standard'}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <div className="flex items-center justify-end space-x-1">
+                                        <Dialog>
+                                          <DialogTrigger asChild>
+                                            <Button
+                                              size="icon"
+                                              variant="ghost"
+                                              title="View Details"
+                                              className="h-8 w-8"
+                                            >
+                                              <Eye className="h-4 w-4" />
+                                            </Button>
+                                          </DialogTrigger>
+                                          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                            <DialogHeader>
+                                              <DialogTitle>Test Case Details - TC-{testCase.id.toString().padStart(3, '0')}</DialogTitle>
+                                            </DialogHeader>
+                                            <div className="space-y-6">
+                                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                <div>
+                                                  <Label className="text-xs font-semibold text-muted-foreground">PRIORITY</Label>
+                                                  <Badge className={getPriorityColor(testCase.priority)}>
+                                                    {testCase.priority}
+                                                  </Badge>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-xs font-semibold text-muted-foreground">STATUS</Label>
+                                                  <div className="flex items-center space-x-2">
+                                                    <div className={`w-2 h-2 rounded-full ${
+                                                      testCase.status === "approved" ? "bg-green-500" :
+                                                      testCase.status === "rejected" ? "bg-red-500" :
+                                                      "bg-yellow-500"
+                                                    }`}></div>
+                                                    <Badge className={getStatusColor(testCase.status)}>
+                                                      {testCase.status}
                                                     </Badge>
                                                   </div>
-                                                  <div className="space-y-2">
-                                                    <div>
-                                                      <span className="text-xs font-medium">Action:</span>
-                                                      <p className="text-sm">{step.action}</p>
-                                                    </div>
-                                                    <div>
-                                                      <span className="text-xs font-medium">Expected Result:</span>
-                                                      <p className="text-sm text-green-700 dark:text-green-300">{step.expectedResult}</p>
-                                                    </div>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-xs font-semibold text-muted-foreground">TYPE</Label>
+                                                  <Badge variant="outline" className="text-xs">
+                                                    {testCase.title.includes('Positive') ? 'Positive' : 
+                                                     testCase.title.includes('Negative') ? 'Negative' :
+                                                     testCase.title.includes('Edge') ? 'Edge Case' :
+                                                     testCase.title.includes('Security') ? 'Security' :
+                                                     testCase.title.includes('Performance') ? 'Performance' : 'Standard'}
+                                                  </Badge>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-xs font-semibold text-muted-foreground">USER STORY</Label>
+                                                  <Badge variant="outline" className="text-xs">
+                                                    {getUserStoryTitle(testCase.userStoryId || 'unassigned')}
+                                                  </Badge>
+                                                </div>
+                                              </div>
+                                              
+                                              <div>
+                                                <Label className="text-sm font-semibold">Title</Label>
+                                                <div className="mt-1 p-3 bg-muted rounded-md">
+                                                  <p className="text-sm">{testCase.title}</p>
+                                                </div>
+                                              </div>
+
+                                              <div>
+                                                <Label className="text-sm font-semibold">Objective</Label>
+                                                <div className="mt-1 p-3 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-400 dark:border-blue-600 rounded-md">
+                                                  <pre className="text-sm whitespace-pre-wrap text-blue-800 dark:text-blue-200">{testCase.objective}</pre>
+                                                </div>
+                                              </div>
+
+                                              {testCase.prerequisites && (
+                                                <div>
+                                                  <Label className="text-sm font-semibold">Prerequisites</Label>
+                                                  <div className="mt-1 p-3 bg-amber-50 dark:bg-amber-950 border-l-4 border-amber-400 dark:border-amber-600 rounded-md">
+                                                    <pre className="text-sm whitespace-pre-wrap text-amber-800 dark:text-amber-200">{testCase.prerequisites}</pre>
                                                   </div>
                                                 </div>
-                                              ))}
+                                              )}
+
+                                              <div>
+                                                <Label className="text-sm font-semibold">Test Steps</Label>
+                                                <div className="mt-1 p-3 bg-purple-50 dark:bg-purple-950 border-l-4 border-purple-400 dark:border-purple-600 rounded-md">
+                                                  <pre className="text-sm whitespace-pre-wrap text-purple-800 dark:text-purple-200">{testCase.testSteps}</pre>
+                                                </div>
+                                              </div>
+
+                                              <div>
+                                                <Label className="text-sm font-semibold">Expected Result</Label>
+                                                <div className="mt-1 p-3 bg-green-50 dark:bg-green-950 border-l-4 border-green-400 dark:border-green-600 rounded-md">
+                                                  <p className="text-sm text-green-800 dark:text-green-200">{testCase.expectedResult}</p>
+                                                </div>
+                                              </div>
+
+                                              {testCase.testPassword && (
+                                                <div>
+                                                  <Label className="text-sm font-semibold">Test Password</Label>
+                                                  <div className="font-mono bg-muted px-3 py-2 rounded-md mt-1">
+                                                    {testCase.testPassword}
+                                                  </div>
+                                                </div>
+                                              )}
+
+                                              {testCase.requiredPermissions && (
+                                                <div>
+                                                  <Label className="text-sm font-semibold">Required Permissions</Label>
+                                                  <div className="mt-1 p-3 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-400 dark:border-blue-600 rounded-md">
+                                                    <pre className="text-sm whitespace-pre-wrap text-blue-800 dark:text-blue-200">{testCase.requiredPermissions}</pre>
+                                                  </div>
+                                                </div>
+                                              )}
                                             </div>
-                                          ) : (
-                                            <pre className="text-sm whitespace-pre-wrap">
-                                              {Array.isArray(testCase.testSteps) 
-                                                ? testCase.testSteps.join('\n')
-                                                : testCase.testSteps}
-                                            </pre>
-                                          )}
-                                        </div>
+                                          </DialogContent>
+                                        </Dialog>
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          title="Approve"
+                                          className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                          onClick={() => updateStatusMutation.mutate({ id: testCase.id, status: "approved" })}
+                                          disabled={updateStatusMutation.isPending}
+                                        >
+                                          <Check className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          title="Reject"
+                                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                          onClick={() => updateStatusMutation.mutate({ id: testCase.id, status: "rejected" })}
+                                          disabled={updateStatusMutation.isPending}
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </Button>
+                                        <AlertDialog>
+                                          <AlertDialogTrigger asChild>
+                                            <Button
+                                              size="icon"
+                                              variant="ghost"
+                                              title="Delete"
+                                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                              disabled={deleteTestCaseMutation.isPending}
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </AlertDialogTrigger>
+                                          <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                              <AlertDialogTitle>Delete Test Case</AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                Are you sure you want to delete this test case? This action cannot be undone.
+                                              </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                              <AlertDialogAction onClick={() => handleDeleteTestCase(testCase.id)}>Delete</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                        </AlertDialog>
                                       </div>
-                                    )}
-
-                                    <div>
-                                      <Label className="text-sm font-semibold">Expected Result</Label>
-                                      <div className="mt-1 p-3 bg-green-50 dark:bg-green-950 border-l-4 border-green-400 dark:border-green-600 rounded-md">
-                                        <p className="text-sm text-green-800 dark:text-green-200">{testCase.expectedResult}</p>
-                                      </div>
-                                    </div>
-
-                                    {testCase.testPassword && (
-                                      <div>
-                                        <Label className="text-sm font-semibold">Test Password</Label>
-                                        <div className="font-mono bg-muted px-3 py-2 rounded-md mt-1">
-                                          {testCase.testPassword}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {testCase.requiredPermissions && (
-                                      <div>
-                                        <Label className="text-sm font-semibold">Required Permissions</Label>
-                                        <div className="mt-1 p-3 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-400 dark:border-blue-600 rounded-md">
-                                          <pre className="text-sm whitespace-pre-wrap text-blue-800 dark:text-blue-200">{testCase.requiredPermissions}</pre>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                title="Approve"
-                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                onClick={() => updateStatusMutation.mutate({ id: testCase.id, status: "approved" })}
-                                disabled={updateStatusMutation.isPending}
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                title="Reject"
-                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                onClick={() => updateStatusMutation.mutate({ id: testCase.id, status: "rejected" })}
-                                disabled={updateStatusMutation.isPending}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    title="Delete"
-                                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    disabled={deleteTestCaseMutation.isPending}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Test Case</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete this test case? This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDeleteTestCase(testCase.id)}>Delete</AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                    
-                    {/* Pagination Controls for this User Story */}
-                    {totalPages > 1 && (
-                      <div className="px-4 py-3 bg-muted/25 border-t flex items-center justify-between">
-                        <div className="text-xs text-muted-foreground">
-                          Showing {((currentPage - 1) * userStoryItemsPerPage) + 1} to {Math.min(currentPage * userStoryItemsPerPage, groupTestCases.length)} of {groupTestCases.length} test cases
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                              )}
+                            </TableBody>
+                          </Table>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setUserStoryPage(userStoryId, currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="h-8 w-8 p-0"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          <div className="flex items-center space-x-1">
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                        
+                        {/* Pagination Controls for this User Story */}
+                        {totalPages > 1 && (
+                          <div className="px-4 py-3 bg-muted/25 border-t flex items-center justify-between">
+                            <div className="text-xs text-muted-foreground">
+                              Showing {((currentPage - 1) * userStoryItemsPerPage) + 1} to {Math.min(currentPage * userStoryItemsPerPage, groupTestCases.length)} of {groupTestCases.length} test cases
+                            </div>
+                            <div className="flex items-center space-x-2">
                               <Button
-                                key={pageNum}
-                                variant={pageNum === currentPage ? "default" : "outline"}
+                                variant="outline"
                                 size="sm"
-                                onClick={() => setUserStoryPage(userStoryId, pageNum)}
+                                onClick={() => setUserStoryPage(userStoryId, currentPage - 1)}
+                                disabled={currentPage === 1}
                                 className="h-8 w-8 p-0"
                               >
-                                {pageNum}
+                                <ChevronLeft className="h-4 w-4" />
                               </Button>
-                            ))}
+                              <div className="flex items-center space-x-1">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                                  <Button
+                                    key={pageNum}
+                                    variant={pageNum === currentPage ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setUserStoryPage(userStoryId, pageNum)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    {pageNum}
+                                  </Button>
+                                ))}
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setUserStoryPage(userStoryId, currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="h-8 w-8 p-0"
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Bulk Actions */}
+                {filteredTestCases.length > 0 && (
+                  <div className="flex items-center justify-between pt-4 border-t mt-6">
+                    <div className="flex items-center space-x-4">
+                      <Button variant="outline" onClick={handleSelectAll}>
+                        <Check className="h-4 w-4 mr-2" />
+                        {selectedTestCases.length === filteredTestCases.length ? "Deselect All" : "Select All"}
+                      </Button>
+                      {selectedTestCases.length > 0 && (
+                        <span className="text-sm text-muted-foreground">
+                          {selectedTestCases.length} of {filteredTestCases.length} selected
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
                           <Button
                             variant="outline"
-                            size="sm"
-                            onClick={() => setUserStoryPage(userStoryId, currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                            className="h-8 w-8 p-0"
+                            className="border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105"
+                            disabled={deleteAllTestCasesMutation.isPending}
                           >
-                            <ChevronRight className="h-4 w-4" />
+                            {deleteAllTestCasesMutation.isPending ? (
+                              <>
+                                <LoadingSpinner size="sm" className="mr-2 border-red-600" />
+                                Deleting All
+                                <BouncingDots className="ml-2" />
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete All
+                              </>
+                            )}
                           </Button>
-                        </div>
-                      </div>
-                    )}
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete All Test Cases</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete all test cases? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteAllTestCases}>Delete All</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Bulk Actions */}
-            {filteredTestCases.length > 0 && (
-              <div className="flex items-center justify-between pt-4 border-t mt-6">
-                <div className="flex items-center space-x-4">
-                  <Button variant="outline" onClick={handleSelectAll}>
-                    <Check className="h-4 w-4 mr-2" />
-                    {selectedTestCases.length === filteredTestCases.length ? "Deselect All" : "Select All"}
-                  </Button>
-                  {selectedTestCases.length > 0 && (
-                    <span className="text-sm text-muted-foreground">
-                      {selectedTestCases.length} of {filteredTestCases.length} selected
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105"
-                        disabled={deleteAllTestCasesMutation.isPending}
-                      >
-                        {deleteAllTestCasesMutation.isPending ? (
-                          <>
-                            <LoadingSpinner size="sm" className="mr-2 border-red-600" />
-                            Deleting All
-                            <BouncingDots className="ml-2" />
-                          </>
-                        ) : (
-                          <>
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete All
-                          </>
-                        )}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete All Test Cases</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete all test cases? This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteAllTestCases}>Delete All</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
+                )}
+              </>
             )}
           </>
         )}
