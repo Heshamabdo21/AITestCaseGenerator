@@ -370,15 +370,15 @@ export function TestCasesSection() {
     return story?.title || `User Story ${userStoryId}`;
   };
 
-  // Get user story display with ID and name
+  // Get user story display with ID and name (Azure DevOps format)
   const getUserStoryDisplay = (userStoryId: number | string) => {
     if (userStoryId === 'unassigned') return 'Unassigned Test Cases';
     const story = userStories.find((s: any) => s.id === userStoryId);
     if (story) {
-      return `US-${story.id.toString().padStart(3, '0')}: ${story.title}`;
+      return `${story.id}: ${story.title}`;
     }
     // Show ID even when user story details aren't loaded
-    return `US-${userStoryId.toString().padStart(3, '0')}: User Story ${userStoryId}`;
+    return `${userStoryId}: User Story ${userStoryId}`;
   };
   
   // Pagination logic
@@ -609,7 +609,7 @@ export function TestCasesSection() {
               )}
               {userStoryFilter !== "all" && (
                 <Badge variant="secondary" className="text-xs">
-                  Story: {userStoryFilter === 'unassigned' ? 'Unassigned' : `US-${userStoryFilter}`}
+                  Story: {userStoryFilter === 'unassigned' ? 'Unassigned' : userStoryFilter}
                   <button
                     onClick={() => setUserStoryFilter("all")}
                     className="ml-1 hover:bg-muted rounded-full p-0.5"
