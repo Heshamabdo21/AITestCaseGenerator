@@ -11,7 +11,7 @@ import { DemoBanner } from "@/components/demo-banner";
 import { PlatformTestShowcase } from "@/components/platform-test-showcase";
 import { PlatformTutorial } from "@/components/platform-tutorial";
 import { UnifiedTestGenerator } from "@/components/unified-test-generator";
-import { ProgressTracker } from "@/components/progress-tracker";
+
 import { CopyFeedback } from "@/components/copy-feedback";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -76,11 +76,10 @@ export default function Home() {
           {/* Configuration Panel */}
           <div className="lg:col-span-1">
             <Tabs defaultValue="azure" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="azure">Azure & AI</TabsTrigger>
                 <TabsTrigger value="test">Test Setup</TabsTrigger>
                 <TabsTrigger value="import">CSV Import</TabsTrigger>
-                <TabsTrigger value="progress">Progress</TabsTrigger>
               </TabsList>
               
               <TabsContent value="azure" className="space-y-4">
@@ -97,9 +96,7 @@ export default function Home() {
                 <CsvImportPanel />
               </TabsContent>
               
-              <TabsContent value="progress" className="space-y-4">
-                <ProgressTracker data-tour="progress" />
-              </TabsContent>
+
             </Tabs>
           </div>
 
