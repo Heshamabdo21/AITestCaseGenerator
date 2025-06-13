@@ -108,6 +108,16 @@ The application includes a health check endpoint at `/api/health` that Docker us
    docker-compose up -d
    ```
 
+4. **View build logs:**
+   ```bash
+   docker-compose build
+   ```
+
+5. **Check container sizes:**
+   ```bash
+   docker images | grep azure-testcase
+   ```
+
 ## Production Considerations
 
 1. **Use environment files for secrets:**

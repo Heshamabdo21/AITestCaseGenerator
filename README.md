@@ -196,11 +196,11 @@ A comprehensive test case management system designed for Azure DevOps integratio
 ### Docker Configuration
 
 The Docker setup includes:
-- **Multi-stage build** for optimized image size
-- **Non-root user execution** for security
-- **Health checks** for container monitoring
-- **Alpine Linux base** for minimal attack surface
-- **Persistent volumes** for data storage
+- **Multi-stage build** - Optimized production images with separate build/runtime stages
+- **Security hardening** - Non-root user execution and minimal attack surface
+- **Health monitoring** - Built-in health checks and restart policies
+- **Production optimization** - Clean images without build dependencies
+- **Data persistence** - Volume mounting for uploads and database storage
 
 ## 📁 Project Structure
 

@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      target: production
     ports:
       - "5000:5000"
     environment:
@@ -13,7 +15,7 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./uploads:/app/uploads
+      - app_uploads:/app/uploads
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
@@ -42,3 +44,4 @@ services:
 
 volumes:
   postgres_data:
+  app_uploads:
