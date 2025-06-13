@@ -208,7 +208,10 @@ export function TestCasesSection() {
   const getUserStoryTitle = (userStoryId: number | string) => {
     if (userStoryId === 'unassigned') return 'Unassigned Test Cases';
     const story = userStories.find((s: any) => s.id === userStoryId);
-    return story?.title || `User Story ${userStoryId}`;
+    if (story) {
+      return `${story.azureId}: ${story.title}`;
+    }
+    return `${userStoryId}: User Story ${userStoryId}`;
   };
   
   // Pagination logic
