@@ -1,5 +1,5 @@
 import { StructuredTestViewer } from "@/components/structured-test-viewer";
-import { QuickTestGenerator } from "@/components/quick-test-generator";
+import { UnifiedTestGenerator } from "@/components/unified-test-generator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -75,9 +75,9 @@ export default function TestViewer() {
           </Card>
         </div>
 
-        {/* Quick Generator */}
+        {/* Unified Generator */}
         <div className="mb-8">
-          <QuickTestGenerator />
+          <UnifiedTestGenerator />
         </div>
 
         {/* Test Cases Viewer */}
