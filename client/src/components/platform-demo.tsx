@@ -93,8 +93,14 @@ export function PlatformDemo() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Get current Azure config for iteration path tracking
+  const { data: azureConfig } = useQuery({
+    queryKey: ['/api/azure-config/latest'],
+    retry: false,
+  });
+
   const { data: userStories = [] } = useQuery({
-    queryKey: ['/api/user-stories/stored'],
+    queryKey: ['/api/user-stories/stored', (azureConfig as any)?.iterationPath],
     retry: false
   });
 

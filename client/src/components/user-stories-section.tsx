@@ -31,7 +31,7 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
 
   // Query for stored user stories that depends on current config
   const { data: userStories = [], isLoading, error } = useQuery<UserStory[]>({
-    queryKey: ['/api/user-stories/stored', azureConfig?.iterationPath],
+    queryKey: ['/api/user-stories/stored', (azureConfig as AzureConfig)?.iterationPath],
     retry: false,
   });
 
@@ -40,10 +40,13 @@ export function UserStoriesSection({ onTestCasesGenerated }: UserStoriesSectionP
     mutationFn: () => api.fetchUserStories(),
     onSuccess: (data) => {
       // Update cache with new data based on current iteration path
-      queryClient.setQueryData(['/api/user-stories/stored', azureConfig?.iterationPath], data);
+      queryClient.setQueryData(['/api/user-stories/stored', (azureConfig as AzureConfig)?.iterationPath], data);
+      const iterationText = (azureConfig as AzureConfig)?.iterationPath && (azureConfig as AzureConfig)?.iterationPath !== 'all' 
+        ? ` (filtered by ${(azureConfig as AzureConfig)?.iterationPath})` 
+        : '';
       toast({
         title: "User Stories Fetched",
-        description: `Found ${data.length} user stories from Azure DevOps${azureConfig?.iterationPath && azureConfig.iterationPath !== 'all' ? ` (filtered by ${azureConfig.iterationPath})` : ''}`,
+        description: `Found ${data.length} user stories from Azure DevOps${iterationText}`,
       });
     },
     onError: (error: any) => {
