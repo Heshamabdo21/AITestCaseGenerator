@@ -195,6 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const csvContent = req.file.buffer.toString('utf-8');
       
       // Validate and parse CSV
+      console.log('CSV Content Preview:', csvContent.substring(0, 500));
       const csvTestCases = parseCsvTestCases(csvContent);
       
       if (csvTestCases.length === 0) {

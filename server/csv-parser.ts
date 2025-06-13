@@ -20,18 +20,14 @@ export function parseCsvTestCases(csvContent: string): CsvTestCase[] {
   
   const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
   
-  // Validate required headers
-  const requiredFields = ['id', 'title', 'workitemtype'];
-  const missingFields = requiredFields.filter(field => 
-    !headers.some(header => header.includes(field))
-  );
-  
-  if (missingFields.length > 0) {
-    throw new Error(`Missing required CSV columns: ${missingFields.join(', ')}`);
-  }
-  
   // Create header mapping for flexible column order
   const headerMap = createHeaderMapping(headers);
+  
+  // Validate that we can map the essential fields
+  if (headerMap.title === undefined) {
+    console.warn('Could not map title field');
+    console.warn('Available headers:', headers);
+  }
   const testCases: CsvTestCase[] = [];
   
   for (let i = 1; i < lines.length; i++) {
@@ -43,7 +39,8 @@ export function parseCsvTestCases(csvContent: string): CsvTestCase[] {
     
     try {
       const testCase = mapCsvRowToTestCase(values, headerMap);
-      if (testCase.id && testCase.title) {
+      // Accept rows with either ID or title, as some rows might be continuation of test steps
+      if (testCase.title || testCase.id || testCase.stepAction) {
         testCases.push(testCase);
       }
     } catch (error) {
@@ -67,19 +64,19 @@ function createHeaderMapping(headers: string[]): Record<string, number> {
     // Map various possible column names to our standard fields
     if (cleanHeader.includes('id') || cleanHeader.includes('workitemid')) {
       mapping.id = index;
-    } else if (cleanHeader.includes('workitemtype') || cleanHeader.includes('type')) {
+    } else if (cleanHeader.includes('workitemtype') || cleanHeader === 'type' || header.toLowerCase().includes('work item type')) {
       mapping.workItemType = index;
     } else if (cleanHeader.includes('title') || cleanHeader.includes('name')) {
       mapping.title = index;
-    } else if (cleanHeader.includes('teststep') || cleanHeader.includes('step')) {
+    } else if (cleanHeader.includes('teststep') || cleanHeader === 'step' || header.toLowerCase().includes('test step')) {
       mapping.testStep = index;
-    } else if (cleanHeader.includes('stepaction') || cleanHeader.includes('action')) {
+    } else if (cleanHeader.includes('stepaction') || cleanHeader.includes('action') || header.toLowerCase().includes('step action')) {
       mapping.stepAction = index;
-    } else if (cleanHeader.includes('stepexpected') || cleanHeader.includes('expected')) {
+    } else if (cleanHeader.includes('stepexpected') || cleanHeader.includes('expected') || header.toLowerCase().includes('step expected')) {
       mapping.stepExpected = index;
-    } else if (cleanHeader.includes('areapath') || cleanHeader.includes('area')) {
+    } else if (cleanHeader.includes('areapath') || cleanHeader.includes('area') || header.toLowerCase().includes('area path')) {
       mapping.areaPath = index;
-    } else if (cleanHeader.includes('assignedto') || cleanHeader.includes('assigned')) {
+    } else if (cleanHeader.includes('assignedto') || cleanHeader.includes('assigned') || header.toLowerCase().includes('assigned to')) {
       mapping.assignedTo = index;
     } else if (cleanHeader.includes('state') || cleanHeader.includes('status')) {
       mapping.state = index;
