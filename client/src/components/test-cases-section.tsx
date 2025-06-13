@@ -112,8 +112,9 @@ export function TestCasesSection() {
     mutationFn: (testCaseIds: number[]) => api.addTestCasesToAzure(testCaseIds),
     onSuccess: () => {
       setSelectedTestCases([]);
+      fireConfetti();
       toast({
-        title: "Test Cases Added to Azure DevOps",
+        title: "🎉 Test Cases Added to Azure DevOps",
         description: "Selected test cases have been added to Azure DevOps successfully",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
@@ -233,6 +234,16 @@ export function TestCasesSection() {
     const story = userStories.find((s: any) => s.id === userStoryId);
     return story?.title || `User Story ${userStoryId}`;
   };
+
+  // Get user story display with ID and name
+  const getUserStoryDisplay = (userStoryId: number | string) => {
+    if (userStoryId === 'unassigned') return 'Unassigned Test Cases';
+    const story = userStories.find((s: any) => s.id === userStoryId);
+    if (story) {
+      return `US-${story.id.toString().padStart(3, '0')}: ${story.title}`;
+    }
+    return `User Story ${userStoryId}`;
+  };
   
   // Pagination logic
   const totalPages = Math.ceil(typedTestCases.length / itemsPerPage);
@@ -332,7 +343,7 @@ export function TestCasesSection() {
             <div key={userStoryId} className="border rounded-lg">
               <div className="px-4 py-3 bg-muted/50 border-b">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm">{getUserStoryTitle(userStoryId)}</h3>
+                  <h3 className="font-semibold text-sm">{getUserStoryDisplay(userStoryId)}</h3>
                   <Badge variant="outline" className="text-xs">
                     {groupTestCases.length} test{groupTestCases.length !== 1 ? 's' : ''}
                   </Badge>
