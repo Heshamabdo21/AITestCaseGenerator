@@ -318,14 +318,32 @@ export function TestCasesSection() {
               <TableBody>
                 {isLoading ? (
                   Array.from({ length: itemsPerPage }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableRow key={i} className="animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-4 shimmer animate-pulse" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-16 shimmer animate-pulse" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-48 shimmer animate-pulse" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-16 shimmer animate-pulse" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20 shimmer animate-pulse" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24 shimmer animate-pulse" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Skeleton className="h-8 w-8 shimmer animate-pulse rounded" />
+                          <Skeleton className="h-8 w-8 shimmer animate-pulse rounded" />
+                          <Skeleton className="h-8 w-8 shimmer animate-pulse rounded" />
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : paginatedTestCases.length === 0 ? (
@@ -584,9 +602,13 @@ export function TestCasesSection() {
                             onClick={() => updateStatusMutation.mutate({ id: testCase.id, status: "approved" })}
                             disabled={testCase.status === "approved" || updateStatusMutation.isPending}
                             title="Approve"
-                            className="h-8 w-8 text-green-600 hover:text-green-700"
+                            className="h-8 w-8 text-green-600 hover:text-green-700 transition-all duration-200 hover:scale-110"
                           >
-                            <Check className="h-4 w-4" />
+                            {updateStatusMutation.isPending ? (
+                              <LoadingSpinner size="sm" className="border-green-600" />
+                            ) : (
+                              <Check className="h-4 w-4" />
+                            )}
                           </Button>
 
                           <Button
@@ -595,9 +617,13 @@ export function TestCasesSection() {
                             onClick={() => updateStatusMutation.mutate({ id: testCase.id, status: "rejected" })}
                             disabled={testCase.status === "rejected" || updateStatusMutation.isPending}
                             title="Reject"
-                            className="h-8 w-8 text-red-600 hover:text-red-700"
+                            className="h-8 w-8 text-red-600 hover:text-red-700 transition-all duration-200 hover:scale-110"
                           >
-                            <X className="h-4 w-4" />
+                            {updateStatusMutation.isPending ? (
+                              <LoadingSpinner size="sm" className="border-red-600" />
+                            ) : (
+                              <X className="h-4 w-4" />
+                            )}
                           </Button>
 
                           <AlertDialog>
@@ -606,9 +632,14 @@ export function TestCasesSection() {
                                 size="icon"
                                 variant="ghost"
                                 title="Delete"
-                                className="h-8 w-8 text-red-600 hover:text-red-700"
+                                className="h-8 w-8 text-red-600 hover:text-red-700 transition-all duration-200 hover:scale-110"
+                                disabled={deleteTestCaseMutation.isPending}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                {deleteTestCaseMutation.isPending ? (
+                                  <LoadingSpinner size="sm" className="border-red-600" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -650,6 +681,7 @@ export function TestCasesSection() {
                   size="sm"
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
+                  className="transition-all duration-200 hover:scale-105"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Previous
@@ -661,7 +693,7 @@ export function TestCasesSection() {
                       variant={currentPage === page ? "default" : "outline"}
                       size="sm"
                       onClick={() => handlePageChange(page)}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 transition-all duration-200 hover:scale-110"
                     >
                       {page}
                     </Button>
@@ -700,10 +732,21 @@ export function TestCasesSection() {
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="border-red-300 text-red-700 hover:bg-red-50"
+                    className="border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105"
+                    disabled={deleteAllTestCasesMutation.isPending}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete All
+                    {deleteAllTestCasesMutation.isPending ? (
+                      <>
+                        <LoadingSpinner size="sm" className="mr-2 border-red-600" />
+                        Deleting All
+                        <BouncingDots className="ml-2" />
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete All
+                      </>
+                    )}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
