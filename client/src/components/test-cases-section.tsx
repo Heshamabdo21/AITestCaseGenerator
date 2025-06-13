@@ -370,12 +370,13 @@ export function TestCasesSection() {
     return story?.title || `User Story ${userStoryId}`;
   };
 
-  // Get user story display with ID and name (Azure DevOps format)
+  // Get user story display with Azure DevOps ID and title
   const getUserStoryDisplay = (userStoryId: number | string) => {
     if (userStoryId === 'unassigned') return 'Unassigned Test Cases';
     const story = userStories.find((s: any) => s.id === userStoryId);
     if (story) {
-      return `${story.id}: ${story.title}`;
+      // Use Azure DevOps ID and title from the actual Azure DevOps data
+      return `${story.azureId}: ${story.title}`;
     }
     // Show ID even when user story details aren't loaded
     return `${userStoryId}: User Story ${userStoryId}`;
