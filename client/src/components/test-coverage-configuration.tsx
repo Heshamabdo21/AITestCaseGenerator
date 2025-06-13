@@ -24,14 +24,7 @@ import {
   Bug,
   Clock,
   Eye,
-  Settings,
-  Activity,
-  MousePointer,
-  Server,
-  Layers,
-  BarChart3,
-  RotateCcw,
-  Flame
+  Settings
 } from "lucide-react";
 
 const testCoverageConfigSchema = z.object({
@@ -221,7 +214,7 @@ export function TestCoverageConfiguration() {
                   checked={form.watch("includeSecurityTests")}
                   onCheckedChange={(checked) => form.setValue("includeSecurityTests", !!checked)}
                 />
-                <Shield className="h-4 w-4 text-red-500" />
+                <Shield className="h-4 w-4 text-blue-500" />
                 <Label htmlFor="includeSecurityTests" className="text-sm">Security Tests</Label>
               </div>
               
@@ -231,7 +224,7 @@ export function TestCoverageConfiguration() {
                   checked={form.watch("includePerformanceTests")}
                   onCheckedChange={(checked) => form.setValue("includePerformanceTests", !!checked)}
                 />
-                <Activity className="h-4 w-4 text-orange-500" />
+                <Zap className="h-4 w-4 text-yellow-500" />
                 <Label htmlFor="includePerformanceTests" className="text-sm">Performance Tests</Label>
               </div>
               
@@ -251,7 +244,7 @@ export function TestCoverageConfiguration() {
                   checked={form.watch("includeCompatibilityTests")}
                   onCheckedChange={(checked) => form.setValue("includeCompatibilityTests", !!checked)}
                 />
-                <Layers className="h-4 w-4 text-cyan-500" />
+                <Globe className="h-4 w-4 text-cyan-500" />
                 <Label htmlFor="includeCompatibilityTests" className="text-sm">Compatibility Tests</Label>
               </div>
               
@@ -261,7 +254,7 @@ export function TestCoverageConfiguration() {
                   checked={form.watch("includeApiTests")}
                   onCheckedChange={(checked) => form.setValue("includeApiTests", !!checked)}
                 />
-                <Server className="h-4 w-4 text-gray-500" />
+                <Settings className="h-4 w-4 text-gray-500" />
                 <Label htmlFor="includeApiTests" className="text-sm">API Tests</Label>
               </div>
               
@@ -271,7 +264,7 @@ export function TestCoverageConfiguration() {
                   checked={form.watch("includeUiTests")}
                   onCheckedChange={(checked) => form.setValue("includeUiTests", !!checked)}
                 />
-                <MousePointer className="h-4 w-4 text-indigo-500" />
+                <Eye className="h-4 w-4 text-indigo-500" />
                 <Label htmlFor="includeUiTests" className="text-sm">UI Tests</Label>
               </div>
             </div>
@@ -310,7 +303,7 @@ export function TestCoverageConfiguration() {
                   checked={form.watch("enableApiEndpointTests")}
                   onCheckedChange={(checked) => form.setValue("enableApiEndpointTests", !!checked)}
                 />
-                <Server className="h-4 w-4 text-orange-500" />
+                <Settings className="h-4 w-4 text-orange-500" />
                 <Label htmlFor="enableApiEndpointTests" className="text-sm">API Endpoint Tests</Label>
               </div>
             </div>
@@ -329,7 +322,7 @@ export function TestCoverageConfiguration() {
                   checked={form.watch("basicTestComplexity")}
                   onCheckedChange={(checked) => form.setValue("basicTestComplexity", !!checked)}
                 />
-                <BarChart3 className="h-4 w-4 text-green-500" />
+                <Badge variant="outline" className="text-green-600">Basic</Badge>
                 <Label htmlFor="basicTestComplexity" className="text-sm">Basic Tests</Label>
               </div>
               
@@ -339,7 +332,7 @@ export function TestCoverageConfiguration() {
                   checked={form.watch("intermediateTestComplexity")}
                   onCheckedChange={(checked) => form.setValue("intermediateTestComplexity", !!checked)}
                 />
-                <BarChart3 className="h-4 w-4 text-yellow-500" />
+                <Badge variant="outline" className="text-yellow-600">Intermediate</Badge>
                 <Label htmlFor="intermediateTestComplexity" className="text-sm">Intermediate Tests</Label>
               </div>
               
@@ -349,7 +342,7 @@ export function TestCoverageConfiguration() {
                   checked={form.watch("advancedTestComplexity")}
                   onCheckedChange={(checked) => form.setValue("advancedTestComplexity", !!checked)}
                 />
-                <BarChart3 className="h-4 w-4 text-red-500" />
+                <Badge variant="outline" className="text-red-600">Advanced</Badge>
                 <Label htmlFor="advancedTestComplexity" className="text-sm">Advanced Tests</Label>
               </div>
             </div>
@@ -368,7 +361,7 @@ export function TestCoverageConfiguration() {
                   checked={form.watch("includeRegressionTests")}
                   onCheckedChange={(checked) => form.setValue("includeRegressionTests", !!checked)}
                 />
-                <RotateCcw className="h-4 w-4 text-blue-500" />
+                <Bug className="h-4 w-4 text-red-500" />
                 <Label htmlFor="includeRegressionTests" className="text-sm">Regression Tests</Label>
               </div>
               
@@ -378,7 +371,7 @@ export function TestCoverageConfiguration() {
                   checked={form.watch("includeSmokeTests")}
                   onCheckedChange={(checked) => form.setValue("includeSmokeTests", !!checked)}
                 />
-                <Flame className="h-4 w-4 text-orange-500" />
+                <Clock className="h-4 w-4 text-blue-500" />
                 <Label htmlFor="includeSmokeTests" className="text-sm">Smoke Tests</Label>
               </div>
             </div>
