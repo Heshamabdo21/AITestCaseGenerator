@@ -11,10 +11,12 @@ import { DemoBanner } from "@/components/demo-banner";
 import { PlatformTestShowcase } from "@/components/platform-test-showcase";
 import { PlatformTutorial } from "@/components/platform-tutorial";
 import { UnifiedTestGenerator } from "@/components/unified-test-generator";
+import { ProgressTracker } from "@/components/progress-tracker";
+import { CopyFeedback } from "@/components/copy-feedback";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Bot, User, TestTube } from "lucide-react";
+import { Bot, User, TestTube, Target } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Home() {
@@ -54,7 +56,9 @@ export default function Home() {
                   Test Demo
                 </Button>
               </Link>
-              <ModeToggle />
+              <div data-tour="theme-toggle">
+                <ModeToggle />
+              </div>
               <span className="text-sm text-muted-foreground">test-user@company.com</span>
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                 <User className="text-primary-foreground text-sm" size={16} />
@@ -72,10 +76,11 @@ export default function Home() {
           {/* Configuration Panel */}
           <div className="lg:col-span-1">
             <Tabs defaultValue="azure" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="azure">Azure & AI</TabsTrigger>
                 <TabsTrigger value="test">Test Setup</TabsTrigger>
                 <TabsTrigger value="import">CSV Import</TabsTrigger>
+                <TabsTrigger value="progress">Progress</TabsTrigger>
               </TabsList>
               
               <TabsContent value="azure" className="space-y-4">
@@ -91,12 +96,16 @@ export default function Home() {
               <TabsContent value="import" className="space-y-4">
                 <CsvImportPanel />
               </TabsContent>
+              
+              <TabsContent value="progress" className="space-y-4">
+                <ProgressTracker data-tour="progress" />
+              </TabsContent>
             </Tabs>
           </div>
 
           {/* Main Work Area */}
           <div className="lg:col-span-2 space-y-8">
-            <UnifiedTestGenerator />
+            <UnifiedTestGenerator data-tour="test-generator" />
             <EnhancedUserStories onTestCasesGenerated={handleTestCasesGenerated} />
             <TestCasesSection />
           </div>

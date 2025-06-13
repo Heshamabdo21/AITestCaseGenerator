@@ -64,7 +64,7 @@ export async function generateCodeSuggestion(
       { role: "user", content: message }
     ];
 
-    const response = await openai.chat.completions.create({
+    const response = await openai!.chat.completions.create({
       model: "gpt-4o",
       messages: messages as any,
       response_format: { type: "json_object" },
@@ -87,12 +87,12 @@ export async function generateCodeSuggestion(
 }
 
 export async function analyzeTestCase(testCaseContent: string): Promise<AiResponse> {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!openai) {
     throw new Error("OpenAI API key not configured");
   }
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await openai!.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
