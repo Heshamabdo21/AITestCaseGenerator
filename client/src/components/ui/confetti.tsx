@@ -34,15 +34,23 @@ export function Confetti({ trigger, onComplete }: ConfettiProps) {
       setIsActive(true);
       const newPieces: ConfettiPiece[] = [];
       
-      for (let i = 0; i < 50; i++) {
+      // Generate more confetti pieces with varied patterns
+      const pieceCount = 75; // Increased from 50
+      
+      for (let i = 0; i < pieceCount; i++) {
+        // Create burst pattern from center-top
+        const angle = (Math.PI / 3) * Math.random() - Math.PI / 6; // Spread angle
+        const velocity = 200 + Math.random() * 300;
+        const centerX = window.innerWidth / 2;
+        
         newPieces.push({
           id: i,
-          x: Math.random() * window.innerWidth,
+          x: centerX + (Math.random() - 0.5) * 400, // Wider spread
           y: -20,
           rotation: Math.random() * 360,
           color: colors[Math.floor(Math.random() * colors.length)],
-          size: Math.random() * 8 + 4,
-          delay: Math.random() * 0.5,
+          size: Math.random() * 10 + 3, // Slightly larger pieces
+          delay: Math.random() * 0.8, // Longer delay spread
         });
       }
       
@@ -53,7 +61,7 @@ export function Confetti({ trigger, onComplete }: ConfettiProps) {
         setIsActive(false);
         setPieces([]);
         onComplete?.();
-      }, 3000);
+      }, 4000); // Longer duration
     }
   }, [trigger, onComplete]);
 
@@ -76,9 +84,9 @@ export function Confetti({ trigger, onComplete }: ConfettiProps) {
               opacity: 0,
             }}
             transition={{
-              duration: 2.5 + Math.random() * 1,
+              duration: 3 + Math.random() * 1.5,
               delay: piece.delay,
-              ease: "easeOut",
+              ease: [0.23, 1, 0.32, 1], // Custom easing for more natural fall
             }}
             style={{
               width: piece.size,

@@ -35,8 +35,14 @@ export function TestCasesSection() {
         setTimeout(() => fireConfetti(), 200);
         break;
       case 'batch':
-        if (count && count >= 5) {
-          // Triple burst for large batches
+        if (count && count >= 10) {
+          // Mega celebration for large batches
+          setTimeout(() => fireConfetti(), 200);
+          setTimeout(() => fireConfetti(), 500);
+          setTimeout(() => fireConfetti(), 800);
+          setTimeout(() => fireConfetti(), 1100);
+        } else if (count && count >= 5) {
+          // Triple burst for medium-large batches
           setTimeout(() => fireConfetti(), 200);
           setTimeout(() => fireConfetti(), 600);
           setTimeout(() => fireConfetti(), 1000);
@@ -50,10 +56,12 @@ export function TestCasesSection() {
         break;
       case 'export':
         setTimeout(() => fireConfetti(), 300);
+        setTimeout(() => fireConfetti(), 700);
         break;
       case 'azure':
         setTimeout(() => fireConfetti(), 400);
         setTimeout(() => fireConfetti(), 800);
+        setTimeout(() => fireConfetti(), 1200);
         break;
     }
   };
@@ -224,8 +232,7 @@ export function TestCasesSection() {
     
     // Fire confetti for batch approvals with enhanced timing
     if (count > 1) {
-      setTimeout(() => fireConfetti(), 300);
-      setTimeout(() => fireConfetti(), 800);
+      celebrateSuccess('batch', count);
       toast({
         title: `${count} Test Cases Approved`,
         description: `Successfully approved ${count} test cases`,
