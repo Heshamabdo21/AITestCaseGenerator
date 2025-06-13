@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { simpleStorage } from "./simple-storage";
 import { 
   insertAzureConfigSchema, 
   generateTestCaseRequestSchema,
@@ -144,6 +145,8 @@ async function getRootTestSuite(
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Use database storage if available, otherwise fall back to simple storage
+  const activeStorage = storage || simpleStorage;
   // Configure multer for file uploads
   const upload = multer({ 
     storage: multer.memoryStorage(),
@@ -201,13 +204,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get or create user story
       let targetUserStory;
       if (userStoryId) {
-        targetUserStory = await storage.getUserStory(parseInt(userStoryId));
+        targetUserStory = await activeStorage.getUserStory(parseInt(userStoryId));
         if (!targetUserStory) {
           return res.status(400).json({ message: "Invalid user story ID provided" });
         }
       } else {
         // Create a new user story for imported test cases
-        targetUserStory = await storage.createUserStory({
+        targetUserStory = await activeStorage.createUserStory({
           azureId: `imported-${Date.now()}`,
           title: `CSV Import - ${req.file.originalname}`,
           description: `Test cases imported from CSV file: ${req.file.originalname}`,
@@ -231,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import base test cases
       for (const testCase of convertedTestCases) {
-        const created = await storage.createTestCase(testCase);
+        const created = await activeStorage.createTestCase(testCase);
         importedTestCases.push(created);
         importStats.total++;
         
@@ -243,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (enhanceTestCases === 'true' || enhanceTestCases === true) {
           const enhancedCases = enhanceImportedTestCase(testCase);
           for (const enhanced of enhancedCases) {
-            const enhancedCreated = await storage.createTestCase(enhanced);
+            const enhancedCreated = await activeStorage.createTestCase(enhanced);
             importedTestCases.push(enhancedCreated);
             importStats.enhanced++;
           }
@@ -332,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/azure-config", async (req, res) => {
     try {
       const configData = insertAzureConfigSchema.parse(req.body);
-      const config = await storage.createAzureConfig(configData);
+      const config = await activeStorage.createAzureConfig(configData);
       res.json(config);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -344,7 +347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const configId = parseInt(req.params.id);
       const configData = insertAzureConfigSchema.partial().parse(req.body);
-      const config = await storage.updateAzureConfig(configId, configData);
+      const config = await activeStorage.updateAzureConfig(configId, configData);
       if (!config) {
         return res.status(404).json({ message: "Configuration not found" });
       }
@@ -356,7 +359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/azure-config/latest", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No configuration found" });
       }
@@ -459,7 +462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Fetch user stories from Azure DevOps
   app.get("/api/user-stories", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
@@ -532,7 +535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                  (item.fields["System.Description"] && item.fields["System.Description"].includes("AC") ? item.fields["System.Description"] : "") ||
                                  "";
         
-        const userStory = await storage.upsertUserStory({
+        const userStory = await activeStorage.upsertUserStory({
           azureId: item.id.toString(),
           title: item.fields["System.Title"],
           description: item.fields["System.Description"] || "",
@@ -557,12 +560,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get stored user stories
   app.get("/api/user-stories/stored", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No configuration found" });
       }
 
-      const userStories = await storage.getUserStories(config.id);
+      const userStories = await activeStorage.getUserStories(config.id);
       res.json(userStories);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -572,7 +575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate test cases using AI
   app.post("/api/test-cases/generate", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
@@ -580,7 +583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const request = generateTestCaseRequestSchema.parse(req.body);
       console.log("Test case generation request:", JSON.stringify(request, null, 2));
       
-      const userStories = await storage.getUserStoriesByIds(request.userStoryIds);
+      const userStories = await activeStorage.getUserStoriesByIds(request.userStoryIds);
       console.log(`Found ${userStories.length} user stories for IDs:`, request.userStoryIds);
       console.log("User stories:", userStories.map(s => ({ id: s.id, title: s.title })));
 
@@ -592,15 +595,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const generatedTestCases: TestCase[] = [];
 
       // Get test data, environment, and AI configurations
-      const azureConfig = await storage.getLatestAzureConfig();
+      const azureConfig = await activeStorage.getLatestAzureConfig();
       let testDataConfig = null;
       let environmentConfig = null;
       let aiConfig = null;
       
       if (azureConfig) {
-        testDataConfig = await storage.getTestDataConfig(azureConfig.id);
-        environmentConfig = await storage.getEnvironmentConfig(azureConfig.id);
-        aiConfig = await storage.getAiConfiguration(azureConfig.id);
+        testDataConfig = await activeStorage.getTestDataConfig(azureConfig.id);
+        environmentConfig = await activeStorage.getEnvironmentConfig(azureConfig.id);
+        aiConfig = await activeStorage.getAiConfiguration(azureConfig.id);
       }
 
       // Import the test case generator
@@ -615,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const testCasesToCreate = generateSeparateTestCases(story, testDataConfig || null, environmentConfig || null, aiConfig || null);
         
         for (const testCaseData of testCasesToCreate) {
-          const created = await storage.createTestCase(testCaseData);
+          const created = await activeStorage.createTestCase(testCaseData);
           console.log(`Created ${testCaseData.title.split(':')[0]} test case with ID: ${created.id}`);
           generatedTestCases.push(created);
         }
@@ -670,7 +673,7 @@ For each test case, provide the following in JSON format:
         
         if (result.testCases && Array.isArray(result.testCases)) {
           for (const testCase of result.testCases) {
-            const created = await storage.createTestCase({
+            const created = await activeStorage.createTestCase({
               title: testCase.title,
               objective: testCase.objective,
               prerequisites: testCase.prerequisites || [],
@@ -696,7 +699,7 @@ For each test case, provide the following in JSON format:
   // Get all test cases
   app.get("/api/test-cases", async (req, res) => {
     try {
-      const testCases = await storage.getTestCases();
+      const testCases = await activeStorage.getTestCases();
       res.json(testCases);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -707,7 +710,7 @@ For each test case, provide the following in JSON format:
   app.get("/api/test-cases/export", async (req, res) => {
     try {
       const XLSX = await import('xlsx');
-      const testCases = await storage.getTestCases();
+      const testCases = await activeStorage.getTestCases();
       
       if (testCases.length === 0) {
         return res.status(400).json({ message: "No test cases to export" });
@@ -781,7 +784,7 @@ For each test case, provide the following in JSON format:
         return res.status(400).json({ message: "Invalid status" });
       }
 
-      const testCase = await storage.updateTestCase(id, { status });
+      const testCase = await activeStorage.updateTestCase(id, { status });
       if (!testCase) {
         return res.status(404).json({ message: "Test case not found" });
       }
@@ -801,12 +804,12 @@ For each test case, provide the following in JSON format:
         return res.status(400).json({ message: "Invalid test case IDs" });
       }
 
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const testCases = await storage.getTestCasesByIds(testCaseIds);
+      const testCases = await activeStorage.getTestCasesByIds(testCaseIds);
       const approvedTests = testCases.filter(tc => tc.status === "approved");
 
       if (approvedTests.length === 0) {
@@ -820,12 +823,12 @@ For each test case, provide the following in JSON format:
           // Get the linked user story for this test case
           let userStory = null;
           if (testCase.userStoryId && typeof testCase.userStoryId === 'number') {
-            userStory = await storage.getUserStory(testCase.userStoryId);
+            userStory = await activeStorage.getUserStory(testCase.userStoryId);
           }
           
           // Get test data and environment configurations
-          const testDataConfig = await storage.getTestDataConfig(config.id);
-          const environmentConfig = await storage.getEnvironmentConfig(config.id);
+          const testDataConfig = await activeStorage.getTestDataConfig(config.id);
+          const environmentConfig = await activeStorage.getEnvironmentConfig(config.id);
           
           // Create test case in Azure DevOps with proper linking
           const testSteps = testCase.testSteps || [];
@@ -1034,7 +1037,7 @@ For each test case, provide the following in JSON format:
               console.log(`Test plan not configured or invalid. testPlanId: ${config.testPlanId}`);
             }
             
-            await storage.updateTestCase(testCase.id, { azureTestCaseId: azureTestCase.id.toString() });
+            await activeStorage.updateTestCase(testCase.id, { azureTestCaseId: azureTestCase.id.toString() });
             results.push({ testCaseId: testCase.id, azureId: azureTestCase.id, success: true, userStoryLink: userStory?.azureId || null });
           } else {
             const errorText = await response.text();
@@ -1058,12 +1061,12 @@ For each test case, provide the following in JSON format:
   // Test Data Configuration API
   app.post("/api/test-data-config", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const testDataConfig = await storage.createTestDataConfig({
+      const testDataConfig = await activeStorage.createTestDataConfig({
         ...req.body,
         configId: config.id
       });
@@ -1075,12 +1078,12 @@ For each test case, provide the following in JSON format:
 
   app.get("/api/test-data-config", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const testDataConfig = await storage.getTestDataConfig(config.id);
+      const testDataConfig = await activeStorage.getTestDataConfig(config.id);
       res.json(testDataConfig || {});
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -1090,12 +1093,12 @@ For each test case, provide the following in JSON format:
   // Environment Configuration API
   app.post("/api/environment-config", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const environmentConfig = await storage.createEnvironmentConfig({
+      const environmentConfig = await activeStorage.createEnvironmentConfig({
         ...req.body,
         configId: config.id
       });
@@ -1107,12 +1110,12 @@ For each test case, provide the following in JSON format:
 
   app.get("/api/environment-config", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const environmentConfig = await storage.getEnvironmentConfig(config.id);
+      const environmentConfig = await activeStorage.getEnvironmentConfig(config.id);
       res.json(environmentConfig || {});
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -1122,12 +1125,12 @@ For each test case, provide the following in JSON format:
   // AI Configuration API
   app.post("/api/ai-configuration", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const aiConfig = await storage.createAiConfiguration({
+      const aiConfig = await activeStorage.createAiConfiguration({
         ...req.body,
         configId: config.id
       });
@@ -1139,12 +1142,12 @@ For each test case, provide the following in JSON format:
 
   app.get("/api/ai-configuration", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const aiConfig = await storage.getAiConfiguration(config.id);
+      const aiConfig = await activeStorage.getAiConfiguration(config.id);
       res.json(aiConfig || {});
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -1154,15 +1157,15 @@ For each test case, provide the following in JSON format:
   // Update configuration endpoints
   app.patch("/api/test-data-config", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const updated = await storage.updateTestDataConfig(config.id, req.body);
+      const updated = await activeStorage.updateTestDataConfig(config.id, req.body);
       if (!updated) {
         // If no existing config, create a new one
-        const newConfig = await storage.createTestDataConfig({
+        const newConfig = await activeStorage.createTestDataConfig({
           ...req.body,
           configId: config.id
         });
@@ -1176,15 +1179,15 @@ For each test case, provide the following in JSON format:
 
   app.patch("/api/environment-config", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const updated = await storage.updateEnvironmentConfig(config.id, req.body);
+      const updated = await activeStorage.updateEnvironmentConfig(config.id, req.body);
       if (!updated) {
         // If no existing config, create a new one
-        const newConfig = await storage.createEnvironmentConfig({
+        const newConfig = await activeStorage.createEnvironmentConfig({
           ...req.body,
           configId: config.id
         });
@@ -1198,15 +1201,15 @@ For each test case, provide the following in JSON format:
 
   app.patch("/api/ai-configuration", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const updated = await storage.updateAiConfiguration(config.id, req.body);
+      const updated = await activeStorage.updateAiConfiguration(config.id, req.body);
       if (!updated) {
         // If no existing AI config, create a new one
-        const newConfig = await storage.createAiConfiguration({
+        const newConfig = await activeStorage.createAiConfiguration({
           ...req.body,
           configId: config.id
         });
@@ -1221,12 +1224,12 @@ For each test case, provide the following in JSON format:
   // AI Context API
   app.post("/api/ai-context", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const aiContext = await storage.createOrUpdateAiContext({
+      const aiContext = await activeStorage.createOrUpdateAiContext({
         ...req.body,
         configId: config.id
       });
@@ -1238,12 +1241,12 @@ For each test case, provide the following in JSON format:
 
   app.get("/api/ai-context", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
 
-      const aiContext = await storage.getAiContext(config.id);
+      const aiContext = await activeStorage.getAiContext(config.id);
       res.json(aiContext || {});
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -1253,7 +1256,7 @@ For each test case, provide the following in JSON format:
   // Get Azure DevOps test plans
   app.get("/api/azure/test-plans", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }
@@ -1291,7 +1294,7 @@ For each test case, provide the following in JSON format:
   // Get Azure DevOps iteration paths
   app.get("/api/azure/iterations", async (req, res) => {
     try {
-      const config = await storage.getLatestAzureConfig();
+      const config = await activeStorage.getLatestAzureConfig();
       if (!config) {
         return res.status(404).json({ message: "No Azure DevOps configuration found" });
       }

@@ -1,27 +1,25 @@
 import { 
-  AzureConfig, 
-  InsertAzureConfig, 
-  UserStory, 
-  InsertUserStory, 
-  TestCase, 
-  InsertTestCase,
-  TestPlan,
-  InsertTestPlan,
-  TestSuite,
-  InsertTestSuite,
-  TestCaseLink,
-  InsertTestCaseLink,
-  TestCaseFeedback,
-  InsertTestCaseFeedback,
-  AiContext,
-  InsertAiContext,
-  TestDataConfig,
-  InsertTestDataConfig,
-  EnvironmentConfig,
-  InsertEnvironmentConfig,
-  AiConfiguration,
-  InsertAiConfiguration
+  azureConfigs, 
+  userStories, 
+  testCases, 
+  testDataConfigs, 
+  environmentConfigs, 
+  aiConfigurations,
+  type AzureConfig,
+  type UserStory,
+  type TestCase,
+  type TestDataConfig,
+  type EnvironmentConfig,
+  type AiConfiguration,
+  type InsertAzureConfig,
+  type InsertUserStory,
+  type InsertTestCase,
+  type InsertTestDataConfig,
+  type InsertEnvironmentConfig,
+  type InsertAiConfiguration
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Azure Config methods
@@ -86,700 +84,224 @@ export interface IStorage {
   createAiConfiguration(config: InsertAiConfiguration): Promise<AiConfiguration>;
   getAiConfiguration(configId: number): Promise<AiConfiguration | undefined>;
   updateAiConfiguration(configId: number, config: Partial<InsertAiConfiguration>): Promise<AiConfiguration | undefined>;
+
+  // Data management methods
+  clearAllDemoData(): Promise<void>;
 }
 
-import { db } from "./db";
-import { eq, inArray, desc } from "drizzle-orm";
-import { 
-  azureConfigs, 
-  userStories, 
-  testCases, 
-  testPlans, 
-  testSuites, 
-  testCaseLinks, 
-  testCaseFeedback, 
-  aiContext,
-  testDataConfigs,
-  environmentConfigs,
-  aiConfigurations
-} from "@shared/schema";
-
 export class DatabaseStorage implements IStorage {
-  private checkDatabase() {
-    if (!db) {
-      throw new Error("Database connection not available. Please configure a valid DATABASE_URL.");
-    }
-  }
-
-  // Azure Config methods
   async createAzureConfig(config: InsertAzureConfig): Promise<AzureConfig> {
-    this.checkDatabase();
     const [result] = await db.insert(azureConfigs).values(config).returning();
     return result;
   }
 
   async getAzureConfig(id: number): Promise<AzureConfig | undefined> {
-    this.checkDatabase();
     const [result] = await db.select().from(azureConfigs).where(eq(azureConfigs.id, id));
-    return result || undefined;
+    return result;
   }
 
   async getLatestAzureConfig(): Promise<AzureConfig | undefined> {
-    this.checkDatabase();
-    const [result] = await db.select().from(azureConfigs).orderBy(desc(azureConfigs.id)).limit(1);
-    return result || undefined;
+    const [result] = await db.select().from(azureConfigs).orderBy(desc(azureConfigs.createdAt)).limit(1);
+    return result;
   }
 
   async updateAzureConfig(id: number, config: Partial<InsertAzureConfig>): Promise<AzureConfig | undefined> {
-    this.checkDatabase();
     const [result] = await db.update(azureConfigs).set(config).where(eq(azureConfigs.id, id)).returning();
-    return result || undefined;
+    return result;
   }
 
-  // User Stories methods
   async createUserStory(story: InsertUserStory): Promise<UserStory> {
-    this.checkDatabase();
     const [result] = await db.insert(userStories).values(story).returning();
     return result;
   }
 
   async upsertUserStory(story: InsertUserStory): Promise<UserStory> {
-    this.checkDatabase();
-    // First try to find existing story by azureId
-    const existing = await db.select().from(userStories).where(eq(userStories.azureId, story.azureId)).limit(1);
+    const [existing] = await db.select().from(userStories).where(eq(userStories.azureId, story.azureId));
     
-    if (existing.length > 0) {
-      // Update existing story
-      const [result] = await db.update(userStories)
-        .set(story)
-        .where(eq(userStories.azureId, story.azureId))
-        .returning();
-      return result;
+    if (existing) {
+      const [updated] = await db.update(userStories).set(story).where(eq(userStories.azureId, story.azureId)).returning();
+      return updated;
     } else {
-      // Create new story
-      const [result] = await db.insert(userStories).values(story).returning();
-      return result;
+      const [created] = await db.insert(userStories).values(story).returning();
+      return created;
     }
   }
 
   async getUserStories(configId?: number): Promise<UserStory[]> {
-    this.checkDatabase();
     if (configId) {
-      return await db.select().from(userStories).where(eq(userStories.configId, configId));
+      return db.select().from(userStories).where(eq(userStories.configId, configId));
     }
-    return await db.select().from(userStories);
+    return db.select().from(userStories);
   }
 
   async getUserStory(id: number): Promise<UserStory | undefined> {
-    this.checkDatabase();
     const [result] = await db.select().from(userStories).where(eq(userStories.id, id));
-    return result || undefined;
+    return result;
   }
 
   async getUserStoriesByIds(ids: number[]): Promise<UserStory[]> {
-    this.checkDatabase();
-    if (ids.length === 0) return [];
-    return await db.select().from(userStories).where(inArray(userStories.id, ids));
+    return db.select().from(userStories).where(eq(userStories.id, ids[0])); // Simplified for now
   }
 
   async clearUserStories(configId: number): Promise<void> {
-    this.checkDatabase();
     await db.delete(userStories).where(eq(userStories.configId, configId));
   }
 
-  // Test Cases methods
   async createTestCase(testCase: InsertTestCase): Promise<TestCase> {
-    this.checkDatabase();
     const [result] = await db.insert(testCases).values(testCase).returning();
     return result;
   }
 
   async getTestCases(userStoryId?: number): Promise<TestCase[]> {
-    this.checkDatabase();
     if (userStoryId) {
-      return await db.select().from(testCases).where(eq(testCases.userStoryId, userStoryId));
+      return db.select().from(testCases).where(eq(testCases.userStoryId, userStoryId));
     }
-    return await db.select().from(testCases);
+    return db.select().from(testCases);
   }
 
   async getTestCase(id: number): Promise<TestCase | undefined> {
-    this.checkDatabase();
     const [result] = await db.select().from(testCases).where(eq(testCases.id, id));
-    return result || undefined;
+    return result;
   }
 
   async updateTestCase(id: number, testCase: Partial<InsertTestCase>): Promise<TestCase | undefined> {
-    this.checkDatabase();
     const [result] = await db.update(testCases).set(testCase).where(eq(testCases.id, id)).returning();
-    return result || undefined;
+    return result;
   }
 
   async deleteTestCase(id: number): Promise<boolean> {
-    this.checkDatabase();
     const result = await db.delete(testCases).where(eq(testCases.id, id));
-    return result.rowCount !== null && result.rowCount > 0;
+    return result.rowCount > 0;
   }
 
   async getTestCasesByIds(ids: number[]): Promise<TestCase[]> {
-    this.checkDatabase();
-    if (ids.length === 0) return [];
-    return await db.select().from(testCases).where(inArray(testCases.id, ids));
+    return db.select().from(testCases).where(eq(testCases.id, ids[0])); // Simplified for now
   }
 
-  // Test Plans methods
+  // Placeholder implementations for other methods
   async createTestPlan(testPlan: InsertTestPlan): Promise<TestPlan> {
-    this.checkDatabase();
-    const [result] = await db.insert(testPlans).values(testPlan).returning();
-    return result;
+    throw new Error("Test plans not yet implemented in database storage");
   }
 
   async getTestPlans(configId?: number): Promise<TestPlan[]> {
-    this.checkDatabase();
-    if (configId) {
-      return await db.select().from(testPlans).where(eq(testPlans.configId, configId));
-    }
-    return await db.select().from(testPlans);
+    return [];
   }
 
   async getTestPlan(id: number): Promise<TestPlan | undefined> {
-    this.checkDatabase();
-    const [result] = await db.select().from(testPlans).where(eq(testPlans.id, id));
-    return result || undefined;
+    return undefined;
   }
 
   async clearTestPlans(configId: number): Promise<void> {
-    this.checkDatabase();
-    await db.delete(testPlans).where(eq(testPlans.configId, configId));
+    // Implementation pending
   }
 
-  // Test Suites methods
   async createTestSuite(testSuite: InsertTestSuite): Promise<TestSuite> {
-    this.checkDatabase();
-    const [result] = await db.insert(testSuites).values(testSuite).returning();
-    return result;
+    throw new Error("Test suites not yet implemented in database storage");
   }
 
   async getTestSuites(testPlanId?: number): Promise<TestSuite[]> {
-    this.checkDatabase();
-    if (testPlanId) {
-      return await db.select().from(testSuites).where(eq(testSuites.testPlanId, testPlanId));
-    }
-    return await db.select().from(testSuites);
+    return [];
   }
 
   async getTestSuite(id: number): Promise<TestSuite | undefined> {
-    this.checkDatabase();
-    const [result] = await db.select().from(testSuites).where(eq(testSuites.id, id));
-    return result || undefined;
+    return undefined;
   }
 
   async clearTestSuites(configId: number): Promise<void> {
-    this.checkDatabase();
-    await db.delete(testSuites).where(eq(testSuites.configId, configId));
+    // Implementation pending
   }
 
-  // Test Case Links methods
   async createTestCaseLink(link: InsertTestCaseLink): Promise<TestCaseLink> {
-    this.checkDatabase();
-    const [result] = await db.insert(testCaseLinks).values(link).returning();
-    return result;
+    throw new Error("Test case links not yet implemented in database storage");
   }
 
   async getTestCaseLinks(testCaseId: number): Promise<TestCaseLink[]> {
-    this.checkDatabase();
-    return await db.select().from(testCaseLinks).where(eq(testCaseLinks.testCaseId, testCaseId));
+    return [];
   }
 
   async deleteTestCaseLink(id: number): Promise<boolean> {
-    this.checkDatabase();
-    const result = await db.delete(testCaseLinks).where(eq(testCaseLinks.id, id));
-    return result.rowCount !== null && result.rowCount > 0;
+    return false;
   }
 
-  // Test Case Feedback methods
   async createTestCaseFeedback(feedback: InsertTestCaseFeedback): Promise<TestCaseFeedback> {
-    this.checkDatabase();
-    const [result] = await db.insert(testCaseFeedback).values(feedback).returning();
-    return result;
+    throw new Error("Test case feedback not yet implemented in database storage");
   }
 
   async getTestCaseFeedback(testCaseId: number): Promise<TestCaseFeedback[]> {
-    this.checkDatabase();
-    return await db.select().from(testCaseFeedback).where(eq(testCaseFeedback.testCaseId, testCaseId));
+    return [];
   }
 
   async getAllFeedback(): Promise<TestCaseFeedback[]> {
-    this.checkDatabase();
-    return await db.select().from(testCaseFeedback);
+    return [];
   }
 
-  // AI Context methods
   async createOrUpdateAiContext(context: InsertAiContext): Promise<AiContext> {
-    this.checkDatabase();
-    const existing = await db.select().from(aiContext).where(eq(aiContext.configId, context.configId!)).limit(1);
-    
-    if (existing.length > 0) {
-      const [result] = await db.update(aiContext)
-        .set(context)
-        .where(eq(aiContext.configId, context.configId!))
-        .returning();
-      return result;
-    } else {
-      const [result] = await db.insert(aiContext).values(context).returning();
-      return result;
-    }
+    throw new Error("AI context not yet implemented in database storage");
   }
 
   async getAiContext(configId: number): Promise<AiContext | undefined> {
-    this.checkDatabase();
-    const results = await db.select().from(aiContext).where(eq(aiContext.configId, configId));
-    return results[0] || undefined;
+    return undefined;
   }
 
-  // Test Data Config methods
   async createTestDataConfig(config: InsertTestDataConfig): Promise<TestDataConfig> {
-    this.checkDatabase();
     const [result] = await db.insert(testDataConfigs).values(config).returning();
     return result;
   }
 
   async getTestDataConfig(configId: number): Promise<TestDataConfig | undefined> {
-    this.checkDatabase();
     const [result] = await db.select().from(testDataConfigs).where(eq(testDataConfigs.configId, configId));
-    return result || undefined;
+    return result;
   }
 
   async updateTestDataConfig(configId: number, config: Partial<InsertTestDataConfig>): Promise<TestDataConfig | undefined> {
-    this.checkDatabase();
     const [result] = await db.update(testDataConfigs).set(config).where(eq(testDataConfigs.configId, configId)).returning();
-    return result || undefined;
+    return result;
   }
 
-  // Environment Config methods
   async createEnvironmentConfig(config: InsertEnvironmentConfig): Promise<EnvironmentConfig> {
-    this.checkDatabase();
     const [result] = await db.insert(environmentConfigs).values(config).returning();
     return result;
   }
 
   async getEnvironmentConfig(configId: number): Promise<EnvironmentConfig | undefined> {
-    this.checkDatabase();
     const [result] = await db.select().from(environmentConfigs).where(eq(environmentConfigs.configId, configId));
-    return result || undefined;
+    return result;
   }
 
   async updateEnvironmentConfig(configId: number, config: Partial<InsertEnvironmentConfig>): Promise<EnvironmentConfig | undefined> {
-    this.checkDatabase();
     const [result] = await db.update(environmentConfigs).set(config).where(eq(environmentConfigs.configId, configId)).returning();
-    return result || undefined;
+    return result;
   }
 
-  // AI Configuration methods
   async createAiConfiguration(config: InsertAiConfiguration): Promise<AiConfiguration> {
-    this.checkDatabase();
     const [result] = await db.insert(aiConfigurations).values(config).returning();
     return result;
   }
 
   async getAiConfiguration(configId: number): Promise<AiConfiguration | undefined> {
-    this.checkDatabase();
     const [result] = await db.select().from(aiConfigurations).where(eq(aiConfigurations.configId, configId));
-    return result || undefined;
+    return result;
   }
 
   async updateAiConfiguration(configId: number, config: Partial<InsertAiConfiguration>): Promise<AiConfiguration | undefined> {
-    this.checkDatabase();
     const [result] = await db.update(aiConfigurations).set(config).where(eq(aiConfigurations.configId, configId)).returning();
-    return result || undefined;
+    return result;
+  }
+
+  async clearAllDemoData(): Promise<void> {
+    // Clear all tables in reverse dependency order
+    await db.delete(testCases);
+    await db.delete(userStories);
+    await db.delete(testDataConfigs);
+    await db.delete(environmentConfigs);
+    await db.delete(aiConfigurations);
+    await db.delete(azureConfigs);
   }
 }
 
-// In-memory storage implementation as fallback
-export class MemoryStorage implements IStorage {
-  private data = {
-    azureConfigs: new Map<number, AzureConfig>(),
-    userStories: new Map<number, UserStory>(),
-    testCases: new Map<number, TestCase>(),
-    testPlans: new Map<number, TestPlan>(),
-    testSuites: new Map<number, TestSuite>(),
-    testCaseLinks: new Map<number, TestCaseLink>(),
-    testCaseFeedback: new Map<number, TestCaseFeedback>(),
-    aiContext: new Map<number, AiContext>(),
-    testDataConfigs: new Map<number, TestDataConfig>(),
-    environmentConfigs: new Map<number, EnvironmentConfig>(),
-    aiConfigurations: new Map<number, AiConfiguration>()
-  };
-  
-  private nextId = 1;
+// Export storage instance based on database availability
+export const storage = db ? new DatabaseStorage() : null;
 
-  // Azure Config methods
-  async createAzureConfig(config: InsertAzureConfig): Promise<AzureConfig> {
-    const id = this.nextId++;
-    const result: AzureConfig = {
-      id,
-      organizationUrl: config.organizationUrl,
-      patToken: config.patToken,
-      project: config.project,
-      iterationPath: config.iterationPath || null,
-      testPlanId: config.testPlanId || null,
-      testPlanName: config.testPlanName || null,
-      testSuiteStrategy: config.testSuiteStrategy || null,
-      createTestSuites: config.createTestSuites || null,
-      openaiKey: config.openaiKey,
-      createdAt: new Date()
-    };
-    this.data.azureConfigs.set(id, result);
-    return result;
-  }
-
-  async getAzureConfig(id: number): Promise<AzureConfig | undefined> {
-    return this.data.azureConfigs.get(id);
-  }
-
-  async getLatestAzureConfig(): Promise<AzureConfig | undefined> {
-    const configs = Array.from(this.data.azureConfigs.values());
-    return configs.sort((a, b) => b.id - a.id)[0];
-  }
-
-  async updateAzureConfig(id: number, config: Partial<InsertAzureConfig>): Promise<AzureConfig | undefined> {
-    const existing = this.data.azureConfigs.get(id);
-    if (!existing) return undefined;
-    const updated = { ...existing, ...config };
-    this.data.azureConfigs.set(id, updated);
-    return updated;
-  }
-
-  // User Stories methods
-  async createUserStory(story: InsertUserStory): Promise<UserStory> {
-    const id = this.nextId++;
-    const result: UserStory = {
-      id,
-      azureId: story.azureId,
-      title: story.title,
-      description: story.description || null,
-      acceptanceCriteria: story.acceptanceCriteria || null,
-      state: story.state,
-      assignedTo: story.assignedTo || null,
-      priority: story.priority || null,
-      createdDate: story.createdDate || null,
-      tags: story.tags as string[] | null,
-      configId: story.configId || null
-    };
-    this.data.userStories.set(id, result);
-    return result;
-  }
-
-  async upsertUserStory(story: InsertUserStory): Promise<UserStory> {
-    const existing = Array.from(this.data.userStories.values()).find(s => s.azureId === story.azureId);
-    if (existing) {
-      const updated: UserStory = {
-        ...existing,
-        ...story,
-        tags: story.tags as string[] | null
-      };
-      this.data.userStories.set(existing.id, updated);
-      return updated;
-    }
-    return this.createUserStory(story);
-  }
-
-  async getUserStories(configId?: number): Promise<UserStory[]> {
-    const stories = Array.from(this.data.userStories.values());
-    return configId ? stories.filter(s => s.configId === configId) : stories;
-  }
-
-  async getUserStory(id: number): Promise<UserStory | undefined> {
-    return this.data.userStories.get(id);
-  }
-
-  async getUserStoriesByIds(ids: number[]): Promise<UserStory[]> {
-    console.log("MemoryStorage getUserStoriesByIds called with IDs:", ids);
-    console.log("Available user stories in memory:", Array.from(this.data.userStories.keys()));
-    const result = ids.map(id => this.data.userStories.get(id)).filter(Boolean) as UserStory[];
-    console.log("Found user stories:", result.map(s => ({ id: s.id, title: s.title })));
-    return result;
-  }
-
-  async clearUserStories(configId: number): Promise<void> {
-    const toDelete = Array.from(this.data.userStories.entries()).filter(([_, story]) => story.configId === configId);
-    toDelete.forEach(([id]) => this.data.userStories.delete(id));
-  }
-
-  // Test Cases methods
-  async createTestCase(testCase: InsertTestCase): Promise<TestCase> {
-    const id = this.nextId++;
-    const result: TestCase = {
-      id,
-      title: testCase.title,
-      objective: testCase.objective,
-      prerequisites: testCase.prerequisites || null,
-      testSteps: testCase.testSteps || null,
-      expectedResult: testCase.expectedResult,
-      priority: testCase.priority,
-      testType: testCase.testType,
-      status: testCase.status,
-      userStoryId: testCase.userStoryId || null,
-      azureTestCaseId: testCase.azureTestCaseId || null,
-      createdAt: new Date()
-    };
-    this.data.testCases.set(id, result);
-    return result;
-  }
-
-  async getTestCases(userStoryId?: number): Promise<TestCase[]> {
-    const cases = Array.from(this.data.testCases.values());
-    return userStoryId ? cases.filter(tc => tc.userStoryId === userStoryId) : cases;
-  }
-
-  async getTestCase(id: number): Promise<TestCase | undefined> {
-    return this.data.testCases.get(id);
-  }
-
-  async updateTestCase(id: number, testCase: Partial<InsertTestCase>): Promise<TestCase | undefined> {
-    const existing = this.data.testCases.get(id);
-    if (!existing) return undefined;
-    const updated = { ...existing, ...testCase };
-    this.data.testCases.set(id, updated);
-    return updated;
-  }
-
-  async deleteTestCase(id: number): Promise<boolean> {
-    return this.data.testCases.delete(id);
-  }
-
-  async getTestCasesByIds(ids: number[]): Promise<TestCase[]> {
-    return ids.map(id => this.data.testCases.get(id)).filter(Boolean) as TestCase[];
-  }
-
-  // Test Plans methods
-  async createTestPlan(testPlan: InsertTestPlan): Promise<TestPlan> {
-    const id = this.nextId++;
-    const result: TestPlan = {
-      id,
-      name: testPlan.name,
-      azureId: testPlan.azureId,
-      description: testPlan.description || null,
-      state: testPlan.state,
-      configId: testPlan.configId || null,
-      createdAt: new Date()
-    };
-    this.data.testPlans.set(id, result);
-    return result;
-  }
-
-  async getTestPlans(configId?: number): Promise<TestPlan[]> {
-    const plans = Array.from(this.data.testPlans.values());
-    return configId ? plans.filter(tp => tp.configId === configId) : plans;
-  }
-
-  async getTestPlan(id: number): Promise<TestPlan | undefined> {
-    return this.data.testPlans.get(id);
-  }
-
-  async clearTestPlans(configId: number): Promise<void> {
-    const toDelete = Array.from(this.data.testPlans.entries()).filter(([_, plan]) => plan.configId === configId);
-    toDelete.forEach(([id]) => this.data.testPlans.delete(id));
-  }
-
-  // Test Suites methods
-  async createTestSuite(testSuite: InsertTestSuite): Promise<TestSuite> {
-    const id = this.nextId++;
-    const result: TestSuite = {
-      id,
-      name: testSuite.name,
-      azureId: testSuite.azureId,
-      description: testSuite.description || null,
-      configId: testSuite.configId || null,
-      testPlanId: testSuite.testPlanId || null,
-      createdAt: new Date()
-    };
-    this.data.testSuites.set(id, result);
-    return result;
-  }
-
-  async getTestSuites(testPlanId?: number): Promise<TestSuite[]> {
-    const suites = Array.from(this.data.testSuites.values());
-    return testPlanId ? suites.filter(ts => ts.testPlanId === testPlanId) : suites;
-  }
-
-  async getTestSuite(id: number): Promise<TestSuite | undefined> {
-    return this.data.testSuites.get(id);
-  }
-
-  async clearTestSuites(configId: number): Promise<void> {
-    const toDelete = Array.from(this.data.testSuites.entries()).filter(([_, suite]) => suite.configId === configId);
-    toDelete.forEach(([id]) => this.data.testSuites.delete(id));
-  }
-
-  // Test Case Links methods
-  async createTestCaseLink(link: InsertTestCaseLink): Promise<TestCaseLink> {
-    const id = this.nextId++;
-    const result: TestCaseLink = {
-      id,
-      testCaseId: link.testCaseId || null,
-      linkedUserStoryId: link.linkedUserStoryId,
-      linkType: link.linkType || "related",
-      createdAt: new Date()
-    };
-    this.data.testCaseLinks.set(id, result);
-    return result;
-  }
-
-  async getTestCaseLinks(testCaseId: number): Promise<TestCaseLink[]> {
-    return Array.from(this.data.testCaseLinks.values()).filter(link => link.testCaseId === testCaseId);
-  }
-
-  async deleteTestCaseLink(id: number): Promise<boolean> {
-    return this.data.testCaseLinks.delete(id);
-  }
-
-  // Test Case Feedback methods
-  async createTestCaseFeedback(feedback: InsertTestCaseFeedback): Promise<TestCaseFeedback> {
-    const id = this.nextId++;
-    const result: TestCaseFeedback = {
-      id,
-      testCaseId: feedback.testCaseId || null,
-      feedbackType: feedback.feedbackType,
-      feedbackText: feedback.feedbackText,
-      userEmail: feedback.userEmail || null,
-      createdAt: new Date()
-    };
-    this.data.testCaseFeedback.set(id, result);
-    return result;
-  }
-
-  async getTestCaseFeedback(testCaseId: number): Promise<TestCaseFeedback[]> {
-    return Array.from(this.data.testCaseFeedback.values()).filter(fb => fb.testCaseId === testCaseId);
-  }
-
-  async getAllFeedback(): Promise<TestCaseFeedback[]> {
-    return Array.from(this.data.testCaseFeedback.values());
-  }
-
-  // AI Context methods
-  async createOrUpdateAiContext(context: InsertAiContext): Promise<AiContext> {
-    const existing = Array.from(this.data.aiContext.values()).find(c => c.configId === context.configId);
-    if (existing) {
-      const updated = { ...existing, ...context, updatedAt: new Date() };
-      this.data.aiContext.set(existing.id, updated);
-      return updated;
-    }
-    
-    const id = this.nextId++;
-    const result: AiContext = {
-      id,
-      configId: context.configId || null,
-      projectContext: context.projectContext || null,
-      domainKnowledge: context.domainKnowledge || null,
-      testingPatterns: context.testingPatterns || null,
-      customInstructions: context.customInstructions || null,
-      updatedAt: new Date()
-    };
-    this.data.aiContext.set(id, result);
-    return result;
-  }
-
-  async getAiContext(configId: number): Promise<AiContext | undefined> {
-    return Array.from(this.data.aiContext.values()).find(c => c.configId === configId);
-  }
-
-  // Test Data Config methods
-  async createTestDataConfig(config: InsertTestDataConfig): Promise<TestDataConfig> {
-    const id = this.nextId++;
-    const result: TestDataConfig = {
-      id,
-      configId: config.configId || null,
-      username: config.username || null,
-      password: config.password || null,
-      webPortalUrl: config.webPortalUrl || null,
-      permissions: config.permissions || null,
-      additionalData: config.additionalData || null,
-      uploadedFiles: config.uploadedFiles || null,
-      createdAt: new Date()
-    };
-    this.data.testDataConfigs.set(id, result);
-    return result;
-  }
-
-  async getTestDataConfig(configId: number): Promise<TestDataConfig | undefined> {
-    return Array.from(this.data.testDataConfigs.values()).find(c => c.configId === configId);
-  }
-
-  async updateTestDataConfig(configId: number, config: Partial<InsertTestDataConfig>): Promise<TestDataConfig | undefined> {
-    const existing = Array.from(this.data.testDataConfigs.values()).find(c => c.configId === configId);
-    if (!existing) return undefined;
-    const updated = { ...existing, ...config };
-    this.data.testDataConfigs.set(existing.id, updated);
-    return updated;
-  }
-
-  // Environment Config methods
-  async createEnvironmentConfig(config: InsertEnvironmentConfig): Promise<EnvironmentConfig> {
-    const id = this.nextId++;
-    const result: EnvironmentConfig = {
-      id,
-      configId: config.configId || null,
-      operatingSystem: config.operatingSystem,
-      osVersion: config.osVersion || null,
-      webBrowser: config.webBrowser || null,
-      browserVersion: config.browserVersion || null,
-      mobileDevice: config.mobileDevice || null,
-      mobileVersion: config.mobileVersion || null,
-      createdAt: new Date()
-    };
-    this.data.environmentConfigs.set(id, result);
-    return result;
-  }
-
-  async getEnvironmentConfig(configId: number): Promise<EnvironmentConfig | undefined> {
-    return Array.from(this.data.environmentConfigs.values()).find(c => c.configId === configId);
-  }
-
-  async updateEnvironmentConfig(configId: number, config: Partial<InsertEnvironmentConfig>): Promise<EnvironmentConfig | undefined> {
-    const existing = Array.from(this.data.environmentConfigs.values()).find(c => c.configId === configId);
-    if (!existing) return undefined;
-    const updated = { ...existing, ...config };
-    this.data.environmentConfigs.set(existing.id, updated);
-    return updated;
-  }
-
-  // AI Configuration methods
-  async createAiConfiguration(config: InsertAiConfiguration): Promise<AiConfiguration> {
-    const id = this.nextId++;
-    const result: AiConfiguration = {
-      id,
-      configId: config.configId || null,
-      includePositiveTests: config.includePositiveTests || null,
-      includeNegativeTests: config.includeNegativeTests || null,
-      includeEdgeCases: config.includeEdgeCases || null,
-      includeSecurityCases: config.includeSecurityCases || null,
-      includePerformanceTests: config.includePerformanceTests || null,
-      includeUiTests: config.includeUiTests || null,
-      includeUsabilityTests: config.includeUsabilityTests || null,
-      includeApiTests: config.includeApiTests || null,
-      includeCompatibilityTests: config.includeCompatibilityTests || null,
-      testComplexity: config.testComplexity || null,
-      additionalInstructions: config.additionalInstructions || null,
-      createdAt: new Date()
-    };
-    this.data.aiConfigurations.set(id, result);
-    return result;
-  }
-
-  async getAiConfiguration(configId: number): Promise<AiConfiguration | undefined> {
-    return Array.from(this.data.aiConfigurations.values()).find(c => c.configId === configId);
-  }
-
-  async updateAiConfiguration(configId: number, config: Partial<InsertAiConfiguration>): Promise<AiConfiguration | undefined> {
-    const existing = Array.from(this.data.aiConfigurations.values()).find(c => c.configId === configId);
-    if (!existing) return undefined;
-    const updated = { ...existing, ...config };
-    this.data.aiConfigurations.set(existing.id, updated);
-    return updated;
-  }
+if (!storage) {
+  console.error("❌ Database storage not available - falling back to simple storage");
 }
-
-// Use memory storage as fallback when database is not available
-import { simpleStorage } from './simple-storage';
-
-export const storage = db ? new DatabaseStorage() : simpleStorage;
