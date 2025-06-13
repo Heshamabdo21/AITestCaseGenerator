@@ -167,9 +167,12 @@ export function UnifiedTestGenerator() {
       }
 
       // Generate actual test cases
+      const primaryPlatform = enabledPlatforms[0].id;
+      const testType = primaryPlatform === "api" ? "api" : primaryPlatform === "mobile" ? "mobile" : "web";
+      
       return api.generateTestCases({
         userStoryIds: userStories.map((s: any) => s.id),
-        testType: enabledPlatforms[0].id, // Use first enabled platform as primary
+        testType,
         style: "step-by-step", 
         coverageLevel: "standard",
         includePositive,

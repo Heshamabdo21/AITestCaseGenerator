@@ -106,9 +106,16 @@ This is a comprehensive test case management system designed for Azure DevOps in
 - **Asset Optimization**: Static assets served efficiently in production
 - **TypeScript Compilation**: Full type checking during build process
 
+## Recent Changes
+
+- June 13, 2025: Completed migration from Replit Agent to standard Replit environment
+- June 13, 2025: Merged Quick Test Generator and Live Test Case Generator into unified component
+- June 13, 2025: Enhanced test generation with dual-mode operation (Quick/Multi-Platform)
+- June 13, 2025: Maintained memory storage approach without database dependency
+
 ## Changelog
 
-- June 13, 2025. Initial setup
+- June 13, 2025. Initial setup and migration completion
 
 ## User Preferences
 
