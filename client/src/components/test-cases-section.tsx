@@ -641,9 +641,25 @@ export function TestCasesSection() {
             )}
           </div>
         </div>
-        {/* Test Cases Grouped by User Story */}
-        <div className="space-y-6">
-          {Object.entries(groupedTestCases).map(([userStoryId, groupTestCases]) => (
+
+        {/* Empty State for Filtered Results */}
+        {filteredTestCases.length === 0 && typedTestCases.length > 0 ? (
+          <div className="text-center py-12">
+            <Filter className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No Test Cases Match Your Filters</h3>
+            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+              Try adjusting your filters or clearing them to see more test cases.
+            </p>
+            <Button onClick={resetFilters} variant="outline">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Clear All Filters
+            </Button>
+          </div>
+        ) : (
+          <>
+            {/* Test Cases Grouped by User Story */}
+            <div className="space-y-6">
+              {Object.entries(groupedTestCases).map(([userStoryId, groupTestCases]) => (
             <div key={userStoryId} className="border rounded-lg">
               <div className="px-4 py-3 bg-muted/50 border-b">
                 <div className="flex items-center justify-between">
@@ -928,57 +944,59 @@ export function TestCasesSection() {
           ))}
         </div>
 
-        {/* Bulk Actions */}
-        {typedTestCases.length > 0 && (
-          <div className="flex items-center justify-between pt-4 border-t mt-6">
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" onClick={handleSelectAll}>
-                <Check className="h-4 w-4 mr-2" />
-                {selectedTestCases.length === typedTestCases.length ? "Deselect All" : "Select All"}
-              </Button>
-              {selectedTestCases.length > 0 && (
-                <span className="text-sm text-muted-foreground">
-                  {selectedTestCases.length} of {typedTestCases.length} selected
-                </span>
-              )}
-            </div>
-            <div className="flex items-center space-x-2">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105"
-                    disabled={deleteAllTestCasesMutation.isPending}
-                  >
-                    {deleteAllTestCasesMutation.isPending ? (
-                      <>
-                        <LoadingSpinner size="sm" className="mr-2 border-red-600" />
-                        Deleting All
-                        <BouncingDots className="ml-2" />
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete All
-                      </>
-                    )}
+            {/* Bulk Actions */}
+            {filteredTestCases.length > 0 && (
+              <div className="flex items-center justify-between pt-4 border-t mt-6">
+                <div className="flex items-center space-x-4">
+                  <Button variant="outline" onClick={handleSelectAll}>
+                    <Check className="h-4 w-4 mr-2" />
+                    {selectedTestCases.length === filteredTestCases.length ? "Deselect All" : "Select All"}
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete All Test Cases</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete all test cases? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteAllTestCases}>Delete All</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
+                  {selectedTestCases.length > 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {selectedTestCases.length} of {filteredTestCases.length} selected
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105"
+                        disabled={deleteAllTestCasesMutation.isPending}
+                      >
+                        {deleteAllTestCasesMutation.isPending ? (
+                          <>
+                            <LoadingSpinner size="sm" className="mr-2 border-red-600" />
+                            Deleting All
+                            <BouncingDots className="ml-2" />
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete All
+                          </>
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete All Test Cases</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete all test cases? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteAllTestCases}>Delete All</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
       <Confetti trigger={confettiAnimation} />
