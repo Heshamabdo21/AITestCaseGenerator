@@ -80,8 +80,9 @@ A comprehensive test case management system designed for Azure DevOps integratio
 
 - **Node.js** (v20 or higher)
 - **npm** or **yarn**
-- **PostgreSQL** (optional - uses memory storage by default)
+- **PostgreSQL** (optional - uses memory storage by default, automatically configured on Replit)
 - **Docker** (for containerized deployment)
+- **OpenAI API Key** (for AI-powered test case generation)
 
 ## 🔧 Installation
 
@@ -113,8 +114,13 @@ A comprehensive test case management system designed for Azure DevOps integratio
    AZURE_DEVOPS_PAT=your_personal_access_token
    ```
 
-4. **Database Setup (Optional)**
-   If using PostgreSQL:
+4. **Database Setup**
+   
+   **Option A: Replit Database (Automatic)**
+   - PostgreSQL is automatically configured with DATABASE_URL
+   - Schema is pushed automatically on first run
+   
+   **Option B: Local PostgreSQL**
    ```bash
    # Create database
    createdb testcases
@@ -122,6 +128,10 @@ A comprehensive test case management system designed for Azure DevOps integratio
    # Run migrations
    npm run db:push
    ```
+   
+   **Option C: Memory Storage**
+   - Remove DATABASE_URL environment variable
+   - Application automatically falls back to memory storage
 
 5. **Start Development Server**
    ```bash
@@ -160,8 +170,9 @@ A comprehensive test case management system designed for Azure DevOps integratio
 
    Services included:
    - Application server (port 5000)
-   - PostgreSQL database (port 5432)
-   - Persistent data volumes
+   - PostgreSQL database (port 5432) with persistent volumes
+   - Automatic health monitoring and restart policies
+   - Database schema initialization
 
 ### Manual Docker Build
 
@@ -221,8 +232,10 @@ The Docker setup includes:
 │   └── init-db.js            # Database initialization
 ├── migrations/                # Database migration files
 ├── attached_assets/          # User-uploaded assets
-├── Dockerfile                # Production Docker configuration (updated)
-├── docker-compose.yml        # Development environment setup
+├── Dockerfile                # Production Docker configuration
+├── docker-compose.yml        # Complete stack with PostgreSQL
+├── DOCKER_DEPLOYMENT.md      # Docker deployment guide
+├── POSTGRESQL_SETUP.md       # Database setup and configuration
 ├── vite.config.ts            # Vite bundler configuration
 ├── tailwind.config.ts        # Tailwind CSS configuration
 ├── drizzle.config.ts         # Drizzle ORM configuration
