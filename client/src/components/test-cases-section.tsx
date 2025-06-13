@@ -11,9 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { FlaskRound, Check, X, Edit3, Download, CloudUpload, Eye, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { FlaskRound, Check, X, Edit3, Download, CloudUpload, Eye, Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { LoadingSpinner, TestCaseLoading, BouncingDots } from "@/components/ui/loading-spinner";
 import type { TestCase } from "@shared/schema";
 
 export function TestCasesSection() {
@@ -262,7 +263,7 @@ export function TestCasesSection() {
             >
               {exportToExcelMutation.isPending ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                  <LoadingSpinner size="sm" className="mr-2" />
                   Exporting...
                 </>
               ) : (
@@ -279,8 +280,9 @@ export function TestCasesSection() {
             >
               {addToAzureMutation.isPending ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Processing...
+                  <LoadingSpinner size="sm" className="mr-2 border-white" />
+                  Processing
+                  <BouncingDots className="ml-2" />
                 </>
               ) : (
                 <>
