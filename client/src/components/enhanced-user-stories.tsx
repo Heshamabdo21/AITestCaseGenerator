@@ -427,7 +427,7 @@ export function EnhancedUserStories({ onTestCasesGenerated }: EnhancedUserStorie
 
         {/* Bulk Actions */}
         {filteredStories.length > 0 && (
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
             <div className="flex items-center space-x-4">
               <Button variant="outline" onClick={handleSelectAll}>
                 {selectedStories.length === currentStories.length ? "Deselect All" : "Select All"}
