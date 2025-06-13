@@ -91,12 +91,12 @@ export const aiConfigurations = pgTable("ai_configurations", {
   includePositiveTests: boolean("include_positive_tests").default(true),
   includeNegativeTests: boolean("include_negative_tests").default(true),
   includeEdgeCases: boolean("include_edge_cases").default(true),
-  includeSecurityCases: boolean("include_security_cases").default(false),
-  includePerformanceTests: boolean("include_performance_tests").default(false),
-  includeUiTests: boolean("include_ui_tests").default(false),
-  includeUsabilityTests: boolean("include_usability_tests").default(false),
-  includeApiTests: boolean("include_api_tests").default(false),
-  includeCompatibilityTests: boolean("include_compatibility_tests").default(false),
+  includeSecurityCases: boolean("include_security_cases").default(true),
+  includePerformanceTests: boolean("include_performance_tests").default(true),
+  includeUiTests: boolean("include_ui_tests").default(true),
+  includeUsabilityTests: boolean("include_usability_tests").default(true),
+  includeApiTests: boolean("include_api_tests").default(true),
+  includeCompatibilityTests: boolean("include_compatibility_tests").default(true),
   testComplexity: text("test_complexity").default("medium"), // simple, medium, complex
   additionalInstructions: text("additional_instructions"),
   // Test type preferences

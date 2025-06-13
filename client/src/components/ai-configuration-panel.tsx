@@ -37,12 +37,12 @@ export function AiConfigurationPanel() {
       includePositiveTests: true,
       includeNegativeTests: true,
       includeEdgeCases: true,
-      includeSecurityCases: false,
-      includePerformanceTests: false,
-      includeUiTests: false,
-      includeUsabilityTests: false,
-      includeApiTests: false,
-      includeCompatibilityTests: false,
+      includeSecurityCases: true,
+      includePerformanceTests: true,
+      includeUiTests: true,
+      includeUsabilityTests: true,
+      includeApiTests: true,
+      includeCompatibilityTests: true,
       testComplexity: "medium",
       additionalInstructions: ""
     }
