@@ -9,7 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FlaskRound, Check, X, Edit3, Download, CloudUpload } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { FlaskRound, Check, X, Edit3, Download, CloudUpload, Eye, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import type { TestCase } from "@shared/schema";
@@ -17,6 +19,9 @@ import type { TestCase } from "@shared/schema";
 export function TestCasesSection() {
   const [selectedTestCases, setSelectedTestCases] = useState<number[]>([]);
   const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
+  const [viewingTestCase, setViewingTestCase] = useState<TestCase | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -78,6 +83,47 @@ export function TestCasesSection() {
     onError: (error: any) => {
       toast({
         title: "Export Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to delete test case
+  const deleteTestCaseMutation = useMutation({
+    mutationFn: (testCaseId: number) => api.deleteTestCase(testCaseId),
+    onSuccess: () => {
+      toast({
+        title: "Test Case Deleted",
+        description: "Test case deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
+      setSelectedTestCases(prev => prev.filter(id => id !== testCaseId));
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to delete all test cases
+  const deleteAllTestCasesMutation = useMutation({
+    mutationFn: () => api.deleteAllTestCases(),
+    onSuccess: () => {
+      toast({
+        title: "All Test Cases Deleted",
+        description: "All test cases have been deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
+      setSelectedTestCases([]);
+      setCurrentPage(1);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Delete Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -151,6 +197,24 @@ export function TestCasesSection() {
   };
 
   const typedTestCases = testCases as TestCase[];
+  
+  // Pagination logic
+  const totalPages = Math.ceil(typedTestCases.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTestCases = typedTestCases.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleDeleteTestCase = (testCaseId: number) => {
+    deleteTestCaseMutation.mutate(testCaseId);
+  };
+
+  const handleDeleteAllTestCases = () => {
+    deleteAllTestCasesMutation.mutate();
+  };
   
   if (typedTestCases.length === 0 && !isLoading) {
     return (
