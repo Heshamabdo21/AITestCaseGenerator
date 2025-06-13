@@ -1,76 +1,204 @@
 # Docker Deployment Guide
 
-This guide explains how to deploy the Test Case Management System using Docker.
+Complete deployment guide for the Test Case Management System using Docker with the latest architecture updates.
 
 ## Quick Start
 
 ### Option 1: Docker Compose (Recommended)
-Run the complete application with PostgreSQL database:
+Run the complete application stack with PostgreSQL database:
 
 ```bash
+# Start all services
 docker-compose up -d
+
+# View logs
+docker-compose logs -f app
+
+# Check service status
+docker-compose ps
 ```
 
 The application will be available at http://localhost:5000
 
-### Option 2: Docker Build Only
-Build and run just the application container:
+### Option 2: Standalone Docker Container
+Build and run just the application container with memory storage:
 
 ```bash
 # Build the image
 docker build -t test-case-manager .
 
-# Run the container
+# Run with memory storage
 docker run -p 5000:5000 test-case-manager
+
+# Run with environment variables
+docker run -p 5000:5000 \
+  -e DATABASE_URL=postgresql://user:pass@host:5432/db \
+  -e OPENAI_API_KEY=your_openai_key \
+  test-case-manager
 ```
 
-## Configuration
+## Architecture & Configuration
+
+### Current Build Process
+The Dockerfile uses a multi-stage build optimized for the latest project structure:
+
+1. **Builder Stage**: Installs all dependencies and builds both frontend (Vite) and backend (ESBuild)
+2. **Production Stage**: Copies only production dependencies and built assets
+3. **Runtime**: Executes as non-root user with comprehensive health checks
 
 ### Environment Variables
 
-The application supports the following environment variables:
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `NODE_ENV` | Environment mode | No | `production` |
+| `DATABASE_URL` | PostgreSQL connection string | No | Memory storage |
+| `OPENAI_API_KEY` | OpenAI API key for AI features | No | AI features disabled |
+| `PORT` | Application port | No | `5000` |
+| `HOST` | Bind address | No | `0.0.0.0` |
 
-- `NODE_ENV` - Set to `production` for production deployment
-- `DATABASE_URL` - PostgreSQL connection string (optional, uses memory storage if not provided)
-- `PORT` - Port to run the application on (default: 5000)
-
-### Database Setup
-
-If using PostgreSQL, the application will automatically create the necessary tables on startup.
+### Storage Options
+- **Memory Storage** (default): No database required, data persists during container lifetime
+- **PostgreSQL**: Full persistence with automatic table creation and migrations
 
 ## Docker Compose Services
 
-- **app**: The main application container
-- **db**: PostgreSQL database container
+### Application Stack
+- **app**: Main Node.js application server
+  - Built from local Dockerfile
+  - Exposes port 5000
+  - Includes health checks
+  - Runs as non-root user
 
-## Health Check
+- **db**: PostgreSQL 15 database
+  - Official PostgreSQL image
+  - Persistent volume for data
+  - Environment-based configuration
+  - Only exposed in development
 
-The application includes a health check endpoint at `/api/health` that Docker uses to monitor container health.
+### Service Dependencies
+The application container waits for the database to be ready before starting when using PostgreSQL.
+
+## Health Monitoring
+
+### Application Health Check
+- **Endpoint**: Checks `/api/azure-config/latest`
+- **Interval**: Every 30 seconds
+- **Timeout**: 10 seconds
+- **Start Period**: 30 seconds (allows for initialization)
+- **Retries**: 3 attempts before marking unhealthy
+
+### Database Health
+PostgreSQL includes built-in health checks and automatic restart policies.
 
 ## Security Features
 
-- Multi-stage build for smaller production image
-- Non-root user execution
-- Minimal attack surface using Alpine Linux
-- Production dependencies only in final image
+### Container Security
+- **Multi-stage build**: Minimizes final image size and attack surface
+- **Non-root execution**: Application runs as user `testapp` (UID 1001)
+- **Alpine Linux base**: Minimal, security-focused base image
+- **Production dependencies only**: No development tools in final image
 
-## Volumes
+### Application Security
+- **Input validation**: Zod schema validation on all inputs
+- **File upload restrictions**: Size limits and type validation
+- **Environment isolation**: Proper secret management
+- **SQL injection prevention**: Parameterized queries via Drizzle ORM
 
-- `postgres_data`: Persistent storage for PostgreSQL data
-- `uploads`: Storage for uploaded files
+## Data Persistence
 
-## Ports
+### Volumes
+- `postgres_data`: PostgreSQL database files
+- `app_uploads`: User-uploaded CSV files and assets
 
-- `5000`: Application server
-- `5432`: PostgreSQL database (only exposed for development)
-
-## Stopping the Application
-
+### Backup Strategy
 ```bash
-docker-compose down
+# Backup database
+docker-compose exec db pg_dump -U testuser testcases > backup.sql
+
+# Restore database
+docker-compose exec -T db psql -U testuser testcases < backup.sql
 ```
 
-To also remove volumes:
+## Development vs Production
+
+### Development Mode
 ```bash
-docker-compose down -v
+# Use docker-compose.override.yml for development
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 ```
+
+### Production Deployment
+```bash
+# Production with external database
+docker run -d \
+  --name test-case-manager \
+  -p 5000:5000 \
+  -e NODE_ENV=production \
+  -e DATABASE_URL=postgresql://user:pass@prod-db:5432/testcases \
+  -e OPENAI_API_KEY=prod_key \
+  --restart unless-stopped \
+  test-case-manager
+```
+
+## Troubleshooting
+
+### Common Issues
+1. **Container won't start**: Check logs with `docker-compose logs app`
+2. **Database connection**: Verify `DATABASE_URL` format and network connectivity
+3. **Port conflicts**: Ensure port 5000 is available or change mapping
+4. **Permission issues**: Verify volume permissions for non-root user
+
+### Debugging Commands
+```bash
+# View detailed logs
+docker-compose logs -f --tail=100 app
+
+# Access container shell
+docker-compose exec app sh
+
+# Check container health
+docker inspect <container_id> | grep Health
+
+# Monitor resource usage
+docker stats
+```
+
+## Scaling & Performance
+
+### Horizontal Scaling
+```bash
+# Scale application containers
+docker-compose up -d --scale app=3
+
+# Use load balancer (nginx, traefik, etc.)
+```
+
+### Resource Limits
+```yaml
+# In docker-compose.yml
+services:
+  app:
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+```
+
+## Maintenance
+
+### Updates
+```bash
+# Update application
+docker-compose pull
+docker-compose up -d --build
+
+# Clean old images
+docker image prune -f
+```
+
+### Monitoring
+- Container health status via Docker health checks
+- Application metrics via built-in endpoints
+- Database performance monitoring
+- Log aggregation for production deployments

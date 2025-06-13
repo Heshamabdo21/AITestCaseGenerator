@@ -29,32 +29,34 @@ A comprehensive test case management system designed for Azure DevOps integratio
 ## 🛠 Technologies Used
 
 ### Frontend
-- **React 18** - Modern UI framework with hooks
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first CSS framework
-- **Shadcn/UI** - High-quality UI components
-- **Wouter** - Lightweight routing
-- **TanStack Query** - Data fetching and caching
-- **React Hook Form** - Form management
-- **Framer Motion** - Smooth animations
-- **Lucide React** - Icon library
+- **React 18** - Modern UI framework with hooks and concurrent features
+- **TypeScript** - Type-safe development with strict type checking
+- **Tailwind CSS v4** - Latest utility-first CSS framework
+- **Shadcn/UI + Radix UI** - Accessible, high-quality component library
+- **Wouter** - Lightweight client-side routing (3.3.5)
+- **TanStack Query v5** - Powerful data fetching and state management
+- **React Hook Form** - Performant form library with validation
+- **Framer Motion** - Production-ready motion library
+- **Lucide React** - Modern icon library with 1000+ icons
 
 ### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web application framework
-- **TypeScript** - Type-safe server development
-- **Drizzle ORM** - Type-safe database queries
-- **PostgreSQL** - Production database
-- **Zod** - Schema validation
-- **OpenAI API** - AI-powered features
-- **Multer** - File upload handling
+- **Node.js 20** - Latest LTS JavaScript runtime
+- **Express.js 4** - Minimal web application framework
+- **TypeScript** - Full-stack type safety
+- **Drizzle ORM** - Type-safe SQL toolkit with zero-runtime overhead
+- **PostgreSQL/Memory Storage** - Flexible storage options
+- **Zod** - Runtime type validation and parsing
+- **OpenAI API v5** - Latest AI integration for test generation
+- **Multer v2** - Advanced file upload handling
+- **WebSocket (ws)** - Real-time communication support
 
 ### Development & Deployment
-- **Vite** - Fast build tool and development server
-- **ESBuild** - Fast JavaScript bundler
-- **Docker** - Containerization
-- **Docker Compose** - Multi-container orchestration
-- **TSX** - TypeScript execution for development
+- **Vite 5** - Next-generation frontend tooling
+- **ESBuild** - Extremely fast JavaScript bundler
+- **TSX** - TypeScript execution engine for development
+- **Docker Multi-stage** - Optimized containerization
+- **Docker Compose** - Development environment orchestration
+- **Replit Integration** - Cloud development platform support
 
 ## 📋 Prerequisites
 
@@ -174,22 +176,33 @@ The Docker setup includes:
 ## 📁 Project Structure
 
 ```
-├── client/                 # Frontend React application
+├── client/                    # Frontend React application
 │   ├── src/
-│   │   ├── components/     # Reusable UI components
-│   │   ├── pages/         # Application pages
-│   │   ├── lib/           # Utility functions
-│   │   └── hooks/         # Custom React hooks
-├── server/                 # Backend Express application
-│   ├── routes.ts          # API routes
-│   ├── storage.ts         # Data storage interface
-│   ├── csv-parser.ts      # CSV import functionality
-│   └── test-case-generator.ts # AI test generation
-├── shared/                 # Shared types and schemas
-│   └── schema.ts          # Database schema and types
-├── Dockerfile             # Docker configuration
-├── docker-compose.yml     # Multi-container setup
-└── README.md             # This file
+│   │   ├── components/        # Reusable UI components
+│   │   ├── pages/            # Application pages/routes
+│   │   ├── lib/              # Utility functions & configurations
+│   │   └── hooks/            # Custom React hooks
+│   └── index.html            # Application entry point
+├── server/                    # Backend Express application
+│   ├── index.ts              # Main server entry point
+│   ├── routes.ts             # API route definitions
+│   ├── db.ts                 # Database connection & setup
+│   ├── simple-storage.ts     # In-memory storage implementation
+│   ├── csv-parser.ts         # CSV import/export functionality
+│   ├── demo-data.ts          # Demo data initialization
+│   └── vite.ts               # Vite integration for serving frontend
+├── shared/                    # Shared types and schemas
+│   └── schema.ts             # Database schema with Drizzle & Zod
+├── scripts/                   # Utility scripts
+│   └── init-db.js            # Database initialization
+├── migrations/                # Database migration files
+├── attached_assets/          # User-uploaded assets
+├── Dockerfile                # Production Docker configuration
+├── docker-compose.yml        # Development environment setup
+├── vite.config.ts            # Vite bundler configuration
+├── tailwind.config.ts        # Tailwind CSS configuration
+├── drizzle.config.ts         # Drizzle ORM configuration
+└── README.md                 # This documentation
 ```
 
 ## 🔌 API Endpoints
