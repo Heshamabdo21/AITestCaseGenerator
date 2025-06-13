@@ -208,7 +208,7 @@ The Docker setup includes:
 ├── client/                    # Frontend React application
 │   ├── src/
 │   │   ├── components/        # Reusable UI components
-│   │   │   ├── ai-assistant.tsx         # AI coding companion
+
 │   │   │   ├── progress-tracker.tsx     # Milestone visualization
 │   │   │   ├── copy-feedback.tsx        # Visual copy confirmation
 │   │   │   ├── onboarding-tour.tsx      # Interactive user guide
@@ -220,7 +220,7 @@ The Docker setup includes:
 ├── server/                    # Backend Express application
 │   ├── index.ts              # Main server entry point
 │   ├── routes.ts             # API route definitions (includes AI endpoints)
-│   ├── ai-assistant.ts       # OpenAI integration for code suggestions
+
 │   ├── db.ts                 # Database connection & setup
 │   ├── simple-storage.ts     # In-memory storage implementation
 │   ├── csv-parser.ts         # CSV import/export functionality
@@ -262,9 +262,7 @@ The Docker setup includes:
 - `GET /api/test-cases/export-excel` - Export test cases to Excel
 - `PATCH /api/test-cases/:id` - Update test case status
 
-### AI Assistant (New)
-- `POST /api/ai-assistant/suggest` - Get AI code suggestions and improvements
-- `POST /api/ai-assistant/analyze` - Analyze test case quality and provide recommendations
+
 
 ### Health Check
 - `GET /api/health` - Container health status

@@ -45,14 +45,7 @@ const defaultSteps: TourStep[] = [
     position: 'bottom',
     highlight: true
   },
-  {
-    id: 'ai-assistant',
-    target: '[data-tour="ai-assistant"]',
-    title: 'AI Code Assistant',
-    content: 'Your intelligent coding companion! Click here to get code suggestions, improvements, and instant help with test case development.',
-    position: 'left',
-    action: 'Try asking for a code suggestion!'
-  },
+
   {
     id: 'test-generation',
     target: '[data-tour="test-generator"]',

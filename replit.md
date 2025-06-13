@@ -112,6 +112,7 @@ This is a comprehensive test case management system designed for Azure DevOps in
 - June 13, 2025: Merged Quick Test Generator and Live Test Case Generator into unified component
 - June 13, 2025: Enhanced test generation with dual-mode operation (Quick/Multi-Platform)
 - June 13, 2025: Maintained memory storage approach without database dependency
+- June 13, 2025: Removed chatbot feature (AI assistant component and API endpoints)
 
 ## Changelog
 
