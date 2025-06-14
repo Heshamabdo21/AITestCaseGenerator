@@ -339,14 +339,37 @@ export function TestCasesSection() {
 
   // Get user story display with Azure DevOps ID and title
   const getUserStoryDisplay = (userStoryId: number | string) => {
-    if (userStoryId === 'unassigned') return 'Unassigned Test Cases';
+    if (userStoryId === 'unassigned') {
+      return {
+        id: 'unassigned',
+        title: 'Unassigned Test Cases',
+        fullDisplay: 'Unassigned Test Cases',
+        state: 'Unassigned',
+        priority: null,
+        assignedTo: null
+      };
+    }
     const story = userStories.find((s: any) => s.id === userStoryId);
     if (story) {
-      // Use Azure DevOps ID and title from the actual Azure DevOps data
-      return `${story.azureId}: ${story.title}`;
+      // Enhanced display with Azure DevOps ID and title for better traceability
+      return {
+        id: story.azureId,
+        title: story.title,
+        fullDisplay: `${story.azureId}: ${story.title}`,
+        state: story.state,
+        priority: story.priority,
+        assignedTo: story.assignedTo
+      };
     }
-    // Show ID even when user story details aren't loaded
-    return `${userStoryId}: User Story ${userStoryId}`;
+    // Fallback when user story details aren't loaded
+    return {
+      id: userStoryId.toString(),
+      title: `User Story ${userStoryId}`,
+      fullDisplay: `${userStoryId}: User Story ${userStoryId}`,
+      state: 'Unknown',
+      priority: null,
+      assignedTo: null
+    };
   };
   
   // Pagination logic
@@ -650,7 +673,36 @@ export function TestCasesSection() {
                       <div key={userStoryId} className="border rounded-lg">
                         <div className="px-4 py-3 bg-muted/50 border-b">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-sm">{getUserStoryDisplay(userStoryId)}</h3>
+                            <div className="space-y-1">
+                              {(() => {
+                                const storyDisplay = getUserStoryDisplay(userStoryId);
+                                if (typeof storyDisplay === 'string') {
+                                  return <h3 className="font-semibold text-sm">{storyDisplay}</h3>;
+                                }
+                                return (
+                                  <>
+                                    <h3 className="font-semibold text-sm">{storyDisplay.fullDisplay}</h3>
+                                    <div className="flex items-center space-x-2">
+                                      {storyDisplay.state !== 'Unknown' && (
+                                        <Badge variant="outline" className="text-xs">
+                                          {storyDisplay.state}
+                                        </Badge>
+                                      )}
+                                      {storyDisplay.priority && (
+                                        <Badge variant="secondary" className="text-xs">
+                                          Priority: {storyDisplay.priority}
+                                        </Badge>
+                                      )}
+                                      {storyDisplay.assignedTo && (
+                                        <span className="text-xs text-muted-foreground">
+                                          Assigned: {storyDisplay.assignedTo}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </>
+                                );
+                              })()}
+                            </div>
                             <div className="flex items-center space-x-2">
                               <Badge variant="outline" className="text-xs">
                                 {groupTestCases.length} test{groupTestCases.length !== 1 ? 's' : ''}
