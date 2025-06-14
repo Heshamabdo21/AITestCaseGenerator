@@ -4,12 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { AlertTriangle } from "lucide-react";
 
 const aiConfigurationSchema = z.object({
   includePositiveTests: z.boolean().default(true),
@@ -70,9 +72,12 @@ export function AiConfigurationPanel() {
       queryClient.invalidateQueries({ queryKey: ["/api/ai-configuration"] });
     },
     onError: (error: any) => {
+      const isAzureConfigMissing = error.message?.includes("No Azure DevOps configuration found");
       toast({
         title: "Error",
-        description: error.message,
+        description: isAzureConfigMissing 
+          ? "Please configure your Azure DevOps connection first before setting up AI preferences."
+          : error.message,
         variant: "destructive",
       });
     },
@@ -91,6 +96,15 @@ export function AiConfigurationPanel() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {!azureConfig && (
+          <Alert className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Azure DevOps configuration is required before setting up AI preferences. 
+              Please configure your Azure connection first in the Configuration tab.
+            </AlertDescription>
+          </Alert>
+        )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-3">
@@ -343,7 +357,7 @@ export function AiConfigurationPanel() {
               )}
             />
 
-            <Button type="submit" disabled={saveAiConfigMutation.isPending}>
+            <Button type="submit" disabled={!azureConfig || saveAiConfigMutation.isPending}>
               {saveAiConfigMutation.isPending ? "Saving..." : "Save AI Configuration"}
             </Button>
           </form>
