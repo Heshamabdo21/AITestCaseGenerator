@@ -307,7 +307,7 @@ export function TestCasesSection() {
     }
   };
 
-  const handleExportSelectedForUserStory = (userStoryId: string, testCases: TestCase[]) => {
+  const handleExportSelectedForUserStory = async (userStoryId: string, testCases: TestCase[]) => {
     const selectedIds = selectedTestCasesByUserStory[userStoryId] || [];
     const selectedTestCases = testCases.filter(tc => selectedIds.includes(tc.id));
     
@@ -320,21 +320,42 @@ export function TestCasesSection() {
       return;
     }
 
-    // Create Excel export for selected test cases
-    const blob = new Blob([JSON.stringify(selectedTestCases, null, 2)], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `test-cases-user-story-${userStoryId}.json`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    celebrateSuccess('export');
-    toast({
-      title: "Export Successful",
-      description: `Exported ${selectedTestCases.length} test cases for user story ${userStoryId}`,
-    });
+    try {
+      // Use the same export API but filter by selected test case IDs
+      const response = await fetch('/api/test-cases/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ testCaseIds: selectedIds })
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `test-cases-user-story-${userStoryId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.removeChild(a);
+      
+      celebrateSuccess('export');
+      toast({
+        title: "Export Successful",
+        description: `Exported ${selectedTestCases.length} test cases for user story ${userStoryId}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Unable to export test cases. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -943,8 +964,51 @@ export function TestCasesSection() {
                                 </span>
                               )}
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {groupTestCases.length} test {groupTestCases.length === 1 ? 'case' : 'cases'}
+                            <div className="flex items-center space-x-3">
+                              {/* User Story Specific Actions */}
+                              <div className="flex items-center space-x-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleSelectAllForUserStory(userStoryId, groupTestCases)}
+                                  className="text-xs border-slate-300 hover:bg-slate-50"
+                                >
+                                  {(selectedTestCasesByUserStory[userStoryId]?.length || 0) === groupTestCases.length && groupTestCases.length > 0 ? 'Deselect All' : 'Select All'}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleApproveSelectedForUserStory(userStoryId)}
+                                  disabled={(selectedTestCasesByUserStory[userStoryId]?.length || 0) === 0 || updateStatusMutation.isPending}
+                                  className="text-xs border-green-300 text-green-700 hover:bg-green-50"
+                                >
+                                  <Check className="h-3 w-3 mr-1" />
+                                  Approve ({selectedTestCasesByUserStory[userStoryId]?.length || 0})
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleRejectSelectedForUserStory(userStoryId)}
+                                  disabled={(selectedTestCasesByUserStory[userStoryId]?.length || 0) === 0 || updateStatusMutation.isPending}
+                                  className="text-xs border-red-300 text-red-700 hover:bg-red-50"
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Reject ({selectedTestCasesByUserStory[userStoryId]?.length || 0})
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleExportSelectedForUserStory(userStoryId, groupTestCases)}
+                                  disabled={(selectedTestCasesByUserStory[userStoryId]?.length || 0) === 0}
+                                  className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50"
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  Export
+                                </Button>
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {groupTestCases.length} test {groupTestCases.length === 1 ? 'case' : 'cases'}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -955,14 +1019,8 @@ export function TestCasesSection() {
                               <TableRow className="bg-slate-50/50 dark:bg-slate-900/50">
                                 <TableHead className="w-12">
                                   <Checkbox
-                                    checked={selectedTestCases.filter(id => paginatedGroupTestCases.map(tc => tc.id).includes(id)).length === paginatedGroupTestCases.length && paginatedGroupTestCases.length > 0}
-                                    onCheckedChange={(checked) => {
-                                      if (checked) {
-                                        setSelectedTestCases(prev => [...prev, ...paginatedGroupTestCases.map(tc => tc.id).filter(id => !prev.includes(id))]);
-                                      } else {
-                                        setSelectedTestCases(prev => prev.filter(id => !paginatedGroupTestCases.map(tc => tc.id).includes(id)));
-                                      }
-                                    }}
+                                    checked={(selectedTestCasesByUserStory[userStoryId]?.length || 0) === paginatedGroupTestCases.length && paginatedGroupTestCases.length > 0}
+                                    onCheckedChange={() => handleSelectAllForUserStory(userStoryId, paginatedGroupTestCases)}
                                   />
                                 </TableHead>
                                 <TableHead className="font-semibold">
@@ -1022,8 +1080,8 @@ export function TestCasesSection() {
                                   >
                                     <TableCell>
                                       <Checkbox
-                                        checked={selectedTestCases.includes(testCase.id)}
-                                        onCheckedChange={() => handleTestCaseSelect(testCase.id)}
+                                        checked={(selectedTestCasesByUserStory[userStoryId] || []).includes(testCase.id)}
+                                        onCheckedChange={() => handleUserStoryTestCaseSelect(testCase.id, userStoryId)}
                                       />
                                     </TableCell>
                                     <TableCell className="font-mono">

@@ -108,6 +108,10 @@ This is a comprehensive test case management system designed for Azure DevOps in
 
 ## Recent Changes
 
+- June 14, 2025: Implemented enhanced test case table functionality with user story-specific and global action buttons
+- June 14, 2025: Added selective export capabilities for individual user stories
+- June 14, 2025: Enhanced batch operations with approve/reject functionality per user story
+- June 14, 2025: Improved UI with clear distinction between global and local actions
 - June 13, 2025: Completed migration from Replit Agent to standard Replit environment
 - June 13, 2025: Merged Quick Test Generator and Live Test Case Generator into unified component
 - June 13, 2025: Enhanced test generation with dual-mode operation (Quick/Multi-Platform)
