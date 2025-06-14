@@ -53,6 +53,9 @@ This is a comprehensive test case management system designed for Azure DevOps in
 - **Status Tracking**: Approval workflow with pending, approved, and rejected states
 - **Linking System**: Connects test cases to user stories and requirements
 - **Feedback Collection**: User feedback system for continuous improvement
+- **Enhanced Table Actions**: User story-specific and global action buttons for targeted operations
+- **Selective Export**: Excel export functionality for individual user stories or selected test cases
+- **Batch Operations**: Bulk approve/reject capabilities with clear visual feedback
 
 ### 5. Configuration Systems
 - **AI Configuration**: Customizable test generation preferences and complexity levels
@@ -105,6 +108,29 @@ This is a comprehensive test case management system designed for Azure DevOps in
 - **Backend Build**: ESBuild bundles server code to `dist/index.js`
 - **Asset Optimization**: Static assets served efficiently in production
 - **TypeScript Compilation**: Full type checking during build process
+
+## Feature Enhancements
+
+### Test Case Table Action System
+The test case interface now supports sophisticated batch operations with clear separation between global and user story-specific actions:
+
+#### Global Actions (Header Level)
+- **Approve All Selected**: Mass approval across all test cases with celebration effects
+- **Reject All Selected**: Bulk rejection with confirmation feedback
+- **Export All**: Complete Excel export of all test cases with structured formatting
+- **Select/Deselect All**: Quick selection management across the entire dataset
+
+#### User Story-Specific Actions (Table Level)
+- **Select All for User Story**: Toggle selection for all test cases within a specific user story
+- **Approve Selected**: Targeted approval for selected test cases within the user story
+- **Reject Selected**: Targeted rejection with proper status updates
+- **Export Selected**: Filtered Excel export containing only selected test cases from the user story
+
+#### Technical Implementation
+- **Dual Selection State**: Independent selection tracking for global and user story-specific operations
+- **Backend Export API**: POST endpoint supporting filtered exports via test case ID arrays
+- **Excel Generation**: Structured XLSX output with auto-sized columns and proper formatting
+- **Visual Feedback**: Loading states, success animations, and clear button labeling
 
 ## Recent Changes
 
