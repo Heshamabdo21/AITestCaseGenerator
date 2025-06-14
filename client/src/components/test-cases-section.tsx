@@ -537,16 +537,19 @@ export function TestCasesSection() {
                 </SelectContent>
               </Select>
               <Select value={userStoryFilter} onValueChange={setUserStoryFilter}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="User Story" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Stories</SelectItem>
-                  {getUniqueUserStories().map(userStoryId => (
-                    <SelectItem key={userStoryId} value={userStoryId}>
-                      {userStoryId === 'unassigned' ? 'Unassigned' : `Story ${userStoryId}`}
-                    </SelectItem>
-                  ))}
+                  {getUniqueUserStories().map(userStoryId => {
+                    const storyDisplay = getUserStoryDisplay(userStoryId);
+                    return (
+                      <SelectItem key={userStoryId} value={userStoryId}>
+                        {userStoryId === 'unassigned' ? 'Unassigned' : storyDisplay.fullDisplay}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -602,7 +605,7 @@ export function TestCasesSection() {
               )}
               {userStoryFilter !== "all" && (
                 <Badge variant="secondary" className="text-xs">
-                  Story: {userStoryFilter === 'unassigned' ? 'Unassigned' : userStoryFilter}
+                  Story: {userStoryFilter === 'unassigned' ? 'Unassigned' : getUserStoryDisplay(userStoryFilter).fullDisplay}
                   <button
                     onClick={() => setUserStoryFilter("all")}
                     className="ml-1 hover:bg-muted rounded-full p-0.5"
@@ -635,6 +638,56 @@ export function TestCasesSection() {
             )}
           </div>
         </div>
+
+        {/* User Stories Summary Panel */}
+        {typedTestCases.length > 0 && Object.keys(groupedTestCases).length > 0 && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-900 dark:to-gray-900 rounded-lg border">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Azure DevOps User Stories Overview
+              </h3>
+              <Badge variant="secondary" className="text-xs">
+                {Object.keys(groupedTestCases).length} active {Object.keys(groupedTestCases).length === 1 ? 'story' : 'stories'}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Object.entries(groupedTestCases).map(([userStoryId, groupTestCases]) => {
+                const storyDisplay = getUserStoryDisplay(userStoryId);
+                return (
+                  <div key={userStoryId} className="p-3 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700">
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between">
+                        <h4 className="text-xs font-medium text-slate-900 dark:text-slate-100 line-clamp-2">
+                          {storyDisplay.fullDisplay}
+                        </h4>
+                        <Badge variant="outline" className="text-xs ml-2 flex-shrink-0">
+                          {groupTestCases.length} tests
+                        </Badge>
+                      </div>
+                      <div className="flex items-center flex-wrap gap-1">
+                        {storyDisplay.state !== 'Unknown' && storyDisplay.state !== 'Unassigned' && (
+                          <Badge variant="secondary" className="text-xs">
+                            {storyDisplay.state}
+                          </Badge>
+                        )}
+                        {storyDisplay.priority && (
+                          <Badge variant="outline" className="text-xs">
+                            P{storyDisplay.priority}
+                          </Badge>
+                        )}
+                      </div>
+                      {storyDisplay.assignedTo && (
+                        <div className="text-xs text-muted-foreground truncate">
+                          Assigned: {storyDisplay.assignedTo}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Empty State for No Test Cases */}
         {typedTestCases.length === 0 ? (
@@ -671,45 +724,61 @@ export function TestCasesSection() {
                     
                     return (
                       <div key={userStoryId} className="border rounded-lg">
-                        <div className="px-4 py-3 bg-muted/50 border-b">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-1">
+                        <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-b">
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-2 flex-1">
                               {(() => {
                                 const storyDisplay = getUserStoryDisplay(userStoryId);
-                                if (typeof storyDisplay === 'string') {
-                                  return <h3 className="font-semibold text-sm">{storyDisplay}</h3>;
-                                }
                                 return (
                                   <>
-                                    <h3 className="font-semibold text-sm">{storyDisplay.fullDisplay}</h3>
                                     <div className="flex items-center space-x-2">
-                                      {storyDisplay.state !== 'Unknown' && (
-                                        <Badge variant="outline" className="text-xs">
-                                          {storyDisplay.state}
-                                        </Badge>
+                                      <h3 className="font-semibold text-base text-blue-900 dark:text-blue-100">
+                                        {storyDisplay.fullDisplay}
+                                      </h3>
+                                    </div>
+                                    <div className="flex items-center flex-wrap gap-2">
+                                      {storyDisplay.state !== 'Unknown' && storyDisplay.state !== 'Unassigned' && (
+                                        <div className="flex items-center space-x-1">
+                                          <span className="text-xs font-medium text-muted-foreground">State:</span>
+                                          <Badge variant="outline" className="text-xs bg-white dark:bg-gray-800">
+                                            {storyDisplay.state}
+                                          </Badge>
+                                        </div>
                                       )}
                                       {storyDisplay.priority && (
-                                        <Badge variant="secondary" className="text-xs">
-                                          Priority: {storyDisplay.priority}
-                                        </Badge>
+                                        <div className="flex items-center space-x-1">
+                                          <span className="text-xs font-medium text-muted-foreground">Priority:</span>
+                                          <Badge variant="secondary" className="text-xs">
+                                            {storyDisplay.priority}
+                                          </Badge>
+                                        </div>
                                       )}
                                       {storyDisplay.assignedTo && (
-                                        <span className="text-xs text-muted-foreground">
-                                          Assigned: {storyDisplay.assignedTo}
-                                        </span>
+                                        <div className="flex items-center space-x-1">
+                                          <span className="text-xs font-medium text-muted-foreground">Assigned:</span>
+                                          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                                            {storyDisplay.assignedTo}
+                                          </span>
+                                        </div>
                                       )}
                                     </div>
                                   </>
                                 );
                               })()}
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Badge variant="outline" className="text-xs">
-                                {groupTestCases.length} test{groupTestCases.length !== 1 ? 's' : ''}
-                              </Badge>
+                            <div className="flex items-center space-x-3 ml-4">
+                              <div className="text-right">
+                                <div className="text-xs font-medium text-muted-foreground">Test Cases</div>
+                                <Badge variant="default" className="text-xs bg-blue-600 hover:bg-blue-700">
+                                  {groupTestCases.length} test{groupTestCases.length !== 1 ? 's' : ''}
+                                </Badge>
+                              </div>
                               {totalPages > 1 && (
-                                <div className="text-xs text-muted-foreground">
-                                  Page {currentPage} of {totalPages}
+                                <div className="text-right">
+                                  <div className="text-xs font-medium text-muted-foreground">Page</div>
+                                  <div className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                                    {currentPage} of {totalPages}
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -851,9 +920,30 @@ export function TestCasesSection() {
                                                 </div>
                                                 <div>
                                                   <Label className="text-xs font-semibold text-muted-foreground">USER STORY</Label>
-                                                  <Badge variant="outline" className="text-xs">
-                                                    {getUserStoryTitle(testCase.userStoryId || 'unassigned')}
-                                                  </Badge>
+                                                  <div className="flex flex-col space-y-1">
+                                                    {(() => {
+                                                      const storyDisplay = getUserStoryDisplay(testCase.userStoryId || 'unassigned');
+                                                      return (
+                                                        <>
+                                                          <Badge variant="outline" className="text-xs">
+                                                            {storyDisplay.fullDisplay}
+                                                          </Badge>
+                                                          {storyDisplay.state !== 'Unknown' && storyDisplay.state !== 'Unassigned' && (
+                                                            <div className="flex items-center space-x-1">
+                                                              <Badge variant="secondary" className="text-xs">
+                                                                {storyDisplay.state}
+                                                              </Badge>
+                                                              {storyDisplay.priority && (
+                                                                <Badge variant="outline" className="text-xs">
+                                                                  P{storyDisplay.priority}
+                                                                </Badge>
+                                                              )}
+                                                            </div>
+                                                          )}
+                                                        </>
+                                                      );
+                                                    })()}
+                                                  </div>
                                                 </div>
                                               </div>
                                               
