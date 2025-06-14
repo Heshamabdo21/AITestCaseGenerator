@@ -25,7 +25,8 @@ import {
   MoreHorizontal,
   Copy,
   Edit,
-  Tags
+  Tags,
+  Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
@@ -475,9 +476,14 @@ export function TestCaseBulkManager() {
                       <Button
                         variant={operation.variant}
                         size="sm"
+                        disabled={isOperationInProgress}
                         className="flex items-center space-x-2"
                       >
-                        {operation.icon}
+                        {isOperationInProgress ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          operation.icon
+                        )}
                         <span>{operation.label}</span>
                       </Button>
                     </AlertDialogTrigger>
@@ -501,10 +507,15 @@ export function TestCaseBulkManager() {
                     key={operation.id}
                     variant={operation.variant}
                     size="sm"
+                    disabled={isOperationInProgress}
                     onClick={() => operation.action(selectedTestCases)}
                     className="flex items-center space-x-2"
                   >
-                    {operation.icon}
+                    {isOperationInProgress ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      operation.icon
+                    )}
                     <span>{operation.label}</span>
                   </Button>
                 )
