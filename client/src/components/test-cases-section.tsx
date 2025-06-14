@@ -231,6 +231,26 @@ export function TestCasesSection() {
     },
   });
 
+  // Mutation to organize test cases into test plan
+  const organizeIntoTestPlanMutation = useMutation({
+    mutationFn: () => api.organizeTestCasesIntoTestPlan(),
+    onSuccess: (result) => {
+      celebrateSuccess('azure');
+      toast({
+        title: "Test Cases Organized in Test Plan",
+        description: `Successfully organized ${result.summary.successfullyOrganized} test cases into ${result.summary.testSuitesCreated} test suites`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Organize Test Cases",
+        description: error.message || "Unable to organize test cases. Please ensure test cases are pushed to Azure DevOps first.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleTestCaseSelect = (testCaseId: number) => {
     setSelectedTestCases(prev => 
       prev.includes(testCaseId) 
@@ -713,6 +733,26 @@ export function TestCasesSection() {
                   <>
                     <CloudUpload className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
                     Add to Azure ({selectedTestCases.length})
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => organizeIntoTestPlanMutation.mutate()}
+                disabled={typedTestCases.filter(tc => tc.azureTestCaseId).length === 0 || organizeIntoTestPlanMutation.isPending}
+                className="border-orange-300 text-orange-700 hover:bg-orange-50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:border-orange-400 transform-gpu group relative overflow-hidden"
+              >
+                {organizeIntoTestPlanMutation.isPending ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2 border-orange-600" />
+                    Organizing
+                    <BouncingDots className="ml-2" />
+                  </>
+                ) : (
+                  <>
+                    <FlaskRound className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
+                    Organize into Test Plan ({typedTestCases.filter(tc => tc.azureTestCaseId).length})
                   </>
                 )}
               </Button>

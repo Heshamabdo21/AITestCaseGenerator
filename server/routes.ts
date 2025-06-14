@@ -1147,22 +1147,23 @@ For each test case, provide the following in JSON format:
       const authHeader = `Basic ${Buffer.from(`:${config.patToken}`).toString('base64')}`;
 
       // Group test cases by user story
-      const testCasesByUserStory = new Map<number, typeof azurePushedTestCases>();
+      const testCasesByUserStory: Record<number, typeof azurePushedTestCases> = {};
       azurePushedTestCases.forEach(testCase => {
         if (testCase.userStoryId) {
-          if (!testCasesByUserStory.has(testCase.userStoryId)) {
-            testCasesByUserStory.set(testCase.userStoryId, []);
+          if (!testCasesByUserStory[testCase.userStoryId]) {
+            testCasesByUserStory[testCase.userStoryId] = [];
           }
-          testCasesByUserStory.get(testCase.userStoryId)!.push(testCase);
+          testCasesByUserStory[testCase.userStoryId].push(testCase);
         }
       });
 
       const results = [];
 
       // Create test suites for each user story and add test cases
-      for (const [userStoryId, testCases] of testCasesByUserStory) {
+      for (const [userStoryId, testCases] of Object.entries(testCasesByUserStory)) {
+        const userStoryIdNum = parseInt(userStoryId);
         try {
-          const userStory = userStories.find(us => us.id === userStoryId);
+          const userStory = userStories.find(us => us.id.toString() === userStoryId);
           if (!userStory) continue;
 
           const suiteName = `User Story ${userStory.azureId}: ${userStory.title}`;
@@ -1234,7 +1235,7 @@ For each test case, provide the following in JSON format:
           });
 
           results.push({
-            userStoryId,
+            userStoryId: userStoryIdNum,
             userStoryTitle: userStory.title,
             azureUserStoryId: userStory.azureId,
             testSuiteId: testSuite.id,
@@ -1247,7 +1248,7 @@ For each test case, provide the following in JSON format:
 
         } catch (error: any) {
           results.push({
-            userStoryId,
+            userStoryId: userStoryIdNum,
             success: false,
             error: error.message
           });
