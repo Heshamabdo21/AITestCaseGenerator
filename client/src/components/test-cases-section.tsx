@@ -769,9 +769,32 @@ export function TestCasesSection() {
                     const paginatedGroupTestCases = getPaginatedTestCasesForUserStory(groupTestCases, userStoryId);
                     const totalPages = getTotalPagesForUserStory(groupTestCases.length);
                     const currentPage = getUserStoryPage(userStoryId);
+                    const userStory = typedUserStories.find(us => us.id.toString() === userStoryId);
                     
                     return (
                       <div key={userStoryId} className="border rounded-lg">
+                        {/* User Story Header */}
+                        <div className="bg-blue-50 dark:bg-blue-950/30 px-4 py-3 border-b">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <span className="font-medium text-blue-800 dark:text-blue-200">
+                                  User Story #{userStoryId}
+                                </span>
+                              </div>
+                              {userStory && (
+                                <span className="text-sm text-gray-600 dark:text-gray-300">
+                                  {userStory.title}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {groupTestCases.length} test {groupTestCases.length === 1 ? 'case' : 'cases'}
+                            </div>
+                          </div>
+                        </div>
+                        
                         <div className="rounded-md border-0">
                           <Table>
                             <TableHeader>
