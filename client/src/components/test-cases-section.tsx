@@ -772,128 +772,9 @@ export function TestCasesSection() {
                     
                     return (
                       <div key={userStoryId} className="border rounded-lg">
-                        <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-b">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-2 flex-1">
-                              {(() => {
-                                const storyDisplay = getUserStoryDisplay(userStoryId);
-                                return (
-                                  <>
-                                    <div className="flex items-center flex-wrap gap-2">
-                                      {storyDisplay.state !== 'Unknown' && storyDisplay.state !== 'Unassigned' && (
-                                        <div className="flex items-center space-x-1">
-                                          <span className="text-xs font-medium text-muted-foreground">State:</span>
-                                          <Badge variant="outline" className="text-xs bg-white dark:bg-gray-800">
-                                            {storyDisplay.state}
-                                          </Badge>
-                                        </div>
-                                      )}
-                                      {storyDisplay.priority && (
-                                        <div className="flex items-center space-x-1">
-                                          <span className="text-xs font-medium text-muted-foreground">Priority:</span>
-                                          <Badge variant="secondary" className="text-xs">
-                                            {storyDisplay.priority}
-                                          </Badge>
-                                        </div>
-                                      )}
-                                      {storyDisplay.assignedTo && (
-                                        <div className="flex items-center space-x-1">
-                                          <span className="text-xs font-medium text-muted-foreground">Assigned:</span>
-                                          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                                            {storyDisplay.assignedTo}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </>
-                                );
-                              })()}
-                            </div>
-                            <div className="flex items-center space-x-3 ml-4">
-                              <div className="text-right">
-                                <div className="text-xs font-medium text-muted-foreground">Test Cases</div>
-                                <Badge variant="default" className="text-xs bg-blue-600 hover:bg-blue-700">
-                                  {groupTestCases.length} test{groupTestCases.length !== 1 ? 's' : ''}
-                                </Badge>
-                              </div>
-                              {totalPages > 1 && (
-                                <div className="text-right">
-                                  <div className="text-xs font-medium text-muted-foreground">Page</div>
-                                  <div className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                                    {currentPage} of {totalPages}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
                         <div className="rounded-md border-0">
                           <Table>
                             <TableHeader>
-                              {/* Azure DevOps User Story Header */}
-                              <TableRow className="bg-blue-50 dark:bg-blue-950 border-b-2 border-blue-200 dark:border-blue-800">
-                                <TableHead colSpan={7} className="text-center py-3">
-                                  <div className="flex items-center justify-center space-x-2 text-left">
-                                    <span className="font-semibold text-blue-900 dark:text-blue-100">
-                                      Azure DevOps User Story:
-                                    </span>
-                                    {(() => {
-                                      // Convert userStoryId to number for comparison
-                                      const numericUserStoryId = typeof userStoryId === 'string' ? parseInt(userStoryId) : userStoryId;
-                                      
-                                      // Find the matching user story
-                                      let story = userStories.find((s: any) => {
-                                        // Try exact numeric match first
-                                        if (s.id === numericUserStoryId) return true;
-                                        // Try string match
-                                        if (s.id.toString() === userStoryId.toString()) return true;
-                                        // Try azureId match as backup
-                                        if (s.azureId === userStoryId.toString()) return true;
-                                        return false;
-                                      });
-                                      
-                                      if (story) {
-                                        return (
-                                          <>
-                                            <Badge variant="outline" className="bg-white dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
-                                              {story.azureId}: {story.title}
-                                            </Badge>
-                                            {story.state && (
-                                              <Badge variant="secondary" className="text-xs">
-                                                {story.state}
-                                              </Badge>
-                                            )}
-                                          </>
-                                        );
-                                      } else if (userStoryId === 'unassigned') {
-                                        return (
-                                          <Badge variant="outline" className="bg-white dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
-                                            Unassigned Test Cases
-                                          </Badge>
-                                        );
-                                      } else {
-                                        // Debug: Show what we're looking for
-                                        console.log('User Story Debug:', { 
-                                          userStoryId, 
-                                          userStoryIdType: typeof userStoryId,
-                                          userStoriesCount: userStories.length,
-                                          availableStories: userStories.map(s => ({ 
-                                            id: s.id, 
-                                            idType: typeof s.id,
-                                            azureId: s.azureId, 
-                                            title: s.title 
-                                          }))
-                                        });
-                                        return (
-                                          <Badge variant="outline" className="bg-white dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
-                                            User Story {userStoryId} (Not Found)
-                                          </Badge>
-                                        );
-                                      }
-                                    })()}
-                                  </div>
-                                </TableHead>
-                              </TableRow>
                               {/* Column Headers */}
                               <TableRow className="bg-slate-50/50 dark:bg-slate-900/50">
                                 <TableHead className="w-12">
@@ -1198,6 +1079,7 @@ export function TestCasesSection() {
                             </TableBody>
                           </Table>
                         </div>
+                        
                         {/* Pagination Controls for this User Story */}
                         {totalPages > 1 && (
                           <div className="px-4 py-3 bg-muted/25 border-t flex items-center justify-between">
