@@ -595,7 +595,7 @@ export function TestCasesSection() {
                 size="sm"
                 onClick={() => exportTestCasesMutation.mutate()}
                 disabled={exportTestCasesMutation.isPending || typedTestCases.length === 0}
-                className="border-blue-300 text-blue-700 hover:bg-blue-50 transition-all duration-200 hover:scale-105"
+                className="border-blue-300 text-blue-700 hover:bg-blue-50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:border-blue-400 transform-gpu group relative overflow-hidden"
               >
                 {exportTestCasesMutation.isPending ? (
                   <>
@@ -605,7 +605,7 @@ export function TestCasesSection() {
                   </>
                 ) : (
                   <>
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
                     Export All
                   </>
                 )}
@@ -615,7 +615,7 @@ export function TestCasesSection() {
                 size="sm"
                 onClick={handleApproveSelected}
                 disabled={selectedTestCases.length === 0 || updateStatusMutation.isPending}
-                className="border-green-300 text-green-700 hover:bg-green-50 transition-all duration-200 hover:scale-105"
+                className="border-green-300 text-green-700 hover:bg-green-50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:border-green-400 transform-gpu group relative overflow-hidden"
               >
                 {updateStatusMutation.isPending ? (
                   <>
@@ -625,7 +625,7 @@ export function TestCasesSection() {
                   </>
                 ) : (
                   <>
-                    <Check className="h-4 w-4 mr-2" />
+                    <Check className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
                     Approve ({selectedTestCases.length})
                   </>
                 )}
@@ -635,7 +635,7 @@ export function TestCasesSection() {
                 size="sm"
                 onClick={handleRejectSelected}
                 disabled={selectedTestCases.length === 0 || updateStatusMutation.isPending}
-                className="border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105"
+                className="border-red-300 text-red-700 hover:bg-red-50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:border-red-400 transform-gpu group relative overflow-hidden"
               >
                 {updateStatusMutation.isPending ? (
                   <>
@@ -645,7 +645,7 @@ export function TestCasesSection() {
                   </>
                 ) : (
                   <>
-                    <X className="h-4 w-4 mr-2" />
+                    <X className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
                     Reject ({selectedTestCases.length})
                   </>
                 )}
@@ -656,7 +656,7 @@ export function TestCasesSection() {
               size="sm"
               onClick={handleSelectAll}
               disabled={typedTestCases.length === 0}
-              className="text-xs"
+              className="text-xs transition-all duration-300 hover:scale-105 hover:bg-slate-100 hover:shadow-md transform-gpu"
             >
               {selectedTestCases.length === typedTestCases.length ? 'Deselect All' : 'Select All'}
             </Button>
@@ -971,7 +971,7 @@ export function TestCasesSection() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleSelectAllForUserStory(userStoryId, groupTestCases)}
-                                  className="text-xs border-slate-300 hover:bg-slate-50"
+                                  className="text-xs border-slate-300 hover:bg-slate-50 transition-all duration-300 hover:scale-105 hover:shadow-md transform-gpu group"
                                 >
                                   {(selectedTestCasesByUserStory[userStoryId]?.length || 0) === groupTestCases.length && groupTestCases.length > 0 ? 'Deselect All' : 'Select All'}
                                 </Button>
@@ -980,9 +980,9 @@ export function TestCasesSection() {
                                   size="sm"
                                   onClick={() => handleApproveSelectedForUserStory(userStoryId)}
                                   disabled={(selectedTestCasesByUserStory[userStoryId]?.length || 0) === 0 || updateStatusMutation.isPending}
-                                  className="text-xs border-green-300 text-green-700 hover:bg-green-50"
+                                  className="text-xs border-green-300 text-green-700 hover:bg-green-50 transition-all duration-300 hover:scale-105 hover:shadow-md hover:border-green-400 transform-gpu group"
                                 >
-                                  <Check className="h-3 w-3 mr-1" />
+                                  <Check className="h-3 w-3 mr-1 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
                                   Approve ({selectedTestCasesByUserStory[userStoryId]?.length || 0})
                                 </Button>
                                 <Button
@@ -990,9 +990,9 @@ export function TestCasesSection() {
                                   size="sm"
                                   onClick={() => handleRejectSelectedForUserStory(userStoryId)}
                                   disabled={(selectedTestCasesByUserStory[userStoryId]?.length || 0) === 0 || updateStatusMutation.isPending}
-                                  className="text-xs border-red-300 text-red-700 hover:bg-red-50"
+                                  className="text-xs border-red-300 text-red-700 hover:bg-red-50 transition-all duration-300 hover:scale-105 hover:shadow-md hover:border-red-400 transform-gpu group"
                                 >
-                                  <X className="h-3 w-3 mr-1" />
+                                  <X className="h-3 w-3 mr-1 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
                                   Reject ({selectedTestCasesByUserStory[userStoryId]?.length || 0})
                                 </Button>
                                 <Button
@@ -1000,9 +1000,9 @@ export function TestCasesSection() {
                                   size="sm"
                                   onClick={() => handleExportSelectedForUserStory(userStoryId, groupTestCases)}
                                   disabled={(selectedTestCasesByUserStory[userStoryId]?.length || 0) === 0}
-                                  className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50"
+                                  className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50 transition-all duration-300 hover:scale-105 hover:shadow-md hover:border-blue-400 transform-gpu group"
                                 >
-                                  <Download className="h-3 w-3 mr-1" />
+                                  <Download className="h-3 w-3 mr-1 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
                                   Export
                                 </Button>
                               </div>
@@ -1134,9 +1134,9 @@ export function TestCasesSection() {
                                               size="icon"
                                               variant="ghost"
                                               title="View Details"
-                                              className="h-8 w-8"
+                                              className="h-8 w-8 transition-all duration-300 hover:scale-110 hover:bg-blue-50 hover:shadow-md transform-gpu group"
                                             >
-                                              <Eye className="h-4 w-4" />
+                                              <Eye className="h-4 w-4 transition-transform duration-300 group-hover:scale-125" />
                                             </Button>
                                           </DialogTrigger>
                                           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -1326,9 +1326,9 @@ export function TestCasesSection() {
                                 size="sm"
                                 onClick={() => setUserStoryPage(userStoryId, currentPage - 1)}
                                 disabled={currentPage === 1}
-                                className="h-8 w-8 p-0"
+                                className="h-8 w-8 p-0 transition-all duration-300 hover:scale-110 hover:shadow-md transform-gpu group"
                               >
-                                <ChevronLeft className="h-4 w-4" />
+                                <ChevronLeft className="h-4 w-4 transition-transform duration-300 group-hover:scale-125" />
                               </Button>
                               <div className="flex items-center space-x-1">
                                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
@@ -1337,7 +1337,7 @@ export function TestCasesSection() {
                                     variant={pageNum === currentPage ? "default" : "outline"}
                                     size="sm"
                                     onClick={() => setUserStoryPage(userStoryId, pageNum)}
-                                    className="h-8 w-8 p-0"
+                                    className="h-8 w-8 p-0 transition-all duration-300 hover:scale-110 hover:shadow-md transform-gpu"
                                   >
                                     {pageNum}
                                   </Button>
