@@ -775,7 +775,6 @@ export function TestCasesSection() {
                         <div className="rounded-md border-0">
                           <Table>
                             <TableHeader>
-                              {/* Column Headers */}
                               <TableRow className="bg-slate-50/50 dark:bg-slate-900/50">
                                 <TableHead className="w-12">
                                   <Checkbox
