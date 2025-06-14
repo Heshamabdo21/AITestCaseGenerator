@@ -11,6 +11,9 @@ import { DemoBanner } from "@/components/demo-banner";
 import { PlatformTestShowcase } from "@/components/platform-test-showcase";
 import { PlatformTutorial } from "@/components/platform-tutorial";
 import { UnifiedTestGenerator } from "@/components/unified-test-generator";
+import { TestCaseAnalytics } from "@/components/test-case-analytics";
+import { TestCaseBulkManager } from "@/components/test-case-bulk-manager";
+import { AdvancedExportPanel } from "@/components/advanced-export-panel";
 
 import { CopyFeedback } from "@/components/copy-feedback";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -104,7 +107,27 @@ export default function Home() {
           <div className="lg:col-span-2 space-y-8">
             <UnifiedTestGenerator data-tour="test-generator" />
             <EnhancedUserStories onTestCasesGenerated={handleTestCasesGenerated} />
-            <TestCasesSection />
+            
+            {/* Test Case Management Tabs */}
+            <Tabs defaultValue="cases" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="cases">Test Cases</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="bulk">Bulk Manager</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="cases" className="space-y-4">
+                <TestCasesSection />
+              </TabsContent>
+              
+              <TabsContent value="analytics" className="space-y-4">
+                <TestCaseAnalytics />
+              </TabsContent>
+              
+              <TabsContent value="bulk" className="space-y-4">
+                <TestCaseBulkManager />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
