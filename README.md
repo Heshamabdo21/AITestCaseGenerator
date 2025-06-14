@@ -23,7 +23,6 @@ A comprehensive test case management system designed for Azure DevOps integratio
 - **Code Assistant with Character**: Interactive AI companion for intelligent code suggestions and test improvements
 - **Smart Enhancement**: AI-powered test case improvement and contextual recommendations
 - **Automated Analysis**: Test case quality analysis with optimization suggestions
-- **Code Generation**: Generate test automation code and test data
 
 ### Advanced UI/UX Features
 - **Progress Visualization**: Animated milestone tracking with real-time progress indicators
