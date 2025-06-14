@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { LoadingSpinner, TestCaseLoading, BouncingDots } from "@/components/ui/loading-spinner";
 import { Confetti, useConfetti } from "@/components/ui/confetti";
+import { TestCaseMetrics } from "@/components/test-case-metrics";
 import type { TestCase } from "@shared/schema";
 
 export function TestCasesSection() {
@@ -432,10 +433,16 @@ export function TestCasesSection() {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
             <FlaskRound className="h-5 w-5" />
-            <span>Test Cases</span>
+            <span>Generated Test Cases</span>
             <Badge variant="outline" className="ml-2">
               {typedTestCases.length}
             </Badge>
+            {typedTestCases.length > 0 && (
+              <div className="flex items-center space-x-2 ml-4">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-muted-foreground">Azure DevOps Linked</span>
+              </div>
+            )}
           </CardTitle>
           <div className="flex items-center space-x-2">
             <Button
@@ -639,6 +646,9 @@ export function TestCasesSection() {
           </div>
         </div>
 
+        {/* Test Case Metrics Dashboard */}
+        <TestCaseMetrics testCases={typedTestCases} userStories={userStories} />
+
         {/* User Stories Summary Panel */}
         {typedTestCases.length > 0 && Object.keys(groupedTestCases).length > 0 && (
           <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-900 dark:to-gray-900 rounded-lg border">
@@ -646,15 +656,25 @@ export function TestCasesSection() {
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Azure DevOps User Stories Overview
               </h3>
-              <Badge variant="secondary" className="text-xs">
-                {Object.keys(groupedTestCases).length} active {Object.keys(groupedTestCases).length === 1 ? 'story' : 'stories'}
-              </Badge>
+              <div className="flex items-center space-x-2">
+                <Badge variant="secondary" className="text-xs">
+                  {Object.keys(groupedTestCases).length} active {Object.keys(groupedTestCases).length === 1 ? 'story' : 'stories'}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {typedTestCases.length} total tests
+                </Badge>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {Object.entries(groupedTestCases).map(([userStoryId, groupTestCases]) => {
                 const storyDisplay = getUserStoryDisplay(userStoryId);
+                const approvedCount = groupTestCases.filter(tc => tc.status === 'approved').length;
+                const pendingCount = groupTestCases.filter(tc => tc.status === 'pending').length;
+                const rejectedCount = groupTestCases.filter(tc => tc.status === 'rejected').length;
+                const completionRate = Math.round((approvedCount / groupTestCases.length) * 100);
+                
                 return (
-                  <div key={userStoryId} className="p-3 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700">
+                  <div key={userStoryId} className="p-3 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
                     <div className="space-y-2">
                       <div className="flex items-start justify-between">
                         <h4 className="text-xs font-medium text-slate-900 dark:text-slate-100 line-clamp-2">
@@ -664,6 +684,34 @@ export function TestCasesSection() {
                           {groupTestCases.length} tests
                         </Badge>
                       </div>
+                      
+                      {/* Test Status Breakdown */}
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center space-x-2">
+                          {approvedCount > 0 && (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="text-green-700 dark:text-green-300">{approvedCount}</span>
+                            </div>
+                          )}
+                          {pendingCount > 0 && (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                              <span className="text-yellow-700 dark:text-yellow-300">{pendingCount}</span>
+                            </div>
+                          )}
+                          {rejectedCount > 0 && (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                              <span className="text-red-700 dark:text-red-300">{rejectedCount}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-slate-600 dark:text-slate-400">
+                          {completionRate}% ready
+                        </div>
+                      </div>
+                      
                       <div className="flex items-center flex-wrap gap-1">
                         {storyDisplay.state !== 'Unknown' && storyDisplay.state !== 'Unassigned' && (
                           <Badge variant="secondary" className="text-xs">
@@ -787,7 +835,7 @@ export function TestCasesSection() {
                         <div className="rounded-md border-0">
                           <Table>
                             <TableHeader>
-                              <TableRow>
+                              <TableRow className="bg-slate-50/50 dark:bg-slate-900/50">
                                 <TableHead className="w-12">
                                   <Checkbox
                                     checked={selectedTestCases.filter(id => paginatedGroupTestCases.map(tc => tc.id).includes(id)).length === paginatedGroupTestCases.length && paginatedGroupTestCases.length > 0}
@@ -800,12 +848,37 @@ export function TestCasesSection() {
                                     }}
                                   />
                                 </TableHead>
-                                <TableHead>ID</TableHead>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Priority</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="font-semibold">
+                                  <div className="flex flex-col">
+                                    <span>Test ID</span>
+                                    <span className="text-xs font-normal text-muted-foreground">TC-XXX</span>
+                                  </div>
+                                </TableHead>
+                                <TableHead className="font-semibold">
+                                  <div className="flex flex-col">
+                                    <span>Test Case Title</span>
+                                    <span className="text-xs font-normal text-muted-foreground">Linked to User Story</span>
+                                  </div>
+                                </TableHead>
+                                <TableHead className="font-semibold">
+                                  <div className="flex flex-col">
+                                    <span>Priority</span>
+                                    <span className="text-xs font-normal text-muted-foreground">High/Med/Low</span>
+                                  </div>
+                                </TableHead>
+                                <TableHead className="font-semibold">
+                                  <div className="flex flex-col">
+                                    <span>Status</span>
+                                    <span className="text-xs font-normal text-muted-foreground">Approval State</span>
+                                  </div>
+                                </TableHead>
+                                <TableHead className="font-semibold">
+                                  <div className="flex flex-col">
+                                    <span>Test Type</span>
+                                    <span className="text-xs font-normal text-muted-foreground">Category</span>
+                                  </div>
+                                </TableHead>
+                                <TableHead className="text-right font-semibold">Actions</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -840,8 +913,16 @@ export function TestCasesSection() {
                                       TC-{testCase.id.toString().padStart(3, '0')}
                                     </TableCell>
                                     <TableCell className="max-w-xs">
-                                      <div className="truncate" title={testCase.title}>
-                                        {testCase.title}
+                                      <div className="space-y-1">
+                                        <div className="truncate font-medium" title={testCase.title}>
+                                          {testCase.title}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          {(() => {
+                                            const storyDisplay = getUserStoryDisplay(testCase.userStoryId || 'unassigned');
+                                            return `Linked to: ${storyDisplay.fullDisplay}`;
+                                          })()}
+                                        </div>
                                       </div>
                                     </TableCell>
                                     <TableCell>
