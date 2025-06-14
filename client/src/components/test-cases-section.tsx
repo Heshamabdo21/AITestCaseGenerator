@@ -779,11 +779,6 @@ export function TestCasesSection() {
                                 const storyDisplay = getUserStoryDisplay(userStoryId);
                                 return (
                                   <>
-                                    <div className="flex items-center space-x-2">
-                                      <h3 className="font-semibold text-base text-blue-900 dark:text-blue-100">
-                                        {storyDisplay.fullDisplay}
-                                      </h3>
-                                    </div>
                                     <div className="flex items-center flex-wrap gap-2">
                                       {storyDisplay.state !== 'Unknown' && storyDisplay.state !== 'Unassigned' && (
                                         <div className="flex items-center space-x-1">
@@ -838,7 +833,7 @@ export function TestCasesSection() {
                               {/* Azure DevOps User Story Header */}
                               <TableRow className="bg-blue-50 dark:bg-blue-950 border-b-2 border-blue-200 dark:border-blue-800">
                                 <TableHead colSpan={7} className="text-center py-3">
-                                  <div className="flex items-center justify-center space-x-2">
+                                  <div className="flex items-center justify-center space-x-2 text-left">
                                     <span className="font-semibold text-blue-900 dark:text-blue-100">
                                       Azure DevOps User Story:
                                     </span>
@@ -1203,7 +1198,6 @@ export function TestCasesSection() {
                             </TableBody>
                           </Table>
                         </div>
-                        
                         {/* Pagination Controls for this User Story */}
                         {totalPages > 1 && (
                           <div className="px-4 py-3 bg-muted/25 border-t flex items-center justify-between">
