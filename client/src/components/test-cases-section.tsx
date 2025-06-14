@@ -1348,9 +1348,9 @@ export function TestCasesSection() {
                                 size="sm"
                                 onClick={() => setUserStoryPage(userStoryId, currentPage + 1)}
                                 disabled={currentPage === totalPages}
-                                className="h-8 w-8 p-0"
+                                className="h-8 w-8 p-0 transition-all duration-300 hover:scale-110 hover:shadow-md transform-gpu group"
                               >
-                                <ChevronRight className="h-4 w-4" />
+                                <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:scale-125" />
                               </Button>
                             </div>
                           </div>
