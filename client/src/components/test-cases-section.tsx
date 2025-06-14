@@ -637,31 +637,51 @@ export function TestCasesSection() {
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center space-x-2">
-            <FlaskRound className="h-5 w-5" />
-            <span>Generated Test Cases</span>
-            <Badge variant="outline" className="ml-2">
+      <CardHeader className="space-y-4">
+        {/* Title Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardTitle className="flex items-center space-x-2 flex-wrap">
+            <FlaskRound className="h-5 w-5 flex-shrink-0" />
+            <span className="whitespace-nowrap">Generated Test Cases</span>
+            <Badge variant="outline" className="flex-shrink-0">
               {typedTestCases.length}
             </Badge>
             {typedTestCases.length > 0 && (
-              <div className="flex items-center space-x-2 ml-4">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-muted-foreground">Azure DevOps Linked</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse flex-shrink-0"></div>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Azure DevOps Linked</span>
               </div>
             )}
           </CardTitle>
-          <div className="flex items-center space-x-2">
-            {/* Global Action Buttons */}
-            <div className="flex items-center space-x-1 border-r pr-2 mr-1">
-              <span className="text-xs text-muted-foreground">Global:</span>
+          
+          {/* Quick Select Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSelectAll}
+            disabled={typedTestCases.length === 0}
+            className="text-xs transition-all duration-300 hover:scale-105 hover:bg-slate-100 hover:shadow-md transform-gpu flex-shrink-0 self-start sm:self-center"
+          >
+            {selectedTestCases.length === typedTestCases.length ? 'Deselect All' : 'Select All'}
+          </Button>
+        </div>
+
+        {/* Action Buttons Section */}
+        <div className="border-t pt-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-medium flex-shrink-0">Global Actions:</span>
+              <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
+            </div>
+            
+            {/* Responsive Button Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => exportTestCasesMutation.mutate()}
                 disabled={exportTestCasesMutation.isPending || typedTestCases.length === 0}
-                className="border-blue-300 text-blue-700 hover:bg-blue-50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:border-blue-400 transform-gpu group relative overflow-hidden"
+                className="border-blue-300 text-blue-700 hover:bg-blue-50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-blue-400 transform-gpu group relative overflow-hidden w-full"
               >
                 {exportTestCasesMutation.isPending ? (
                   <>
@@ -676,12 +696,13 @@ export function TestCasesSection() {
                   </>
                 )}
               </Button>
+
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleApproveSelected}
                 disabled={selectedTestCases.length === 0 || updateStatusMutation.isPending}
-                className="border-green-300 text-green-700 hover:bg-green-50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:border-green-400 transform-gpu group relative overflow-hidden"
+                className="border-green-300 text-green-700 hover:bg-green-50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-green-400 transform-gpu group relative overflow-hidden w-full"
               >
                 {updateStatusMutation.isPending ? (
                   <>
@@ -692,16 +713,17 @@ export function TestCasesSection() {
                 ) : (
                   <>
                     <Check className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
-                    Approve ({selectedTestCases.length})
+                    <span className="truncate">Approve ({selectedTestCases.length})</span>
                   </>
                 )}
               </Button>
+
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleRejectSelected}
                 disabled={selectedTestCases.length === 0 || updateStatusMutation.isPending}
-                className="border-red-300 text-red-700 hover:bg-red-50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:border-red-400 transform-gpu group relative overflow-hidden"
+                className="border-red-300 text-red-700 hover:bg-red-50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-red-400 transform-gpu group relative overflow-hidden w-full"
               >
                 {updateStatusMutation.isPending ? (
                   <>
@@ -712,16 +734,17 @@ export function TestCasesSection() {
                 ) : (
                   <>
                     <X className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
-                    Reject ({selectedTestCases.length})
+                    <span className="truncate">Reject ({selectedTestCases.length})</span>
                   </>
                 )}
               </Button>
+
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => addToAzureMutation.mutate(selectedTestCases)}
                 disabled={selectedTestCases.length === 0 || addToAzureMutation.isPending}
-                className="border-purple-300 text-purple-700 hover:bg-purple-50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:border-purple-400 transform-gpu group relative overflow-hidden"
+                className="border-purple-300 text-purple-700 hover:bg-purple-50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-purple-400 transform-gpu group relative overflow-hidden w-full"
               >
                 {addToAzureMutation.isPending ? (
                   <>
@@ -732,16 +755,17 @@ export function TestCasesSection() {
                 ) : (
                   <>
                     <CloudUpload className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
-                    Add to Azure ({selectedTestCases.length})
+                    <span className="truncate">Add to Azure ({selectedTestCases.length})</span>
                   </>
                 )}
               </Button>
+
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => organizeIntoTestPlanMutation.mutate()}
                 disabled={typedTestCases.filter(tc => tc.azureTestCaseId).length === 0 || organizeIntoTestPlanMutation.isPending}
-                className="border-orange-300 text-orange-700 hover:bg-orange-50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:border-orange-400 transform-gpu group relative overflow-hidden"
+                className="border-orange-300 text-orange-700 hover:bg-orange-50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-orange-400 transform-gpu group relative overflow-hidden w-full sm:col-span-2 lg:col-span-1"
               >
                 {organizeIntoTestPlanMutation.isPending ? (
                   <>
@@ -752,20 +776,11 @@ export function TestCasesSection() {
                 ) : (
                   <>
                     <FlaskRound className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
-                    Organize into Test Plan ({typedTestCases.filter(tc => tc.azureTestCaseId).length})
+                    <span className="truncate">Organize into Test Plan ({typedTestCases.filter(tc => tc.azureTestCaseId).length})</span>
                   </>
                 )}
               </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSelectAll}
-              disabled={typedTestCases.length === 0}
-              className="text-xs transition-all duration-300 hover:scale-105 hover:bg-slate-100 hover:shadow-md transform-gpu"
-            >
-              {selectedTestCases.length === typedTestCases.length ? 'Deselect All' : 'Select All'}
-            </Button>
           </div>
         </div>
       </CardHeader>
