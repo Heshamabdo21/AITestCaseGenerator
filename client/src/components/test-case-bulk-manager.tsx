@@ -35,7 +35,7 @@ interface BulkOperation {
   id: string;
   label: string;
   icon: React.ReactNode;
-  action: (selectedIds: number[]) => void;
+  action: (selectedIds?: number[]) => void | Promise<void>;
   variant?: "default" | "destructive" | "outline" | "secondary";
   requiresConfirmation?: boolean;
   confirmationTitle?: string;
@@ -169,54 +169,102 @@ export function TestCaseBulkManager() {
   }, [testCases, searchTerm, statusFilter, priorityFilter, typeFilter, sortBy, sortOrder]);
 
   // Bulk operations
-  const handleBulkApprove = () => {
-    selectedTestCases.forEach(id => {
-      updateStatusMutation.mutate({ id, status: "approved" });
-    });
-    setSelectedTestCases([]);
-    toast({
-      title: "Bulk Approval",
-      description: `${selectedTestCases.length} test cases approved`,
-    });
-  };
-
-  const handleBulkReject = () => {
-    selectedTestCases.forEach(id => {
-      updateStatusMutation.mutate({ id, status: "rejected" });
-    });
-    setSelectedTestCases([]);
-    toast({
-      title: "Bulk Rejection",
-      description: `${selectedTestCases.length} test cases rejected`,
-    });
-  };
-
-  const handleBulkDelete = () => {
-    selectedTestCases.forEach(id => {
-      deleteTestCaseMutation.mutate(id);
-    });
-    setSelectedTestCases([]);
-    toast({
-      title: "Bulk Deletion",
-      description: `${selectedTestCases.length} test cases deleted`,
-    });
-  };
-
-  const handleBulkEdit = () => {
-    if (bulkEditData.status) {
-      selectedTestCases.forEach(id => {
-        updateStatusMutation.mutate({ id, status: bulkEditData.status });
+  const handleBulkApprove = async () => {
+    if (selectedTestCases.length === 0) return;
+    
+    try {
+      const promises = selectedTestCases.map(id => 
+        updateStatusMutation.mutateAsync({ id, status: "approved" })
+      );
+      await Promise.all(promises);
+      
+      setSelectedTestCases([]);
+      toast({
+        title: "Bulk Approval",
+        description: `${selectedTestCases.length} test cases approved`,
+      });
+    } catch (error) {
+      toast({
+        title: "Bulk Approval Failed",
+        description: "Some test cases could not be approved",
+        variant: "destructive",
       });
     }
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedTestCases.length === 0) return;
     
-    setSelectedTestCases([]);
-    setBulkEditDialogOpen(false);
-    setBulkEditData({ status: "", priority: "", tags: "" });
+    try {
+      const promises = selectedTestCases.map(id => 
+        updateStatusMutation.mutateAsync({ id, status: "rejected" })
+      );
+      await Promise.all(promises);
+      
+      setSelectedTestCases([]);
+      toast({
+        title: "Bulk Rejection",
+        description: `${selectedTestCases.length} test cases rejected`,
+      });
+    } catch (error) {
+      toast({
+        title: "Bulk Rejection Failed",
+        description: "Some test cases could not be rejected",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedTestCases.length === 0) return;
     
-    toast({
-      title: "Bulk Edit Complete",
-      description: `${selectedTestCases.length} test cases updated`,
-    });
+    try {
+      const promises = selectedTestCases.map(id => 
+        deleteTestCaseMutation.mutateAsync(id)
+      );
+      await Promise.all(promises);
+      
+      setSelectedTestCases([]);
+      toast({
+        title: "Bulk Deletion",
+        description: `${selectedTestCases.length} test cases deleted`,
+      });
+    } catch (error) {
+      toast({
+        title: "Bulk Deletion Failed",
+        description: "Some test cases could not be deleted",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkEdit = async () => {
+    if (selectedTestCases.length === 0) return;
+    
+    try {
+      if (bulkEditData.status) {
+        const promises = selectedTestCases.map(id => 
+          updateStatusMutation.mutateAsync({ id, status: bulkEditData.status })
+        );
+        await Promise.all(promises);
+      }
+      
+      const selectedCount = selectedTestCases.length;
+      setSelectedTestCases([]);
+      setBulkEditDialogOpen(false);
+      setBulkEditData({ status: "", priority: "", tags: "" });
+      
+      toast({
+        title: "Bulk Edit Complete",
+        description: `${selectedCount} test cases updated`,
+      });
+    } catch (error) {
+      toast({
+        title: "Bulk Edit Failed",
+        description: "Some test cases could not be updated",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSelectAll = () => {
@@ -234,6 +282,8 @@ export function TestCaseBulkManager() {
         : [...prev, testCaseId]
     );
   };
+
+  const isOperationInProgress = updateStatusMutation.isPending || deleteTestCaseMutation.isPending;
 
   const bulkOperations: BulkOperation[] = [
     {
