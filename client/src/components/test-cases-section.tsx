@@ -185,6 +185,52 @@ export function TestCasesSection() {
     },
   });
 
+  // Mutation to add test cases to Azure DevOps
+  const addToAzureMutation = useMutation({
+    mutationFn: (testCaseIds: number[]) => api.addTestCasesToAzure(testCaseIds),
+    onSuccess: (result) => {
+      celebrateSuccess('azure');
+      toast({
+        title: "Test Cases Added to Azure DevOps",
+        description: `Successfully added ${result.successCount} test cases to Azure DevOps`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
+      setSelectedTestCases([]);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Add Test Cases to Azure",
+        description: error.message || "Unable to connect to Azure DevOps. Please check your configuration.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to add selected test cases for a user story to Azure DevOps
+  const addUserStoryTestCasesToAzureMutation = useMutation({
+    mutationFn: ({ testCaseIds, userStoryId }: { testCaseIds: number[], userStoryId: string }) => 
+      api.addTestCasesToAzure(testCaseIds),
+    onSuccess: (result, { userStoryId }) => {
+      celebrateSuccess('azure');
+      toast({
+        title: "Test Cases Added to Azure DevOps",
+        description: `Successfully added ${result.successCount} test cases for user story ${userStoryId} to Azure DevOps`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
+      setSelectedTestCasesByUserStory(prev => ({
+        ...prev,
+        [userStoryId]: []
+      }));
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Add Test Cases to Azure",
+        description: error.message || "Unable to connect to Azure DevOps. Please check your configuration.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleTestCaseSelect = (testCaseId: number) => {
     setSelectedTestCases(prev => 
       prev.includes(testCaseId) 
@@ -650,6 +696,26 @@ export function TestCasesSection() {
                   </>
                 )}
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => addToAzureMutation.mutate(selectedTestCases)}
+                disabled={selectedTestCases.length === 0 || addToAzureMutation.isPending}
+                className="border-purple-300 text-purple-700 hover:bg-purple-50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:border-purple-400 transform-gpu group relative overflow-hidden"
+              >
+                {addToAzureMutation.isPending ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2 border-purple-600" />
+                    Adding to Azure
+                    <BouncingDots className="ml-2" />
+                  </>
+                ) : (
+                  <>
+                    <CloudUpload className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
+                    Add to Azure ({selectedTestCases.length})
+                  </>
+                )}
+              </Button>
             </div>
             <Button
               variant="ghost"
@@ -1004,6 +1070,28 @@ export function TestCasesSection() {
                                 >
                                   <Download className="h-3 w-3 mr-1 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
                                   Export
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addUserStoryTestCasesToAzureMutation.mutate({ 
+                                    testCaseIds: selectedTestCasesByUserStory[userStoryId] || [], 
+                                    userStoryId 
+                                  })}
+                                  disabled={(selectedTestCasesByUserStory[userStoryId]?.length || 0) === 0 || addUserStoryTestCasesToAzureMutation.isPending}
+                                  className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 transition-all duration-300 hover:scale-105 hover:shadow-md hover:border-purple-400 transform-gpu group"
+                                >
+                                  {addUserStoryTestCasesToAzureMutation.isPending ? (
+                                    <>
+                                      <LoadingSpinner size="sm" className="mr-1 border-purple-600" />
+                                      Adding
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CloudUpload className="h-3 w-3 mr-1 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
+                                      Add to Azure
+                                    </>
+                                  )}
                                 </Button>
                               </div>
                               <div className="text-xs text-gray-500 dark:text-gray-400">
