@@ -103,6 +103,11 @@ export const api = {
     return safeJsonParse(response);
   },
 
+  async organizeTestCasesIntoTestPlan(): Promise<{ message: string; testPlanId: string; results: any[]; summary: any }> {
+    const response = await apiRequest("POST", "/api/test-cases/organize-into-test-plan");
+    return safeJsonParse(response);
+  },
+
   async exportTestCasesToExcel(): Promise<void> {
     const response = await fetch("/api/test-cases/export");
     if (!response.ok) {

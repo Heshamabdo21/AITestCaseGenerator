@@ -1126,6 +1126,159 @@ For each test case, provide the following in JSON format:
     }
   });
 
+  // Create test suites and organize test cases per user story into test plans
+  app.post("/api/test-cases/organize-into-test-plan", async (req, res) => {
+    try {
+      const config = await activeStorage.getLatestAzureConfig();
+      if (!config || !config.testPlanId) {
+        return res.status(404).json({ message: "No Azure DevOps configuration or test plan ID found" });
+      }
+
+      // Get all test cases that have been pushed to Azure DevOps
+      const allTestCases = await activeStorage.getTestCases();
+      const azurePushedTestCases = allTestCases.filter(tc => tc.azureTestCaseId);
+
+      if (azurePushedTestCases.length === 0) {
+        return res.status(400).json({ message: "No test cases have been pushed to Azure DevOps yet" });
+      }
+
+      // Get user stories to group test cases
+      const userStories = await activeStorage.getUserStories();
+      const authHeader = `Basic ${Buffer.from(`:${config.patToken}`).toString('base64')}`;
+
+      // Group test cases by user story
+      const testCasesByUserStory = new Map<number, typeof azurePushedTestCases>();
+      azurePushedTestCases.forEach(testCase => {
+        if (testCase.userStoryId) {
+          if (!testCasesByUserStory.has(testCase.userStoryId)) {
+            testCasesByUserStory.set(testCase.userStoryId, []);
+          }
+          testCasesByUserStory.get(testCase.userStoryId)!.push(testCase);
+        }
+      });
+
+      const results = [];
+
+      // Create test suites for each user story and add test cases
+      for (const [userStoryId, testCases] of testCasesByUserStory) {
+        try {
+          const userStory = userStories.find(us => us.id === userStoryId);
+          if (!userStory) continue;
+
+          const suiteName = `User Story ${userStory.azureId}: ${userStory.title}`;
+          
+          // Create or get the test suite for this user story
+          const testSuite = await getOrCreateTestSuite(
+            config.organizationUrl,
+            config.project,
+            config.testPlanId,
+            suiteName,
+            authHeader
+          );
+
+          if (!testSuite) {
+            results.push({
+              userStoryId,
+              success: false,
+              error: "Could not create or find test suite"
+            });
+            continue;
+          }
+
+          // Add all test cases for this user story to the suite
+          const testCaseResults = [];
+          for (const testCase of testCases) {
+            try {
+              const addTestCaseUrl = `${config.organizationUrl}/${config.project}/_apis/testplan/Plans/${config.testPlanId}/Suites/${testSuite.id}/TestCase/${testCase.azureTestCaseId}?api-version=7.0`;
+              
+              const addResponse = await fetch(addTestCaseUrl, {
+                method: 'POST',
+                headers: {
+                  'Authorization': authHeader,
+                  'Content-Type': 'application/json'
+                }
+              });
+
+              if (addResponse.ok) {
+                testCaseResults.push({
+                  testCaseId: testCase.id,
+                  azureTestCaseId: testCase.azureTestCaseId,
+                  success: true
+                });
+              } else {
+                const errorText = await addResponse.text();
+                testCaseResults.push({
+                  testCaseId: testCase.id,
+                  azureTestCaseId: testCase.azureTestCaseId,
+                  success: false,
+                  error: `Status: ${addResponse.status} - ${errorText}`
+                });
+              }
+            } catch (error: any) {
+              testCaseResults.push({
+                testCaseId: testCase.id,
+                azureTestCaseId: testCase.azureTestCaseId,
+                success: false,
+                error: error.message
+              });
+            }
+          }
+
+          // Store the test suite information in our storage
+          await activeStorage.createTestSuite({
+            azureId: testSuite.id.toString(),
+            name: testSuite.name,
+            description: `Test suite for user story: ${userStory.title}`,
+            testPlanId: null, // We'll create test plan records separately if needed
+            configId: config.id
+          });
+
+          results.push({
+            userStoryId,
+            userStoryTitle: userStory.title,
+            azureUserStoryId: userStory.azureId,
+            testSuiteId: testSuite.id,
+            testSuiteName: testSuite.name,
+            testCases: testCaseResults,
+            successCount: testCaseResults.filter(r => r.success).length,
+            totalCount: testCaseResults.length,
+            success: true
+          });
+
+        } catch (error: any) {
+          results.push({
+            userStoryId,
+            success: false,
+            error: error.message
+          });
+        }
+      }
+
+      const totalSuccessCount = results.reduce((sum, result) => {
+        return sum + (result.successCount || 0);
+      }, 0);
+      
+      const totalTestCaseCount = results.reduce((sum, result) => {
+        return sum + (result.totalCount || 0);
+      }, 0);
+
+      res.json({
+        message: `Organized ${totalSuccessCount} test cases into ${results.filter(r => r.success).length} test suites`,
+        testPlanId: config.testPlanId,
+        results,
+        summary: {
+          totalTestCases: totalTestCaseCount,
+          successfullyOrganized: totalSuccessCount,
+          testSuitesCreated: results.filter(r => r.success).length,
+          userStoriesProcessed: results.length
+        }
+      });
+
+    } catch (error: any) {
+      res.status(500).json({ message: `Failed to organize test cases into test plan: ${error.message}` });
+    }
+  });
+
   // Test Data Configuration API
   app.post("/api/test-data-config", async (req, res) => {
     try {

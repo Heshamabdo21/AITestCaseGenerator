@@ -52,10 +52,12 @@ This is a comprehensive test case management system designed for Azure DevOps in
 - **Structured Format**: Test cases with objectives, prerequisites, steps, and expected results
 - **Status Tracking**: Approval workflow with pending, approved, and rejected states
 - **Linking System**: Connects test cases to user stories and requirements
+- **Azure DevOps Integration**: Direct push functionality to add test cases to Azure DevOps with proper linking
 - **Feedback Collection**: User feedback system for continuous improvement
 - **Enhanced Table Actions**: User story-specific and global action buttons for targeted operations
 - **Selective Export**: Excel export functionality for individual user stories or selected test cases
 - **Batch Operations**: Bulk approve/reject capabilities with clear visual feedback
+- **Real-time Azure Sync**: Immediate push to Azure DevOps with error handling and status feedback
 
 ### 5. Configuration Systems
 - **AI Configuration**: Customizable test generation preferences and complexity levels
@@ -156,14 +158,15 @@ Enhanced user engagement through sophisticated button and element animations:
 
 ## Recent Changes
 
+- June 14, 2025: Successfully migrated from Replit Agent to standard Replit environment
+- June 14, 2025: Added Azure DevOps integration buttons to push test cases directly to Azure DevOps
+- June 14, 2025: Implemented both global and user story-specific "Add to Azure" functionality
+- June 14, 2025: Enhanced error handling for Azure DevOps connectivity issues
+- June 14, 2025: Added visual feedback with confetti animations for successful Azure integrations
 - June 14, 2025: Implemented interactive UI hover animations for all action buttons
 - June 14, 2025: Added scaling, rotation, and shadow effects to enhance user engagement
 - June 14, 2025: Created custom CSS animations for shimmer, pulse-glow, and bounce effects
 - June 14, 2025: Enhanced pagination controls and table action buttons with smooth transitions
-- June 14, 2025: Implemented enhanced test case table functionality with user story-specific and global action buttons
-- June 14, 2025: Added selective export capabilities for individual user stories
-- June 14, 2025: Enhanced batch operations with approve/reject functionality per user story
-- June 14, 2025: Improved UI with clear distinction between global and local actions
 - June 13, 2025: Completed migration from Replit Agent to standard Replit environment
 - June 13, 2025: Merged Quick Test Generator and Live Test Case Generator into unified component
 - June 13, 2025: Enhanced test generation with dual-mode operation (Quick/Multi-Platform)
