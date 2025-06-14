@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
 import { 
   Check, 
   X, 
@@ -24,7 +24,6 @@ import {
   Settings,
   MoreHorizontal,
   Copy,
-  Edit,
   Tags,
   Loader2
 } from "lucide-react";
@@ -52,12 +51,7 @@ export function TestCaseBulkManager() {
   const [sortBy, setSortBy] = useState<string>("id");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
-  const [bulkEditDialogOpen, setBulkEditDialogOpen] = useState(false);
-  const [bulkEditData, setBulkEditData] = useState({
-    status: "",
-    priority: "",
-    tags: ""
-  });
+
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -239,34 +233,7 @@ export function TestCaseBulkManager() {
     }
   };
 
-  const handleBulkEdit = async () => {
-    if (selectedTestCases.length === 0) return;
-    
-    try {
-      if (bulkEditData.status) {
-        const promises = selectedTestCases.map(id => 
-          updateStatusMutation.mutateAsync({ id, status: bulkEditData.status })
-        );
-        await Promise.all(promises);
-      }
-      
-      const selectedCount = selectedTestCases.length;
-      setSelectedTestCases([]);
-      setBulkEditDialogOpen(false);
-      setBulkEditData({ status: "", priority: "", tags: "" });
-      
-      toast({
-        title: "Bulk Edit Complete",
-        description: `${selectedCount} test cases updated`,
-      });
-    } catch (error) {
-      toast({
-        title: "Bulk Edit Failed",
-        description: "Some test cases could not be updated",
-        variant: "destructive",
-      });
-    }
-  };
+
 
   const handleSelectAll = () => {
     if (selectedTestCases.length === filteredAndSortedTestCases.length) {
@@ -301,13 +268,7 @@ export function TestCaseBulkManager() {
       action: handleBulkReject,
       variant: "secondary"
     },
-    {
-      id: "edit",
-      label: "Bulk Edit",
-      icon: <Edit className="h-4 w-4" />,
-      action: () => setBulkEditDialogOpen(true),
-      variant: "outline"
-    },
+
     {
       id: "delete",
       label: "Delete Selected",
@@ -580,50 +541,7 @@ export function TestCaseBulkManager() {
           </div>
         )}
 
-        {/* Bulk Edit Dialog */}
-        <Dialog open={bulkEditDialogOpen} onOpenChange={setBulkEditDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Bulk Edit Test Cases</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="bulk-status">Status</Label>
-                <Select value={bulkEditData.status} onValueChange={(value) => setBulkEditData(prev => ({ ...prev, status: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="bulk-priority">Priority</Label>
-                <Select value={bulkEditData.priority} onValueChange={(value) => setBulkEditData(prev => ({ ...prev, priority: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setBulkEditDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleBulkEdit}>
-                  Apply Changes
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+
       </CardContent>
     </Card>
   );
