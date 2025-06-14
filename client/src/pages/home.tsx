@@ -14,6 +14,7 @@ import { UnifiedTestGenerator } from "@/components/unified-test-generator";
 import { TestCaseAnalytics } from "@/components/test-case-analytics";
 import { TestCaseBulkManager } from "@/components/test-case-bulk-manager";
 import { AdvancedExportPanel } from "@/components/advanced-export-panel";
+import { TestCaseTemplates } from "@/components/test-case-templates";
 
 import { CopyFeedback } from "@/components/copy-feedback";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -126,6 +127,7 @@ export default function Home() {
               
               <TabsContent value="bulk" className="space-y-4">
                 <TestCaseBulkManager />
+                <AdvancedExportPanel />
               </TabsContent>
             </Tabs>
           </div>

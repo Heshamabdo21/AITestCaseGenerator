@@ -367,14 +367,14 @@ export function AdvancedExportPanel() {
     window.URL.revokeObjectURL(url);
   };
 
-  const getUniqueValues = (field: keyof TestCase) => {
+  const getUniqueValues = (field: string) => {
     const values = new Set<string>();
     testCases.forEach(tc => {
-      const value = tc[field];
+      const value = (tc as any)[field];
       if (value) {
-        if (field === 'priority') {
+        if (field === 'priority' && typeof value === 'string') {
           values.add(value.toLowerCase());
-        } else {
+        } else if (typeof value === 'string' || typeof value === 'number') {
           values.add(value.toString());
         }
       }
