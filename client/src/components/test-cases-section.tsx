@@ -842,19 +842,59 @@ export function TestCasesSection() {
                                     <span className="font-semibold text-blue-900 dark:text-blue-100">
                                       Azure DevOps User Story:
                                     </span>
-                                    <Badge variant="outline" className="bg-white dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
-                                      {(() => {
-                                        const storyDisplay = getUserStoryDisplay(userStoryId);
-                                        return storyDisplay.fullDisplay;
-                                      })()}
-                                    </Badge>
                                     {(() => {
-                                      const storyDisplay = getUserStoryDisplay(userStoryId);
-                                      return storyDisplay.state !== 'Unknown' && storyDisplay.state !== 'Unassigned' && (
-                                        <Badge variant="secondary" className="text-xs">
-                                          {storyDisplay.state}
-                                        </Badge>
-                                      );
+                                      // Convert userStoryId to number for comparison
+                                      const numericUserStoryId = typeof userStoryId === 'string' ? parseInt(userStoryId) : userStoryId;
+                                      
+                                      // Find the matching user story
+                                      let story = userStories.find((s: any) => {
+                                        // Try exact numeric match first
+                                        if (s.id === numericUserStoryId) return true;
+                                        // Try string match
+                                        if (s.id.toString() === userStoryId.toString()) return true;
+                                        // Try azureId match as backup
+                                        if (s.azureId === userStoryId.toString()) return true;
+                                        return false;
+                                      });
+                                      
+                                      if (story) {
+                                        return (
+                                          <>
+                                            <Badge variant="outline" className="bg-white dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
+                                              {story.azureId}: {story.title}
+                                            </Badge>
+                                            {story.state && (
+                                              <Badge variant="secondary" className="text-xs">
+                                                {story.state}
+                                              </Badge>
+                                            )}
+                                          </>
+                                        );
+                                      } else if (userStoryId === 'unassigned') {
+                                        return (
+                                          <Badge variant="outline" className="bg-white dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
+                                            Unassigned Test Cases
+                                          </Badge>
+                                        );
+                                      } else {
+                                        // Debug: Show what we're looking for
+                                        console.log('User Story Debug:', { 
+                                          userStoryId, 
+                                          userStoryIdType: typeof userStoryId,
+                                          userStoriesCount: userStories.length,
+                                          availableStories: userStories.map(s => ({ 
+                                            id: s.id, 
+                                            idType: typeof s.id,
+                                            azureId: s.azureId, 
+                                            title: s.title 
+                                          }))
+                                        });
+                                        return (
+                                          <Badge variant="outline" className="bg-white dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
+                                            User Story {userStoryId} (Not Found)
+                                          </Badge>
+                                        );
+                                      }
                                     })()}
                                   </div>
                                 </TableHead>
