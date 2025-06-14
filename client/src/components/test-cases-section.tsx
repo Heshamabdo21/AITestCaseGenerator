@@ -835,6 +835,31 @@ export function TestCasesSection() {
                         <div className="rounded-md border-0">
                           <Table>
                             <TableHeader>
+                              {/* Azure DevOps User Story Header */}
+                              <TableRow className="bg-blue-50 dark:bg-blue-950 border-b-2 border-blue-200 dark:border-blue-800">
+                                <TableHead colSpan={7} className="text-center py-3">
+                                  <div className="flex items-center justify-center space-x-2">
+                                    <span className="font-semibold text-blue-900 dark:text-blue-100">
+                                      Azure DevOps User Story:
+                                    </span>
+                                    <Badge variant="outline" className="bg-white dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
+                                      {(() => {
+                                        const storyDisplay = getUserStoryDisplay(userStoryId);
+                                        return storyDisplay.fullDisplay;
+                                      })()}
+                                    </Badge>
+                                    {(() => {
+                                      const storyDisplay = getUserStoryDisplay(userStoryId);
+                                      return storyDisplay.state !== 'Unknown' && storyDisplay.state !== 'Unassigned' && (
+                                        <Badge variant="secondary" className="text-xs">
+                                          {storyDisplay.state}
+                                        </Badge>
+                                      );
+                                    })()}
+                                  </div>
+                                </TableHead>
+                              </TableRow>
+                              {/* Column Headers */}
                               <TableRow className="bg-slate-50/50 dark:bg-slate-900/50">
                                 <TableHead className="w-12">
                                   <Checkbox
@@ -857,7 +882,7 @@ export function TestCasesSection() {
                                 <TableHead className="font-semibold">
                                   <div className="flex flex-col">
                                     <span>Test Case Title</span>
-                                    <span className="text-xs font-normal text-muted-foreground">Linked to User Story</span>
+                                    <span className="text-xs font-normal text-muted-foreground">Test Description</span>
                                   </div>
                                 </TableHead>
                                 <TableHead className="font-semibold">
