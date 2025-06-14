@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, Settings } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Brain, Settings, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -86,6 +87,12 @@ export function UnifiedAiConfiguration() {
     retry: false,
   });
 
+  // Check if Azure configuration exists
+  const { data: azureConfig } = useQuery({
+    queryKey: ['/api/azure-config/latest'],
+    retry: false,
+  });
+
   useEffect(() => {
     if (aiConfig && typeof aiConfig === 'object') {
       const config = aiConfig as any;
@@ -132,9 +139,12 @@ export function UnifiedAiConfiguration() {
       });
     },
     onError: (error: any) => {
+      const isAzureConfigMissing = error.message?.includes("No Azure DevOps configuration found");
       toast({
         title: "Failed to Save AI Configuration",
-        description: error.message,
+        description: isAzureConfigMissing 
+          ? "Please configure your Azure DevOps connection first before setting up AI preferences."
+          : error.message,
         variant: "destructive",
       });
     },
@@ -152,9 +162,12 @@ export function UnifiedAiConfiguration() {
       });
     },
     onError: (error: any) => {
+      const isAzureConfigMissing = error.message?.includes("No Azure DevOps configuration found");
       toast({
         title: "Failed to Save AI Context",
-        description: error.message,
+        description: isAzureConfigMissing 
+          ? "Please configure your Azure DevOps connection first before setting up AI context."
+          : error.message,
         variant: "destructive",
       });
     },
@@ -210,6 +223,15 @@ export function UnifiedAiConfiguration() {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {!azureConfig && (
+          <Alert className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Azure DevOps configuration is required before setting up AI preferences. 
+              Please configure your Azure connection first in the Configuration tab.
+            </AlertDescription>
+          </Alert>
+        )}
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* AI Configuration Section */}
           <div className="space-y-6">
@@ -523,7 +545,7 @@ export function UnifiedAiConfiguration() {
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={saveAiConfigMutation.isPending || saveAiContextMutation.isPending}
+            disabled={!azureConfig || saveAiConfigMutation.isPending || saveAiContextMutation.isPending}
           >
             {(saveAiConfigMutation.isPending || saveAiContextMutation.isPending) ? (
               <>

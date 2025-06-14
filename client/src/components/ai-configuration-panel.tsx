@@ -52,6 +52,12 @@ export function AiConfigurationPanel() {
     queryKey: ["/api/ai-configuration"],
   });
 
+  // Check if Azure configuration exists
+  const { data: azureConfig } = useQuery({
+    queryKey: ['/api/azure-config/latest'],
+    retry: false,
+  });
+
   const saveAiConfigMutation = useMutation({
     mutationFn: async (data: AiConfigurationFormData) => {
       return apiRequest(`/api/ai-configuration`, "POST", data);
