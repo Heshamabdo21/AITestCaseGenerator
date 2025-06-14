@@ -21,8 +21,6 @@ import type { TestCase } from "@shared/schema";
 
 export function TestCasesSection() {
   const [selectedTestCases, setSelectedTestCases] = useState<number[]>([]);
-  const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
-  const [viewingTestCase, setViewingTestCase] = useState<TestCase | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   
@@ -157,26 +155,7 @@ export function TestCasesSection() {
     },
   });
 
-  // Mutation to update test case
-  const updateTestCaseMutation = useMutation({
-    mutationFn: ({ id, testCase }: { id: number; testCase: Partial<TestCase> }) => 
-      api.updateTestCase(id, testCase),
-    onSuccess: () => {
-      toast({
-        title: "Test Case Updated",
-        description: "Test case updated successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/test-cases'] });
-      setEditingTestCase(null);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Failed to Update Test Case",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+
 
   // Mutation to export test cases
   const exportTestCasesMutation = useMutation({
