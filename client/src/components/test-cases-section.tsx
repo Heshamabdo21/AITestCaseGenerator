@@ -244,6 +244,7 @@ export function TestCasesSection() {
   };
 
   const typedTestCases = testCases as TestCase[];
+  const typedUserStories = userStories as any[];
 
   // Filter logic
   const filteredTestCases = typedTestCases.filter(testCase => {
