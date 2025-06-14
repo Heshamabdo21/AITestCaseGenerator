@@ -1065,7 +1065,7 @@ export function TestCasesSection() {
                                                   </Badge>
                                                 </div>
                                                 <div>
-                                                  <Label className="text-xs font-semibold text-muted-foreground">USER STORY</Label>
+                                                  <Label className="text-xs font-semibold text-muted-foreground">AZURE DEVOPS USER STORY</Label>
                                                   <div className="flex flex-col space-y-1">
                                                     {(() => {
                                                       const storyDisplay = getUserStoryDisplay(testCase.userStoryId || 'unassigned');
