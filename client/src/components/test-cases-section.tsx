@@ -22,6 +22,7 @@ import type { TestCase } from "@shared/schema";
 
 export function TestCasesSection() {
   const [selectedTestCases, setSelectedTestCases] = useState<number[]>([]);
+  const [selectedTestCasesByUserStory, setSelectedTestCasesByUserStory] = useState<Record<string, number[]>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   
@@ -192,6 +193,37 @@ export function TestCasesSection() {
     );
   };
 
+  const handleUserStoryTestCaseSelect = (testCaseId: number, userStoryId: string) => {
+    setSelectedTestCasesByUserStory(prev => {
+      const currentSelection = prev[userStoryId] || [];
+      const newSelection = currentSelection.includes(testCaseId)
+        ? currentSelection.filter(id => id !== testCaseId)
+        : [...currentSelection, testCaseId];
+      
+      return {
+        ...prev,
+        [userStoryId]: newSelection
+      };
+    });
+  };
+
+  const handleSelectAllForUserStory = (userStoryId: string, testCases: TestCase[]) => {
+    const currentSelection = selectedTestCasesByUserStory[userStoryId] || [];
+    const allTestCaseIds = testCases.map(tc => tc.id);
+    
+    if (currentSelection.length === testCases.length) {
+      setSelectedTestCasesByUserStory(prev => ({
+        ...prev,
+        [userStoryId]: []
+      }));
+    } else {
+      setSelectedTestCasesByUserStory(prev => ({
+        ...prev,
+        [userStoryId]: allTestCaseIds
+      }));
+    }
+  };
+
   const handleSelectAll = () => {
     if (selectedTestCases.length === typedTestCases.length) {
       setSelectedTestCases([]);
@@ -215,6 +247,94 @@ export function TestCasesSection() {
         description: `Successfully approved ${count} test cases`,
       });
     }
+  };
+
+  const handleRejectSelected = () => {
+    const count = selectedTestCases.length;
+    selectedTestCases.forEach(id => {
+      updateStatusMutation.mutate({ id, status: "rejected" });
+    });
+    setSelectedTestCases([]);
+    
+    if (count > 1) {
+      toast({
+        title: `${count} Test Cases Rejected`,
+        description: `Successfully rejected ${count} test cases`,
+      });
+    }
+  };
+
+  const handleApproveSelectedForUserStory = (userStoryId: string) => {
+    const selectedIds = selectedTestCasesByUserStory[userStoryId] || [];
+    const count = selectedIds.length;
+    
+    selectedIds.forEach(id => {
+      updateStatusMutation.mutate({ id, status: "approved" });
+    });
+    
+    setSelectedTestCasesByUserStory(prev => ({
+      ...prev,
+      [userStoryId]: []
+    }));
+    
+    if (count > 1) {
+      celebrateSuccess('batch', count);
+      toast({
+        title: `${count} Test Cases Approved`,
+        description: `Successfully approved ${count} test cases for this user story`,
+      });
+    }
+  };
+
+  const handleRejectSelectedForUserStory = (userStoryId: string) => {
+    const selectedIds = selectedTestCasesByUserStory[userStoryId] || [];
+    const count = selectedIds.length;
+    
+    selectedIds.forEach(id => {
+      updateStatusMutation.mutate({ id, status: "rejected" });
+    });
+    
+    setSelectedTestCasesByUserStory(prev => ({
+      ...prev,
+      [userStoryId]: []
+    }));
+    
+    if (count > 1) {
+      toast({
+        title: `${count} Test Cases Rejected`,
+        description: `Successfully rejected ${count} test cases for this user story`,
+      });
+    }
+  };
+
+  const handleExportSelectedForUserStory = (userStoryId: string, testCases: TestCase[]) => {
+    const selectedIds = selectedTestCasesByUserStory[userStoryId] || [];
+    const selectedTestCases = testCases.filter(tc => selectedIds.includes(tc.id));
+    
+    if (selectedTestCases.length === 0) {
+      toast({
+        title: "No Test Cases Selected",
+        description: "Please select test cases to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create Excel export for selected test cases
+    const blob = new Blob([JSON.stringify(selectedTestCases, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `test-cases-user-story-${userStoryId}.json`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    celebrateSuccess('export');
+    toast({
+      title: "Export Successful",
+      description: `Exported ${selectedTestCases.length} test cases for user story ${userStoryId}`,
+    });
   };
 
   const getPriorityColor = (priority: string) => {
@@ -446,45 +566,78 @@ export function TestCasesSection() {
             )}
           </CardTitle>
           <div className="flex items-center space-x-2">
+            {/* Global Action Buttons */}
+            <div className="flex items-center space-x-1 border-r pr-2 mr-1">
+              <span className="text-xs text-muted-foreground">Global:</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportTestCasesMutation.mutate()}
+                disabled={exportTestCasesMutation.isPending || typedTestCases.length === 0}
+                className="border-blue-300 text-blue-700 hover:bg-blue-50 transition-all duration-200 hover:scale-105"
+              >
+                {exportTestCasesMutation.isPending ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2 border-blue-600" />
+                    Exporting
+                    <BouncingDots className="ml-2" />
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export All
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleApproveSelected}
+                disabled={selectedTestCases.length === 0 || updateStatusMutation.isPending}
+                className="border-green-300 text-green-700 hover:bg-green-50 transition-all duration-200 hover:scale-105"
+              >
+                {updateStatusMutation.isPending ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2 border-green-600" />
+                    Approving
+                    <BouncingDots className="ml-2" />
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Approve ({selectedTestCases.length})
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRejectSelected}
+                disabled={selectedTestCases.length === 0 || updateStatusMutation.isPending}
+                className="border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105"
+              >
+                {updateStatusMutation.isPending ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2 border-red-600" />
+                    Rejecting
+                    <BouncingDots className="ml-2" />
+                  </>
+                ) : (
+                  <>
+                    <X className="h-4 w-4 mr-2" />
+                    Reject ({selectedTestCases.length})
+                  </>
+                )}
+              </Button>
+            </div>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              onClick={() => exportTestCasesMutation.mutate()}
-              disabled={exportTestCasesMutation.isPending || typedTestCases.length === 0}
-              className="border-blue-300 text-blue-700 hover:bg-blue-50 transition-all duration-200 hover:scale-105"
+              onClick={handleSelectAll}
+              disabled={typedTestCases.length === 0}
+              className="text-xs"
             >
-              {exportTestCasesMutation.isPending ? (
-                <>
-                  <LoadingSpinner size="sm" className="mr-2 border-blue-600" />
-                  Exporting
-                  <BouncingDots className="ml-2" />
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export to Excel
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleApproveSelected}
-              disabled={selectedTestCases.length === 0 || updateStatusMutation.isPending}
-              className="border-green-300 text-green-700 hover:bg-green-50 transition-all duration-200 hover:scale-105"
-            >
-              {updateStatusMutation.isPending ? (
-                <>
-                  <LoadingSpinner size="sm" className="mr-2 border-green-600" />
-                  Approving
-                  <BouncingDots className="ml-2" />
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Approve Selected
-                </>
-              )}
+              {selectedTestCases.length === typedTestCases.length ? 'Deselect All' : 'Select All'}
             </Button>
           </div>
         </div>
